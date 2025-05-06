@@ -8,7 +8,7 @@ import { AppConfig, bootstrapConfigSchema } from './config/schema.js';
 import { INestApplication } from '@nestjs/common';
 
 export class AppBootstrap {
-  private configService: FileConfigService;
+  private readonly configService: FileConfigService;
 
   constructor() {
     this.configService = new FileConfigService();
@@ -17,7 +17,8 @@ export class AppBootstrap {
   public async start(): Promise<void> {
     try {
       const config = await this.configService.injectConfig();
-      console.log('ENVS:', process.env);
+      // console.log('ENVS:', process.env);
+      console.log('ENVS:', config);
       await this.setSwarmKeyEnvironment();
       await this.launchApplication(config);
     } catch (err) {

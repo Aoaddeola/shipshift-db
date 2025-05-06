@@ -1,7 +1,6 @@
 import { generateKey } from '@libp2p/pnet';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-
 const SWARM_KEY_FILE = process.env.SWARM_KEY_FILE || '/sp/secrets/SWARM_KEY';
 
 /**

@@ -3,7 +3,7 @@ import { AppConfig } from './schema.js';
 export default (): AppConfig => {
   return {
     nodeEnv: process.env.NODE_ENV as 'development' | 'production' | 'test',
-    port: parseInt(process.env.PORT || '3000', 10),
+    port: parseInt(process.env.PORT || '7000', 10),
     runMode: (process.env.RUN_MODE as 'node' | 'bootstrap') || 'node',
     debug: process.env.DEBUG || '',
     ipfs: {
@@ -17,7 +17,21 @@ export default (): AppConfig => {
         process.env.ORBITDB_DIRECTORY || `./data/${crypto.randomUUID()}`,
       swarmKey: process.env.SWARM_KEY,
       databases: {
-        offers: process.env.OFFERS_DATABASE || 'offers',
+        availabilities: process.env.AVAILABILITIES_DATABASE || 'availabilities',
+        badges: process.env.BADGES_DATABASE || 'badges',
+        colonies: process.env.COLONIES_DATABASE || 'colonies',
+        journeys: process.env.JOURNEYS_DATABASE || 'journeys',
+        operators: process.env.OPERATORS_DATABASE || 'operators',
+        pending_multisig_tx_witnesses:
+          process.env.PENDING_MULTISIG_TX_WITNESSES_DATABASE ||
+          'pending_multisig_tx_witnesses',
+        pending_multisig_txs:
+          process.env.PENDING_MULTISIG_TXS_DATABASE || 'pending_multisig_txs',
+        steps: process.env.STEPS_DATABASE || 'steps',
+        step_transactions:
+          process.env.STEP_TRANSACTIONS_DATABASE || 'step_transactions',
+        shipments: process.env.SHIPMENTS_DATABASE || 'shipments',
+        currencies: process.env.CURRENCIES_DATABASE || 'currencies',
       },
     },
   };

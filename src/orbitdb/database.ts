@@ -76,9 +76,9 @@ export class Database<T extends { id: string }> implements OnModuleInit {
     await this.initPromise;
 
     const result = await (this.database as any).all();
-    return result.map(({ value: { _id, ...offer } }) => ({
+    return result.map(({ value: { _id, ...val } }) => ({
       id: _id,
-      ...offer,
+      ...val,
     }));
   }
 
