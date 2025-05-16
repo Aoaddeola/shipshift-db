@@ -1,33 +1,31 @@
-// src/sp-cost/sp-cost-create.dto.ts
+// src/currency/currency-create.dto.ts
 
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Currency } from './types.js';
 
 export class CurrencyCreateDto implements Omit<Currency, 'id'> {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'fiat', description: 'Asset class category' })
-  assetClass: string;
-
-  @IsString()
-  @IsNotEmpty()
   @ApiProperty({
-    example: 'USD',
-    description: 'Currency symbol (e.g., USD, EUR)',
+    example: 'ADA',
+    description: 'Currency symbol (e.g., USD, ADA)',
   })
   currencySymbol: string;
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    example: 'US Dollar',
-    description: 'Full name of the currency',
+    example: 'lovelace',
+    description: 'Token name (e.g., lovelace for ADA)',
   })
-  name: string;
+  tokenName: string;
 
-  @ApiProperty({ description: 'Currency quantity' })
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  quantity: number;
+  @ApiProperty({
+    example: 'Cardano',
+    description: 'User-friendly name of the currency',
+  })
+  userFriendlyName: string;
 }

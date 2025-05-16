@@ -16,8 +16,8 @@ export type Location = {
  * OperatorType enum
  */
 export enum OperatorType {
-  ReserveOperatorType = 'ReserveOperator',
-  DispatchOperatorType = 'DispatchOperator',
+  ReserveOperatorType = 'ReserveOperatorType',
+  DispatchOperatorType = 'DispatchOperatorType',
 }
 
 /**

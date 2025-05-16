@@ -11,14 +11,14 @@ export class CurrencyService {
   private readonly logger = new Logger(CurrencyService.name);
 
   constructor(
-    @InjectDatabase('currency') private readonly database: Database<Currency>,
+    @InjectDatabase('currency') private database: Database<Currency>,
   ) {}
 
-  async createCurrency(spCost: Omit<Currency, 'id'>): Promise<Currency> {
+  async createCurrency(currency: Omit<Currency, 'id'>): Promise<Currency> {
     const id = randomUUID();
-    this.logger.log(`Creating Currency: ${id}`);
-    await this.database.put({ ...spCost, id });
-    return { id, ...spCost };
+    this.logger.log(`Creating currency: ${id}`);
+    await this.database.put({ ...currency, id });
+    return { id, ...currency };
   }
 
   async getCurrency(id: string): Promise<Currency> {
@@ -29,26 +29,15 @@ export class CurrencyService {
     return entry;
   }
 
-  async currencyToGYValue(id: string): Promise<{
-    [key: string]: number;
-  }> {
-    const currency = await this.getCurrency(id);
-    const entry = {
-      [`
-        /* ${currency.currencySymbol}. */
-        ${currency.assetClass}
-      `]: currency.quantity,
-    };
-    return entry;
-  }
-
-  async getCurrencys(): Promise<Currency[]> {
+  async getCurrencies(): Promise<Currency[]> {
     return this.database.all();
   }
 
   async deleteCurrency(id: string): Promise<{ message: string }> {
-    const spCost = await this.getCurrency(id);
+    const currency = await this.getCurrency(id);
     await this.database.del(id);
-    return { message: `Currency "${spCost.name}" deleted successfully` };
+    return {
+      message: `Currency "${currency.userFriendlyName}" deleted successfully`,
+    };
   }
 }

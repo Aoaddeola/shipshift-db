@@ -17,7 +17,6 @@ import { AuthGuard } from '@nestjs/passport';
 export class ColonyBadgeController {
   constructor(private readonly colonyBadgeService: ColonyBadgeService) {}
 
-  @UseGuards(AuthGuard('jwt'))
   @Post()
   async createColonyBadge(@Body() badge: ColonyBadgeCreateDto) {
     return this.colonyBadgeService.createColonyBadge(badge);

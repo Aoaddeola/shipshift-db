@@ -1,3 +1,5 @@
+import { OperatorOnChain } from 'src/colony/types.js';
+
 // src/step/step.types.ts
 export interface StepParams {
   id: string;
@@ -7,7 +9,7 @@ export interface StepParams {
   spDelegate: string;
   spETA: string;
   spHolder: string;
-  spPerformer: string[];
+  spPerformer: OperatorOnChain;
   spRecipient: string;
   spRequester: string;
   spStartTime: string;

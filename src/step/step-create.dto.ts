@@ -1,70 +1,79 @@
 // src/step/step-create.dto.ts
+
 import {
-  IsObject,
-  IsBoolean,
   IsString,
-  IsArray,
+  IsObject,
   IsNotEmpty,
+  ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { StepParams } from './types.js';
+import { ApiProperty } from '@nestjs/swagger';
+import { OperatorOnChain } from 'src/colony/types.js';
 
+// Nested DTO for OperatorOnChain
+class OperatorOnChainDto {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'addr1q9abcdef1234567890' })
+  opAddr: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'ReserveOperator' })
+  opRole: string;
+}
+
+// Main DTO
 export class StepCreateDto implements Omit<StepParams, 'id'> {
-  @ApiProperty({ description: 'Whether there is an active conflict' })
-  @IsBoolean()
-  spActiveConflict: boolean;
-
-  @ApiProperty({
-    description: 'Cost breakdown with at least "lovelace" specified',
-    example: { lovelace: 5000000, ada: 5 },
-  })
   @IsObject()
   @IsNotEmpty()
+  @ApiProperty({
+    description: 'Cost breakdown with dynamic keys',
+    example: { lovelace: 5000000 },
+  })
   spCost: Record<string, number>;
 
-  @ApiProperty({ description: 'Delegate address or identifier' })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: 'addr1q8uvwxyz0987654321' })
   spDelegate: string;
 
-  @ApiProperty({ description: 'Estimated Time of Arrival (ISO 8601 format)' })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: '2025-04-01T12:00:00Z' })
   spETA: string;
 
-  @ApiProperty({ description: 'Current holder of the step' })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: 'addr1q7defghij5678901234' })
   spHolder: string;
 
+  @ValidateNested()
+  @Type(() => OperatorOnChainDto)
   @ApiProperty({
-    description: 'List of performers assigned to the step',
-    type: [String],
+    description: 'Performer details',
+    type: OperatorOnChainDto,
   })
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty()
-  spPerformer: string[];
+  spPerformer: OperatorOnChain;
 
-  @ApiProperty({ description: 'Recipient of the step outcome' })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: 'addr1q6klmnopqr4321098765' })
   spRecipient: string;
 
-  @ApiProperty({ description: 'Requester initiating the step' })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: 'addr1q5tuvxyz1122334455' })
   spRequester: string;
 
-  @ApiProperty({ description: 'Start time of the step (ISO 8601 format)' })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: '2025-03-25T09:00:00Z' })
   spStartTime: string;
 
-  @ApiProperty({
-    description: 'Transaction output reference (e.g., Cardano TxOutRef)',
-  })
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: '1a2b3c4d#0' })
   spTxOutRef: string;
 }

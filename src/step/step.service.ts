@@ -1,4 +1,5 @@
 // src/step/step.service.ts
+
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDatabase } from '../orbitdb/inject-database.decorator.js';
 import { StepParams } from './types.js';
@@ -19,11 +20,11 @@ export class StepService {
   }
 
   async getStep(id: string): Promise<StepParams> {
-    const step = await this.database.get(id);
-    if (!step) {
+    const entry = await this.database.get(id);
+    if (!entry) {
       throw new NotFoundException('Step not found');
     }
-    return step;
+    return entry;
   }
 
   async getSteps(): Promise<StepParams[]> {

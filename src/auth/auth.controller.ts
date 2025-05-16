@@ -29,6 +29,6 @@ export class AuthController {
     if (!isValid) {
       throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
     }
-    return { token: this.authService.generateToken(address) };
+    return { token: await this.authService.generateToken(address) };
   }
 }

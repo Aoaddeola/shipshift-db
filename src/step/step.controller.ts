@@ -1,18 +1,9 @@
 // src/step/step.controller.ts
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { StepService } from './step.service.js';
 import { StepCreateDto } from './step-create.dto.js';
-import { AuthGuard } from '@nestjs/passport';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller('step')
 export class StepController {
   constructor(private readonly stepService: StepService) {}

@@ -59,11 +59,20 @@ export class AuthService {
    * @returns Signed JWT token
    */
   async generateToken(walletAddress: string) {
-    const operator =
-      await this.operatorService.getOperatorByAddress(walletAddress);
-    return this.jwtService.sign({
-      sub: operator.id,
-      address: operator.walletAddress,
-    });
+    try {
+      const operator =
+        await this.operatorService.getOperatorByAddress(walletAddress);
+      console.log(
+        '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OperatorAuth!!!!!!!!!!!!!!!',
+        operator,
+      );
+      return this.jwtService.signAsync({
+        sub: operator?.id,
+        address: operator?.walletAddress,
+      });
+    } catch (error) {
+      console.error('User does not exist', error);
+      return '';
+    }
   }
 }

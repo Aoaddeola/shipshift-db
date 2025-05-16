@@ -3,7 +3,7 @@ import { AppConfig } from './schema.js';
 export default (): AppConfig => {
   return {
     nodeEnv: process.env.NODE_ENV as 'development' | 'production' | 'test',
-    port: parseInt(process.env.PORT || '7000', 10),
+    port: parseInt(process.env.PORT || '8033', 10),
     runMode: (process.env.RUN_MODE as 'node' | 'bootstrap') || 'node',
     debug: process.env.DEBUG || '',
     ipfs: {

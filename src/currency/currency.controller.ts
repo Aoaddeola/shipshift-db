@@ -1,4 +1,4 @@
-// src/sp-cost/sp-cost.controller.ts
+// src/currency/currency.controller.ts
 
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CurrencyService } from './currency.service.js';
@@ -18,14 +18,9 @@ export class CurrencyController {
     return this.currencyService.getCurrency(id);
   }
 
-  @Get(':id')
-  async getValByCurrency(@Param('id') id: string) {
-    return this.currencyService.currencyToGYValue(id);
-  }
-
   @Get()
-  async getCurrencys() {
-    return this.currencyService.getCurrencys();
+  async getCurrencies() {
+    return this.currencyService.getCurrencies();
   }
 
   @Delete(':id')

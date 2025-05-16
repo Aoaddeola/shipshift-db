@@ -76,8 +76,8 @@ export class Database<T extends { id: string }> implements OnModuleInit {
     await this.initPromise;
 
     const result = await (this.database as any).all();
-    return result.map(({ value: { _id, ...val } }) => ({
-      id: _id,
+    return result.map(({ value: { id, ...val } }) => ({
+      id: id,
       ...val,
     }));
   }
@@ -85,5 +85,9 @@ export class Database<T extends { id: string }> implements OnModuleInit {
   async del(key: string) {
     await this.initPromise;
     await this.database.del(key);
+  }
+
+  async getDb() {
+    return this.database;
   }
 }

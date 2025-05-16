@@ -5,6 +5,7 @@ import { InjectDatabase } from '../orbitdb/inject-database.decorator.js';
 import { Operator } from './types.js';
 import { Database } from '../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
+import { OperatorType } from 'src/availability/types.js';
 
 @Injectable()
 export class OperatorService {
@@ -29,7 +30,27 @@ export class OperatorService {
     return entry;
   }
 
-  async getOperatorByAddress(address: string): Promise<Operator> {
+  async getOperatorByAddress(address: string): Promise<Operator | undefined> {
+    // // Get the database instance
+    // const db = await this.database.getDb();
+
+    // // Query for matching records
+    // const records = db.query((doc) => doc.walletAddress === address);
+
+    // // Return undefined if no matches found
+    // if (records.length === 0) return undefined;
+
+    // // Convert raw database record to Operator type
+    // const rawRecord = records[0];
+
+    // return {
+    //   id: rawRecord.id,
+    //   colonyId: rawRecord.colonyId,
+    //   walletAddress: rawRecord.walletAddress,
+    //   sessionID: rawRecord.sessionID,
+    //   // Convert JSON string to OperatorType array
+    //   roles: JSON.parse(rawRecord.roles) as OperatorType[],
+    // };
     const records = await this.database.all();
     const entry = records.find(
       (operator: Operator) => operator.walletAddress == address,

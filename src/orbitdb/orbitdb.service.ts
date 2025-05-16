@@ -9,7 +9,6 @@ import { createHelia, HeliaLibp2p } from 'helia';
 import { GossipSub, gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { tcp } from '@libp2p/tcp';
 import { yamux } from '@chainsafe/libp2p-yamux';
-import { mplex } from '@libp2p/mplex';
 import { httpGatewayRouting } from '@helia/routers';
 import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery';
 import { bitswap } from '@helia/block-brokers';
@@ -106,7 +105,7 @@ export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
             tcp(),
             webRTC(),
           ],
-          streamMuxers: [yamux(), mplex()],
+          streamMuxers: [yamux()],
           peerDiscovery: [
             pubsubPeerDiscovery({
               interval: 5e3,
