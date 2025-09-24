@@ -1,28 +1,43 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { ContactDetailsCreateDto } from './contact-details-create.dto.js';
+// src/addresses/controllers/addresses.controller.ts
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  Delete,
+  Put,
+} from '@nestjs/common';
 import { ContactDetailsService } from './contact-details.service.js';
+import { ContactDetailsModel } from './contact-details.model.js';
+import { ContactDetails } from './contact-details.types.js';
 
 @Controller('contact-details')
 export class ContactDetailsController {
   constructor(private readonly contactDetailsService: ContactDetailsService) {}
 
   @Post()
-  async createContactDetails(@Body() contact: ContactDetailsCreateDto) {
-    return this.contactDetailsService.createContactDetails(contact);
+  create(@Body() dto: ContactDetails): Promise<ContactDetailsModel> {
+    return this.contactDetailsService.create(dto);
   }
 
   @Get(':id')
-  async getContactDetails(@Param('id') id: string) {
-    return this.contactDetailsService.getContactDetails(id);
+  findOne(@Param('id') id: string): Promise<ContactDetailsModel | null> {
+    return this.contactDetailsService.findOne(id);
   }
 
-  @Get('owner/:ownerId')
-  async getContactDetailsForOwner(@Param('ownerId') ownerId: string) {
-    return this.contactDetailsService.getContactDetailsForOwner(ownerId);
+  @Get()
+  findAll(): Promise<ContactDetailsModel[]> {
+    return this.contactDetailsService.findAll();
+  }
+
+  @Put()
+  updateOne(@Body() dto: ContactDetails): Promise<[affectedCount: number]> {
+    return this.contactDetailsService.update(dto);
   }
 
   @Delete(':id')
-  async deleteContactDetails(@Param('id') id: string) {
-    return this.contactDetailsService.deleteContactDetails(id);
+  remove(@Param('id') id: string): Promise<void> {
+    return this.contactDetailsService.remove(id);
   }
 }

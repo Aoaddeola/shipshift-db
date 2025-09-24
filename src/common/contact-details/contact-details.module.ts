@@ -1,17 +1,14 @@
+// src/addresses/addresses.module.ts
 import { Module } from '@nestjs/common';
-import { IPFSAccessController } from '@orbitdb/core';
-import { OrbitDBModule } from '../../orbitdb/orbitdb.module.js';
-import { ContactDetailsController } from './contact-details.controller.js';
+import { SequelizeModule } from '@nestjs/sequelize';
 import { ContactDetailsService } from './contact-details.service.js';
+import { ContactDetailsModel } from './contact-details.model.js';
+import { ContactDetailsController } from './contact-details.controller.js';
 
 @Module({
-  imports: [
-    OrbitDBModule.forDatabase('contact-details', {
-      AccessController: IPFSAccessController({ write: ['*'] }),
-    }),
-  ],
-  controllers: [ContactDetailsController],
+  imports: [SequelizeModule.forFeature([ContactDetailsModel])],
   providers: [ContactDetailsService],
+  controllers: [ContactDetailsController],
   exports: [ContactDetailsService],
 })
 export class ContactDetailsModule {}

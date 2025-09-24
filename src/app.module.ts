@@ -19,10 +19,25 @@ import { ParcelModule } from './logistics/parcel/parcel.module.js';
 import { ShipmentModule } from './logistics/shipment/shipment.module.js';
 import { ContactDetailsModule } from './common/contact-details/contact-details.module.js';
 import { LocationModule } from './common/location/location.module.js';
+import { SequelizeModule } from '@nestjs/sequelize';
+import path from 'path';
+import { ContactDetailsModel } from './common/contact-details/contact-details.model.js';
+
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 @Module({
   imports: [
     AppConfigModule,
+    SequelizeModule.forRoot({
+      dialect: 'sqlite',
+      storage: path.join(__dirname, 'database', 'contactdetails.db'),
+      autoLoadModels: true,
+      synchronize: true,
+      models: [ContactDetailsModel],
+    }),
     ScheduleModule.forRoot(),
     OrbitDBRootModule,
 
