@@ -26,4 +26,12 @@ export class OperatorCreateDto
     description: 'ID of the contact details',
   })
   contactDetailsId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'colony-node-456',
+    description: 'ID of the associated colony node',
+  })
+  colonyNodeId: string;
 }

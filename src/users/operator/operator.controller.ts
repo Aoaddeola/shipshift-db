@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { OperatorService } from './operator.service.js';
 import { OperatorCreateDto } from './operator-create.dto.js';
@@ -43,7 +44,20 @@ export class OperatorController {
   }
 
   @Get()
-  async getOperators() {
+  async getOperators(
+    @Query('contactDetailsId') contactDetailsId?: string,
+    @Query('colonyNodeId') colonyNodeId?: string,
+  ) {
+    if (contactDetailsId && colonyNodeId) {
+      return this.operatorService.getOperatorsByContactAndColonyNode(
+        contactDetailsId,
+        colonyNodeId,
+      );
+    } else if (contactDetailsId) {
+      return this.operatorService.getOperatorsByContact(contactDetailsId);
+    } else if (colonyNodeId) {
+      return this.operatorService.getOperatorsByColonyNode(colonyNodeId);
+    }
     return this.operatorService.getOperators();
   }
 
@@ -57,6 +71,11 @@ export class OperatorController {
     @Param('contactDetailsId') contactDetailsId: string,
   ) {
     return this.operatorService.getOperatorsByContact(contactDetailsId);
+  }
+
+  @Get('colony-node/:colonyNodeId')
+  async getOperatorsByColonyNode(@Param('colonyNodeId') colonyNodeId: string) {
+    return this.operatorService.getOperatorsByColonyNode(colonyNodeId);
   }
 
   @Delete(':id')

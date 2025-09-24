@@ -56,6 +56,23 @@ export class OperatorService {
     return all.filter((op) => op.contactDetailsId === contactDetailsId);
   }
 
+  async getOperatorsByColonyNode(colonyNodeId: string): Promise<Operator[]> {
+    const all = await this.database.all();
+    return all.filter((op) => op.colonyNodeId === colonyNodeId);
+  }
+
+  async getOperatorsByContactAndColonyNode(
+    contactDetailsId: string,
+    colonyNodeId: string,
+  ): Promise<Operator[]> {
+    const all = await this.database.all();
+    return all.filter(
+      (op) =>
+        op.contactDetailsId === contactDetailsId &&
+        op.colonyNodeId === colonyNodeId,
+    );
+  }
+
   async updateOperator(
     id: string,
     operator: OperatorCreateDto,
