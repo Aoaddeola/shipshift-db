@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-// src/addresses/services/addresses.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { randomUUID } from 'node:crypto';
 import { ContactDetailsModel } from './contact-details.model.js';
 import { ContactDetails } from './contact-details.types.js';
 
@@ -10,25 +8,70 @@ import { ContactDetails } from './contact-details.types.js';
 export class ContactDetailsService {
   constructor(
     @InjectModel(ContactDetailsModel)
-    private readonly contactDetailsModel: typeof ContactDetailsModel,
+    private contactDetailsModel: typeof ContactDetailsModel,
   ) {}
 
-  async create(dto: ContactDetails): Promise<ContactDetailsModel> {
-    const id = randomUUID();
-    return this.contactDetailsModel.create({
-      ...dto,
-      id,
-    });
+  async create(
+    contactDetails: Omit<ContactDetails, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<ContactDetailsModel> {
+    return this.contactDetailsModel.create(contactDetails);
   }
 
   async findAll(): Promise<ContactDetailsModel[]> {
     return this.contactDetailsModel.findAll();
   }
 
-  async findOne(id: string): Promise<ContactDetailsModel | null> {
-    return this.contactDetailsModel.findOne({
-      where: { id },
+  async findOne(id: string): Promise<ContactDetailsModel> {
+    const contactDetails = await this.contactDetailsModel.findByPk(id);
+    if (!contactDetails) {
+      throw new NotFoundException(`Contact details with ID ${id} not found`);
+    }
+    return contactDetails;
+  }
+
+  async findByOwner(ownerId: string): Promise<ContactDetailsModel[]> {
+    const contactDetails = await this.contactDetailsModel.findAll({
+      where: { ownerId },
     });
+
+    if (contactDetails.length === 0) {
+      throw new NotFoundException(
+        `No contact details found for owner ${ownerId}`,
+      );
+    }
+
+    return contactDetails;
+  }
+
+  async findBySession(session: string): Promise<ContactDetailsModel> {
+    const contactDetails = await this.contactDetailsModel.findOne({
+      where: { session },
+    });
+
+    if (!contactDetails) {
+      throw new NotFoundException(
+        `No contact details found for session ${session}`,
+      );
+    }
+
+    return contactDetails;
+  }
+
+  async update(
+    id: string,
+    contactDetails: Partial<ContactDetails>,
+  ): Promise<ContactDetailsModel> {
+    const [affectedCount, [updatedContactDetails]] =
+      await this.contactDetailsModel.update(contactDetails, {
+        where: { id },
+        returning: true,
+      });
+
+    if (affectedCount === 0) {
+      throw new NotFoundException(`Contact details with ID ${id} not found`);
+    }
+
+    return updatedContactDetails;
   }
 
   async remove(id: string): Promise<void> {
@@ -36,10 +79,5 @@ export class ContactDetailsService {
     if (record) {
       await record.destroy();
     }
-  }
-
-  async update(dto: ContactDetails): Promise<[affectedCount: number]> {
-    const id = dto.id;
-    return this.contactDetailsModel.update(dto, { where: { id } });
   }
 }
