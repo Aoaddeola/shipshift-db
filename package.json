@@ -18,13 +18,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "update-types": "ts-node scripts/import-types.ts",
-    "update-types:shell": "./scripts/update-types.sh",
-    "update-types:watch": "ts-node scripts/watch-types.ts",
-    "validate-types": "ts-node scripts/validate-types.ts",
-    "prebuild": "npm run update-types",
-    "postinstall": "npm run update-types"
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@chainsafe/libp2p-gossipsub": "^14.1.1",
