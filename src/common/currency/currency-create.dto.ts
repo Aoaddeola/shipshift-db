@@ -2,7 +2,7 @@
 
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Currency } from './types.js';
+import { Currency } from './currency.types.js';
 
 export class CurrencyCreateDto implements Omit<Currency, 'id'> {
   @IsString()

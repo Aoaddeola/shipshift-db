@@ -1,7 +1,7 @@
 // src/currency/currency.service.ts
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Currency } from './types.js';
+import { Currency } from './currency.types.js';
 import { randomUUID } from 'node:crypto';
 import { Database } from '../../orbitdb/database.js';
 import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
