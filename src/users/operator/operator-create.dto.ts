@@ -6,7 +6,7 @@ import { Operator } from './operator.types.js';
 export const WALLET_ADDRESS_REGEX = /^addr[0-9a-z]+$/;
 
 export class OperatorCreateDto
-  implements Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>
+  implements Omit<Operator, 'id' | 'createdAt' | 'updatedAt' | 'contactDetails'>
 {
   @IsString()
   @IsNotEmpty()
@@ -26,12 +26,4 @@ export class OperatorCreateDto
     description: 'ID of the contact details',
   })
   contactDetailsId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    example: 'colony-node-456',
-    description: 'ID of the associated colony node',
-  })
-  colonyNodeId: string;
 }
