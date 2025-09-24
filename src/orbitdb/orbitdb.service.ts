@@ -37,6 +37,7 @@ import { webSockets } from '@libp2p/websockets';
 import { kadDHT } from '@libp2p/kad-dht';
 import { webRTC } from '@libp2p/webrtc';
 import { AppConfigService } from '../config/config.service.js';
+import { loadOrCreatePrivateKey } from '../bootstrap-node.js';
 
 @Injectable()
 export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
@@ -68,13 +69,13 @@ export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
   async connect() {
     try {
       const id = process.env.ID;
+      // const id = await createEd25519PeerId();
 
       const blockstore = new LevelBlockstore(
         `${this.configService.orbitdbDirectory}/block-store`,
       );
 
       this.helia = await createHelia({
-        // datastore,
         blockstore,
         routers: [httpGatewayRouting()],
         blockBrokers: [
@@ -86,6 +87,7 @@ export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
           }),
         ],
         libp2p: {
+          privateKey: await loadOrCreatePrivateKey(),
           addresses: {
             listen: [
               `/ip4/${this.configService.ipfsHost}/tcp/${this.configService.ipfsTcpPort}`,
@@ -269,5 +271,9 @@ export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
       await database.close();
       this.logger.log(`Database closed`);
     }
+  }
+
+  async getPeerId() {
+    return this.helia.libp2p.peerId;
   }
 }
