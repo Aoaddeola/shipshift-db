@@ -5,7 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { AuthController } from './auth.controller.js';
-import { OperatorModule } from '../operator/operator.module.js';
+import { OperatorModule } from '../users/operator/operator.module.js';
 
 @Module({
   imports: [
