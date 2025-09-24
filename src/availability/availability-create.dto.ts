@@ -12,7 +12,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OperatorType, OperatorAvailability } from './types.js';
 
 // Nested DTOs
-class LocationDto {
+export class LocationDto {
   @IsString()
   @ApiProperty({ example: '123 Main St' })
   street: string;
