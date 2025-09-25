@@ -76,14 +76,22 @@ export class Database<T extends { id: string }> implements OnModuleInit {
     await this.initPromise;
 
     const result = await (this.database as any).all();
-    return result.map(({ value: { _id, ...offer } }) => ({
-      id: _id,
-      ...offer,
+    return result.map(({ value: { id, ...val } }) => ({
+      id: id,
+      ...val,
     }));
   }
 
   async del(key: string) {
     await this.initPromise;
     await this.database.del(key);
+  }
+
+  async getDb() {
+    return this.database;
+  }
+
+  async getPeerId() {
+    return this.orbitdbService.getPeerId();
   }
 }

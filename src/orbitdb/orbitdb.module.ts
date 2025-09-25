@@ -1,4 +1,4 @@
-import { DynamicModule, Module, ModuleMetadata } from '@nestjs/common';
+import { DynamicModule, Module, Global, ModuleMetadata } from '@nestjs/common';
 import { OrbitDBService } from './orbitdb.service.js';
 import { ORBITDB_DATABASE_TOKEN } from './inject-database.decorator.js';
 import { OpenDatabaseOptions } from '@orbitdb/core';
@@ -19,9 +19,16 @@ export interface OrbitDBModuleAsyncOptions
   inject?: any[];
 }
 
+@Global()
 @Module({
   providers: [OrbitDBService],
   exports: [OrbitDBService],
+})
+export class OrbitDBRootModule {} // Renamed root module
+
+@Module({
+  // providers: [OrbitDBService],
+  // exports: [OrbitDBService],
 })
 export class OrbitDBModule {
   static forDatabase(

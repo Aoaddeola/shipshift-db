@@ -10,7 +10,17 @@ export const ipfsSchema = z.object({
 // Схема для баз данных OrbitDB
 export const databasesSchema = z
   .object({
-    offers: z.string().default('offers'),
+    steps: z.string().default('steps'),
+    step_transactions: z.string().default('step_transactions'),
+    shipments: z.string().default('shipments'),
+    operators: z.string().default('operators'),
+    availabilities: z.string().default('availabilities'),
+    currencies: z.string().default('currencies'),
+    journeys: z.string().default('journeys'),
+    pending_multisig_txs: z.string().default('pending_multisig_txs'),
+    pending_multisig_tx_witnesses: z
+      .string()
+      .default('pending_multisig_tx_witnesses'),
   })
   .catchall(z.string());
 
