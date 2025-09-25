@@ -1,9 +1,11 @@
-import { IsString, IsArray, IsOptional, ArrayNotEmpty } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CuratorUpdateDto {
   @IsString()
   @IsOptional()
+  @MinLength(2)
+  @MaxLength(100)
   @ApiPropertyOptional({
     example: 'Updated Curator Name',
     description: 'Updated name of the curator',
@@ -17,14 +19,4 @@ export class CuratorUpdateDto {
     description: 'Updated contact details ID',
   })
   contactDetailsId?: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  @ArrayNotEmpty({ message: 'missionIds array cannot be empty when provided' })
-  @ApiPropertyOptional({
-    example: ['mission-111', 'mission-222'],
-    description: 'Updated array of mission IDs',
-  })
-  missionIds?: string[];
 }

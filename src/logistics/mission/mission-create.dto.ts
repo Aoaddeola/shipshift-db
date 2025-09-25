@@ -3,13 +3,16 @@ import {
   IsNotEmpty,
   IsArray,
   IsEnum,
-  IsOptional,
   ArrayNotEmpty,
+  IsOptional,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Mission, MissionStatus } from './mission.types.js';
 
-export class MissionCreateDto implements Omit<Mission, 'id'> {
+export class MissionCreateDto
+  implements
+    Omit<Mission, 'id' | 'createdAt' | 'updatedAt' | 'curator' | 'journeys'>
+{
   @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: 'curator-123' })

@@ -1,12 +1,18 @@
-import { IsString, IsNotEmpty, IsArray, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { Agent } from './agent.types.js';
 
 export class AgentCreateDto
-  implements Omit<Agent, 'id' | 'createdAt' | 'updatedAt'>
+  implements
+    Omit<
+      Agent,
+      'id' | 'createdAt' | 'updatedAt' | 'contactDetails' | 'operator'
+    >
 {
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
   @ApiProperty({
     example: 'Agent Smith',
     description: 'Name of the agent',
@@ -30,13 +36,4 @@ export class AgentCreateDto
     description: 'ID of the operator',
   })
   operatorId: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  @ApiPropertyOptional({
-    example: ['journey-789', 'journey-012'],
-    description: 'Array of journey IDs published by this agent',
-  })
-  journeyIds: string[];
 }

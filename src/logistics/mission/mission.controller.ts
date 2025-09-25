@@ -1,17 +1,17 @@
 import {
-  Controller,
-  Post,
   Body,
+  Controller,
+  Delete,
   Get,
   Param,
+  Post,
   Put,
   Patch,
   Query,
-  Delete,
 } from '@nestjs/common';
+import { MissionService } from './mission.service.js';
 import { MissionCreateDto } from './mission-create.dto.js';
 import { MissionUpdateDto } from './mission-update.dto.js';
-import { MissionService } from './mission.service.js';
 import { MissionStatus } from './mission.types.js';
 
 @Controller('mission')
@@ -24,8 +24,52 @@ export class MissionController {
   }
 
   @Get(':id')
-  async getMission(@Param('id') id: string) {
-    return this.missionService.getMission(id);
+  async getMission(
+    @Param('id') id: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.missionService.getMission(id, includeArray);
+  }
+
+  @Get()
+  async getMissions(
+    @Query('curatorId') curatorId?: string,
+    @Query('status') status?: MissionStatus,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+
+    if (curatorId && status) {
+      return this.missionService.getMissionsByCuratorAndStatus(
+        curatorId,
+        status,
+        includeArray,
+      );
+    } else if (curatorId) {
+      return this.missionService.getMissionsByCurator(curatorId, includeArray);
+    } else if (status) {
+      return this.missionService.getMissionsByStatus(status, includeArray);
+    }
+    return this.missionService.getMissions(includeArray);
+  }
+
+  @Get('curator/:curatorId')
+  async getMissionsByCuratorId(
+    @Param('curatorId') curatorId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.missionService.getMissionsByCurator(curatorId, includeArray);
+  }
+
+  @Get('status/:status')
+  async getMissionsByStatus(
+    @Param('status') status: MissionStatus,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.missionService.getMissionsByStatus(status, includeArray);
   }
 
   @Put(':id')
@@ -42,34 +86,6 @@ export class MissionController {
     @Body() update: MissionUpdateDto,
   ) {
     return this.missionService.partialUpdateMission(id, update);
-  }
-
-  @Get()
-  async getMissions(
-    @Query('curatorId') curatorId?: string,
-    @Query('status') status?: MissionStatus,
-  ) {
-    if (curatorId && status) {
-      return this.missionService.getMissionsByCuratorAndStatus(
-        curatorId,
-        status,
-      );
-    } else if (curatorId) {
-      return this.missionService.getMissionsByCurator(curatorId);
-    } else if (status) {
-      return this.missionService.getMissionsByStatus(status);
-    }
-    return this.missionService.getMissions();
-  }
-
-  @Get('curator/:curatorId')
-  async getMissionsByCuratorId(@Param('curatorId') curatorId: string) {
-    return this.missionService.getMissionsByCurator(curatorId);
-  }
-
-  @Get('status/:status')
-  async getMissionsByStatus(@Param('status') status: MissionStatus) {
-    return this.missionService.getMissionsByStatus(status);
   }
 
   @Delete(':id')

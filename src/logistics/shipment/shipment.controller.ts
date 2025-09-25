@@ -9,9 +9,9 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
+import { ShipmentService } from './shipment.service.js';
 import { ShipmentCreateDto } from './shipment-create.dto.js';
 import { ShipmentUpdateDto } from './shipment-update.dto.js';
-import { ShipmentService } from './shipment.service.js';
 import { ShipmentStatus } from './shipment.types.js';
 
 @Controller('shipment')
@@ -24,8 +24,151 @@ export class ShipmentController {
   }
 
   @Get(':id')
-  async getShipment(@Param('id') id: string) {
-    return this.shipmentService.getShipment(id);
+  async getShipment(
+    @Param('id') id: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipment(id, includeArray);
+  }
+
+  @Get()
+  async getShipments(
+    @Query('senderId') senderId?: string,
+    @Query('receiverId') receiverId?: string,
+    @Query('missionId') missionId?: string,
+    @Query('status') status?: ShipmentStatus,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+
+    if (senderId && receiverId && missionId && status) {
+      return this.shipmentService.getShipmentsByAllFilters(
+        senderId,
+        receiverId,
+        missionId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && receiverId && missionId) {
+      return this.shipmentService.getShipmentsBySenderReceiverAndMission(
+        senderId,
+        receiverId,
+        missionId,
+        includeArray,
+      );
+    } else if (senderId && receiverId && status) {
+      return this.shipmentService.getShipmentsBySenderReceiverAndStatus(
+        senderId,
+        receiverId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && missionId && status) {
+      return this.shipmentService.getShipmentsBySenderMissionAndStatus(
+        senderId,
+        missionId,
+        status,
+        includeArray,
+      );
+    } else if (receiverId && missionId && status) {
+      return this.shipmentService.getShipmentsByReceiverMissionAndStatus(
+        receiverId,
+        missionId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && receiverId) {
+      return this.shipmentService.getShipmentsBySenderAndReceiver(
+        senderId,
+        receiverId,
+        includeArray,
+      );
+    } else if (senderId && missionId) {
+      return this.shipmentService.getShipmentsBySenderAndMission(
+        senderId,
+        missionId,
+        includeArray,
+      );
+    } else if (receiverId && missionId) {
+      return this.shipmentService.getShipmentsByReceiverAndMission(
+        receiverId,
+        missionId,
+        includeArray,
+      );
+    } else if (senderId && status) {
+      return this.shipmentService.getShipmentsBySenderAndStatus(
+        senderId,
+        status,
+        includeArray,
+      );
+    } else if (receiverId && status) {
+      return this.shipmentService.getShipmentsByReceiverAndStatus(
+        receiverId,
+        status,
+        includeArray,
+      );
+    } else if (missionId && status) {
+      return this.shipmentService.getShipmentsByMissionAndStatus(
+        missionId,
+        status,
+        includeArray,
+      );
+    } else if (senderId) {
+      return this.shipmentService.getShipmentsBySender(senderId, includeArray);
+    } else if (receiverId) {
+      return this.shipmentService.getShipmentsByReceiver(
+        receiverId,
+        includeArray,
+      );
+    } else if (missionId) {
+      return this.shipmentService.getShipmentsByMission(
+        missionId,
+        includeArray,
+      );
+    } else if (status) {
+      return this.shipmentService.getShipmentsByStatus(status, includeArray);
+    }
+    return this.shipmentService.getShipments(includeArray);
+  }
+
+  @Get('sender/:senderId')
+  async getShipmentsBySender(
+    @Param('senderId') senderId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsBySender(senderId, includeArray);
+  }
+
+  @Get('receiver/:receiverId')
+  async getShipmentsByReceiver(
+    @Param('receiverId') receiverId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsByReceiver(
+      receiverId,
+      includeArray,
+    );
+  }
+
+  @Get('mission/:missionId')
+  async getShipmentsByMission(
+    @Param('missionId') missionId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsByMission(missionId, includeArray);
+  }
+
+  @Get('status/:status')
+  async getShipmentsByStatus(
+    @Param('status') status: ShipmentStatus,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsByStatus(status, includeArray);
   }
 
   @Put(':id')
@@ -42,78 +185,6 @@ export class ShipmentController {
     @Body() update: ShipmentUpdateDto,
   ) {
     return this.shipmentService.partialUpdateShipment(id, update);
-  }
-
-  @Get()
-  async getShipments(
-    @Query('senderId') senderId?: string,
-    @Query('receiverId') receiverId?: string,
-    @Query('missionId') missionId?: string,
-    @Query('status') status?: ShipmentStatus,
-  ) {
-    if (senderId && receiverId && missionId && status) {
-      return this.shipmentService.getShipmentsByAllFilters(
-        senderId,
-        receiverId,
-        missionId,
-        status,
-      );
-    } else if (senderId && receiverId && missionId) {
-      return this.shipmentService.getShipmentsBySenderReceiverAndMission(
-        senderId,
-        receiverId,
-        missionId,
-      );
-    } else if (senderId && receiverId) {
-      return this.shipmentService.getShipmentsBySenderAndReceiver(
-        senderId,
-        receiverId,
-      );
-    } else if (senderId && missionId) {
-      return this.shipmentService.getShipmentsBySenderAndMission(
-        senderId,
-        missionId,
-      );
-    } else if (receiverId && missionId) {
-      return this.shipmentService.getShipmentsByReceiverAndMission(
-        receiverId,
-        missionId,
-      );
-    } else if (missionId && status) {
-      return this.shipmentService.getShipmentsByMissionAndStatus(
-        missionId,
-        status,
-      );
-    } else if (senderId) {
-      return this.shipmentService.getShipmentsBySender(senderId);
-    } else if (receiverId) {
-      return this.shipmentService.getShipmentsByReceiver(receiverId);
-    } else if (missionId) {
-      return this.shipmentService.getShipmentsByMission(missionId);
-    } else if (status) {
-      return this.shipmentService.getShipmentsByStatus(status);
-    }
-    return this.shipmentService.getShipments();
-  }
-
-  @Get('sender/:senderId')
-  async getShipmentsBySender(@Param('senderId') senderId: string) {
-    return this.shipmentService.getShipmentsBySender(senderId);
-  }
-
-  @Get('receiver/:receiverId')
-  async getShipmentsByReceiver(@Param('receiverId') receiverId: string) {
-    return this.shipmentService.getShipmentsByReceiver(receiverId);
-  }
-
-  @Get('mission/:missionId')
-  async getShipmentsByMission(@Param('missionId') missionId: string) {
-    return this.shipmentService.getShipmentsByMission(missionId);
-  }
-
-  @Get('status/:status')
-  async getShipmentsByStatus(@Param('status') status: ShipmentStatus) {
-    return this.shipmentService.getShipmentsByStatus(status);
   }
 
   @Delete(':id')

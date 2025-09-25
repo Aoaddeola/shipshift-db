@@ -2,16 +2,20 @@ import {
   IsString,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   Min,
-  IsDate,
+  IsOptional,
   IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import { Journey, JourneyStatus } from './journey.types.js';
 
-export class JourneyCreateDto implements Omit<Journey, 'id'> {
+export class JourneyCreateDto
+  implements
+    Omit<
+      Journey,
+      'id' | 'createdAt' | 'updatedAt' | 'agent' | 'fromLocation' | 'toLocation'
+    >
+{
   @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: 'agent-123' })
@@ -27,15 +31,15 @@ export class JourneyCreateDto implements Omit<Journey, 'id'> {
   @ApiProperty({ example: 'location-789' })
   toLocationId: string;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: '2025-04-01T09:00:00Z' })
-  availableFrom: Date;
+  availableFrom: string;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: '2025-04-05T17:00:00Z' })
-  availableTo: Date;
+  availableTo: string;
 
   @IsNumber()
   @Min(0.001)
@@ -51,8 +55,8 @@ export class JourneyCreateDto implements Omit<Journey, 'id'> {
   @ApiPropertyOptional({ example: 50, description: 'Optional agent fee' })
   price?: number;
 
-  @IsOptional()
   @IsEnum(JourneyStatus)
+  @IsOptional()
   @ApiPropertyOptional({
     enum: JourneyStatus,
     default: JourneyStatus.AVAILABLE,

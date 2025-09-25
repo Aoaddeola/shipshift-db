@@ -23,6 +23,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ContactDetailsModel } from './common/contact-details/contact-details.model.js';
 import { ContactDetailsModule } from './common/contact-details/contact-details.module.js';
+import { CustomerModule } from './users/customer/customer.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,6 +64,7 @@ const __dirname = path.dirname(__filename);
     MultiSigWitnessModule,
 
     // Users
+    CustomerModule,
     AgentModule,
     CuratorModule,
     OperatorModule,

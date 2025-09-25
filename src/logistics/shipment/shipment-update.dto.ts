@@ -11,26 +11,17 @@ import { ShipmentStatus } from './shipment.types.js';
 export class ShipmentUpdateDto {
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'user-789',
-    description: 'Updated sender ID',
-  })
+  @ApiPropertyOptional({ example: 'user-789' })
   senderId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'user-012',
-    description: 'Updated receiver ID',
-  })
+  @ApiPropertyOptional({ example: 'user-012' })
   receiverId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'mission-345',
-    description: 'Updated mission ID',
-  })
+  @ApiPropertyOptional({ example: 'mission-345' })
   missionId?: string;
 
   @IsArray()

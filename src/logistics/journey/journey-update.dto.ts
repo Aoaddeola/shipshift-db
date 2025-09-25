@@ -1,12 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  Min,
-  IsDate,
-  IsEnum,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNumber, IsOptional, Min, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { JourneyStatus } from './journey.types.js';
 
@@ -26,17 +18,15 @@ export class JourneyUpdateDto {
   @ApiPropertyOptional({ example: 'location-222' })
   toLocationId?: string;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional({ example: '2025-04-02T09:00:00Z' })
-  availableFrom?: Date;
+  availableFrom?: string;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional({ example: '2025-04-06T17:00:00Z' })
-  availableTo?: Date;
+  availableTo?: string;
 
   @IsNumber()
   @Min(0.001)

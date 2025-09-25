@@ -1,4 +1,3 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsArray,
@@ -6,6 +5,7 @@ import {
   IsOptional,
   ArrayNotEmpty,
 } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MissionStatus } from './mission.types.js';
 
 export class MissionUpdateDto {

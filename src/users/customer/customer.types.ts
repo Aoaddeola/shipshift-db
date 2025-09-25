@@ -1,16 +1,14 @@
 import { ContactDetails } from '../../common/contact-details/contact-details.types.js';
-import { Operator } from '../operator/operator.types.js';
+import { LocationCreateDto } from '../../common/location/location-create.dto.js';
 
 /**
- * Agent Interface
+ * Customer Interface
  */
-export interface Agent {
+export interface Customer {
   id: string;
-  name: string;
+  address: LocationCreateDto; // Embedded location
   contactDetailsId: string;
-  operatorId: string; // reference to Operator
   contactDetails?: ContactDetails; // Embedded contact details
-  operator?: Operator; // Embedded operator
   createdAt?: string;
   updatedAt?: string;
 }

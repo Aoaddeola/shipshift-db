@@ -2,32 +2,39 @@ import {
   IsString,
   IsNotEmpty,
   IsArray,
-  IsEnum,
   ArrayNotEmpty,
+  IsEnum,
   IsOptional,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Shipment, ShipmentStatus } from './shipment.types.js';
 
 export class ShipmentCreateDto
-  implements Omit<Shipment, 'id' | 'createdAt' | 'updatedAt'>
+  implements
+    Omit<
+      Shipment,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'mission'
+      | 'steps'
+      | 'sender'
+      | 'receiver'
+    >
 {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'user-123', description: 'ID of the sender' })
+  @ApiProperty({ example: 'user-123' })
   senderId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'user-456', description: 'ID of the receiver' })
+  @ApiProperty({ example: 'user-456' })
   receiverId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'mission-789',
-    description: 'ID of the associated mission',
-  })
+  @ApiProperty({ example: 'mission-789' })
   missionId: string;
 
   @IsArray()

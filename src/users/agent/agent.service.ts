@@ -1,42 +1,146 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
 import { Agent } from './agent.types.js';
 import { Database } from '../../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
+import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
+import { OperatorService } from '../operator/operator.service.js';
 
 @Injectable()
 export class AgentService {
   private readonly logger = new Logger(AgentService.name);
 
-  constructor(@InjectDatabase('agent') private database: Database<Agent>) {}
+  constructor(
+    @InjectDatabase('agent') private database: Database<Agent>,
+    @Inject(ContactDetailsService)
+    private contactDetailsDatabase: ContactDetailsService,
+    @Inject(OperatorService) private operatorDatabase: OperatorService,
+  ) {}
 
   async createAgent(
-    agent: Omit<Agent, 'id' | 'createdAt' | 'updatedAt'>,
+    agent: Omit<
+      Agent,
+      'id' | 'createdAt' | 'updatedAt' | 'contactDetails' | 'operator'
+    >,
   ): Promise<Agent> {
     const id = randomUUID();
     const now = new Date().toISOString();
 
     this.logger.log(`Creating agent: ${id}`);
     const newAgent: Agent = {
-      ...agent,
       id,
       createdAt: now,
       updatedAt: now,
-      journeyIds: agent.journeyIds || [],
+      ...agent,
     };
 
     await this.database.put(newAgent);
     return newAgent;
   }
 
-  async getAgent(id: string): Promise<Agent> {
+  async getAgent(id: string, include?: string[]): Promise<Agent> {
     const entry = await this.database.get(id);
     if (!entry) {
       throw new NotFoundException('Agent not found');
     }
-    return entry;
+
+    return this.populateRelations(entry, include);
+  }
+
+  async getAgents(include?: string[]): Promise<Agent[]> {
+    const all = await this.database.all();
+    return Promise.all(
+      all.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByContactDetails(
+    contactDetailsId: string,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) => agent.contactDetailsId === contactDetailsId,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperator(
+    operatorId: string,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter((agent) => agent.operatorId === operatorId);
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByContactAndOperator(
+    contactDetailsId: string,
+    operatorId: string,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.contactDetailsId === contactDetailsId &&
+        agent.operatorId === operatorId,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  private async populateRelations(
+    agent: Agent,
+    include?: string[],
+  ): Promise<Agent> {
+    // Clone the agent to avoid modifying the original
+    const populatedAgent = { ...agent };
+
+    // Handle contactDetails population
+    if (include?.includes('contactDetails')) {
+      try {
+        const contactDetails = await this.contactDetailsDatabase.findOne(
+          agent.contactDetailsId,
+        );
+        if (contactDetails) {
+          populatedAgent.contactDetails = contactDetails;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch contact details for ${agent.contactDetailsId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle operator population
+    if (include?.includes('operator')) {
+      try {
+        const operator = await this.operatorDatabase.getOperator(
+          agent.operatorId,
+        );
+        if (operator) {
+          populatedAgent.operator = operator;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch operator for ${agent.operatorId}`,
+          error,
+        );
+      }
+    }
+
+    return populatedAgent;
   }
 
   async updateAgent(id: string, agent: AgentCreateDto): Promise<Agent> {
@@ -47,11 +151,10 @@ export class AgentService {
 
     // Create updated agent with ID preserved
     const updatedAgent: Agent = {
-      ...agent,
       id,
       createdAt: now,
       updatedAt: now,
-      journeyIds: agent.journeyIds || [],
+      ...agent,
     };
 
     this.logger.log(`Updating agent: ${id}`);
@@ -68,47 +171,11 @@ export class AgentService {
       ...existingAgent,
       ...update,
       updatedAt: now,
-      // Handle special cases if needed
-      journeyIds:
-        update.journeyIds !== undefined
-          ? update.journeyIds
-          : existingAgent.journeyIds,
     };
 
     this.logger.log(`Partially updating agent: ${id}`);
     await this.database.put(updatedAgent);
     return updatedAgent;
-  }
-
-  async getAgents(): Promise<Agent[]> {
-    return this.database.all();
-  }
-
-  async getAgentsByContactDetails(contactDetailsId: string): Promise<Agent[]> {
-    const all = await this.database.all();
-    return all.filter((agent) => agent.contactDetailsId === contactDetailsId);
-  }
-
-  async getAgentsByOperator(operatorId: string): Promise<Agent[]> {
-    const all = await this.database.all();
-    return all.filter((agent) => agent.operatorId === operatorId);
-  }
-
-  async getAgentsByContactAndOperator(
-    contactDetailsId: string,
-    operatorId: string,
-  ): Promise<Agent[]> {
-    const all = await this.database.all();
-    return all.filter(
-      (agent) =>
-        agent.contactDetailsId === contactDetailsId &&
-        agent.operatorId === operatorId,
-    );
-  }
-
-  async getAgentsByJourney(journeyId: string): Promise<Agent[]> {
-    const all = await this.database.all();
-    return all.filter((agent) => agent.journeyIds.includes(journeyId));
   }
 
   async deleteAgent(id: string): Promise<{ message: string }> {
