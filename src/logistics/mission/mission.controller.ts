@@ -35,19 +35,97 @@ export class MissionController {
   @Get()
   async getMissions(
     @Query('curatorId') curatorId?: string,
+    @Query('fromLocationId') fromLocationId?: string,
+    @Query('toLocationId') toLocationId?: string,
     @Query('status') status?: MissionStatus,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
 
-    if (curatorId && status) {
+    if (curatorId && fromLocationId && toLocationId && status) {
+      return this.missionService.getMissionsByAllFilters(
+        curatorId,
+        fromLocationId,
+        toLocationId,
+        status,
+        includeArray,
+      );
+    } else if (curatorId && fromLocationId && toLocationId) {
+      return this.missionService.getMissionsByCuratorAndLocations(
+        curatorId,
+        fromLocationId,
+        toLocationId,
+        includeArray,
+      );
+    } else if (curatorId && fromLocationId && status) {
+      return this.missionService.getMissionsByCuratorFromLocationAndStatus(
+        curatorId,
+        fromLocationId,
+        status,
+        includeArray,
+      );
+    } else if (curatorId && toLocationId && status) {
+      return this.missionService.getMissionsByCuratorToLocationAndStatus(
+        curatorId,
+        toLocationId,
+        status,
+        includeArray,
+      );
+    } else if (fromLocationId && toLocationId && status) {
+      return this.missionService.getMissionsByLocationsAndStatus(
+        fromLocationId,
+        toLocationId,
+        status,
+        includeArray,
+      );
+    } else if (curatorId && fromLocationId) {
+      return this.missionService.getMissionsByCuratorAndFromLocation(
+        curatorId,
+        fromLocationId,
+        includeArray,
+      );
+    } else if (curatorId && toLocationId) {
+      return this.missionService.getMissionsByCuratorAndToLocation(
+        curatorId,
+        toLocationId,
+        includeArray,
+      );
+    } else if (curatorId && status) {
       return this.missionService.getMissionsByCuratorAndStatus(
         curatorId,
         status,
         includeArray,
       );
+    } else if (fromLocationId && toLocationId) {
+      return this.missionService.getMissionsByLocations(
+        fromLocationId,
+        toLocationId,
+        includeArray,
+      );
+    } else if (fromLocationId && status) {
+      return this.missionService.getMissionsByFromLocationAndStatus(
+        fromLocationId,
+        status,
+        includeArray,
+      );
+    } else if (toLocationId && status) {
+      return this.missionService.getMissionsByToLocationAndStatus(
+        toLocationId,
+        status,
+        includeArray,
+      );
     } else if (curatorId) {
       return this.missionService.getMissionsByCurator(curatorId, includeArray);
+    } else if (fromLocationId) {
+      return this.missionService.getMissionsByFromLocation(
+        fromLocationId,
+        includeArray,
+      );
+    } else if (toLocationId) {
+      return this.missionService.getMissionsByToLocation(
+        toLocationId,
+        includeArray,
+      );
     } else if (status) {
       return this.missionService.getMissionsByStatus(status, includeArray);
     }
@@ -55,12 +133,36 @@ export class MissionController {
   }
 
   @Get('curator/:curatorId')
-  async getMissionsByCuratorId(
+  async getMissionsByCurator(
     @Param('curatorId') curatorId: string,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.missionService.getMissionsByCurator(curatorId, includeArray);
+  }
+
+  @Get('from/:fromLocationId')
+  async getMissionsByFromLocation(
+    @Param('fromLocationId') fromLocationId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.missionService.getMissionsByFromLocation(
+      fromLocationId,
+      includeArray,
+    );
+  }
+
+  @Get('to/:toLocationId')
+  async getMissionsByToLocation(
+    @Param('toLocationId') toLocationId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.missionService.getMissionsByToLocation(
+      toLocationId,
+      includeArray,
+    );
   }
 
   @Get('status/:status')

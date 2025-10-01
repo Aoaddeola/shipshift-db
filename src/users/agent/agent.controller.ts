@@ -12,6 +12,7 @@ import {
 import { AgentService } from './agent.service.js';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
+import { AgentType, ConveyanceMeans } from './agent.types.js';
 
 @Controller('agent')
 export class AgentController {
@@ -30,39 +31,46 @@ export class AgentController {
 
   @Get()
   async getAgents(
-    @Query('contactDetailsId') contactDetailsId?: string,
     @Query('operatorId') operatorId?: string,
+    @Query('type') type?: AgentType,
+    @Query('conveyance') conveyance?: ConveyanceMeans,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
 
-    if (contactDetailsId && operatorId) {
-      return this.agentService.getAgentsByContactAndOperator(
-        contactDetailsId,
+    if (operatorId && type && conveyance) {
+      return this.agentService.getAgentsByOperatorTypeAndConveyance(
         operatorId,
+        type,
+        conveyance,
         includeArray,
       );
-    } else if (contactDetailsId) {
-      return this.agentService.getAgentsByContactDetails(
-        contactDetailsId,
+    } else if (operatorId && type) {
+      return this.agentService.getAgentsByOperatorAndType(
+        operatorId,
+        type,
+        includeArray,
+      );
+    } else if (operatorId && conveyance) {
+      return this.agentService.getAgentsByOperatorAndConveyance(
+        operatorId,
+        conveyance,
+        includeArray,
+      );
+    } else if (type && conveyance) {
+      return this.agentService.getAgentsByTypeAndConveyance(
+        type,
+        conveyance,
         includeArray,
       );
     } else if (operatorId) {
       return this.agentService.getAgentsByOperator(operatorId, includeArray);
+    } else if (type) {
+      return this.agentService.getAgentsByType(type, includeArray);
+    } else if (conveyance) {
+      return this.agentService.getAgentsByConveyance(conveyance, includeArray);
     }
     return this.agentService.getAgents(includeArray);
-  }
-
-  @Get('contact/:contactDetailsId')
-  async getAgentsByContactDetails(
-    @Param('contactDetailsId') contactDetailsId: string,
-    @Query('include') include?: string,
-  ) {
-    const includeArray = include ? include.split(',') : [];
-    return this.agentService.getAgentsByContactDetails(
-      contactDetailsId,
-      includeArray,
-    );
   }
 
   @Get('operator/:operatorId')
@@ -72,6 +80,24 @@ export class AgentController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.agentService.getAgentsByOperator(operatorId, includeArray);
+  }
+
+  @Get('type/:type')
+  async getAgentsByType(
+    @Param('type') type: AgentType,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.agentService.getAgentsByType(type, includeArray);
+  }
+
+  @Get('conveyance/:conveyance')
+  async getAgentsByConveyance(
+    @Param('conveyance') conveyance: ConveyanceMeans,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.agentService.getAgentsByConveyance(conveyance, includeArray);
   }
 
   @Put(':id')

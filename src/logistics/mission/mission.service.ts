@@ -6,7 +6,8 @@ import { randomUUID } from 'node:crypto';
 import { MissionCreateDto } from './mission-create.dto.js';
 import { MissionUpdateDto } from './mission-update.dto.js';
 import { JourneyService } from '../journey/journey.service.js';
-import { CuratorService } from '../../users/curator/curator.service.js';
+import { LocationService } from '../../common/location/location.service.js';
+import { OperatorService } from '../../users/operator/operator.service.js';
 
 @Injectable()
 export class MissionService {
@@ -14,14 +15,21 @@ export class MissionService {
 
   constructor(
     @InjectDatabase('mission') private database: Database<Mission>,
-    @Inject(CuratorService) private curatorService: CuratorService,
+    @Inject(OperatorService) private curatorService: OperatorService,
     @Inject(JourneyService) private journeyService: JourneyService,
+    @Inject(LocationService) private locationService: LocationService,
   ) {}
 
   async createMission(
     mission: Omit<
       Mission,
-      'id' | 'createdAt' | 'updatedAt' | 'curator' | 'journeys'
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'curator'
+      | 'journeys'
+      | 'fromLocation'
+      | 'toLocation'
     >,
   ): Promise<Mission> {
     const id = randomUUID();
@@ -31,8 +39,8 @@ export class MissionService {
     const newMission: Mission = {
       id,
       createdAt: now,
-      updatedAt: now,
       ...mission,
+      updatedAt: now,
       journeyIds: mission.journeyIds || [],
       status: mission.status || MissionStatus.DRAFT,
     };
@@ -69,12 +77,74 @@ export class MissionService {
     );
   }
 
+  async getMissionsByFromLocation(
+    fromLocationId: string,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) => mission.fromLocationId === fromLocationId,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByToLocation(
+    toLocationId: string,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) => mission.toLocationId === toLocationId,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
   async getMissionsByStatus(
     status: MissionStatus,
     include?: string[],
   ): Promise<Mission[]> {
     const all = await this.database.all();
     const missions = all.filter((mission) => mission.status === status);
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByCuratorAndFromLocation(
+    curatorId: string,
+    fromLocationId: string,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.curatorId === curatorId &&
+        mission.fromLocationId === fromLocationId,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByCuratorAndToLocation(
+    curatorId: string,
+    toLocationId: string,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.curatorId === curatorId &&
+        mission.toLocationId === toLocationId,
+    );
 
     return Promise.all(
       missions.map((mission) => this.populateRelations(mission, include)),
@@ -96,6 +166,152 @@ export class MissionService {
     );
   }
 
+  async getMissionsByLocations(
+    fromLocationId: string,
+    toLocationId: string,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.fromLocationId === fromLocationId &&
+        mission.toLocationId === toLocationId,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByFromLocationAndStatus(
+    fromLocationId: string,
+    status: MissionStatus,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.fromLocationId === fromLocationId && mission.status === status,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByToLocationAndStatus(
+    toLocationId: string,
+    status: MissionStatus,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.toLocationId === toLocationId && mission.status === status,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByCuratorFromLocationAndStatus(
+    curatorId: string,
+    fromLocationId: string,
+    status: MissionStatus,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.curatorId === curatorId &&
+        mission.fromLocationId === fromLocationId &&
+        mission.status === status,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByCuratorToLocationAndStatus(
+    curatorId: string,
+    toLocationId: string,
+    status: MissionStatus,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.curatorId === curatorId &&
+        mission.toLocationId === toLocationId &&
+        mission.status === status,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByLocationsAndStatus(
+    fromLocationId: string,
+    toLocationId: string,
+    status: MissionStatus,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.fromLocationId === fromLocationId &&
+        mission.toLocationId === toLocationId &&
+        mission.status === status,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByCuratorAndLocations(
+    curatorId: string,
+    fromLocationId: string,
+    toLocationId: string,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.curatorId === curatorId &&
+        mission.fromLocationId === fromLocationId &&
+        mission.toLocationId === toLocationId,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
+  async getMissionsByAllFilters(
+    curatorId: string,
+    fromLocationId: string,
+    toLocationId: string,
+    status: MissionStatus,
+    include?: string[],
+  ): Promise<Mission[]> {
+    const all = await this.database.all();
+    const missions = all.filter(
+      (mission) =>
+        mission.curatorId === curatorId &&
+        mission.fromLocationId === fromLocationId &&
+        mission.toLocationId === toLocationId &&
+        mission.status === status,
+    );
+
+    return Promise.all(
+      missions.map((mission) => this.populateRelations(mission, include)),
+    );
+  }
+
   private async populateRelations(
     mission: Mission,
     include?: string[],
@@ -106,7 +322,9 @@ export class MissionService {
     // Handle curator population
     if (include?.includes('curator')) {
       try {
-        const curator = await this.curatorService.getCurator(mission.curatorId);
+        const curator = await this.curatorService.getOperator(
+          mission.curatorId,
+        );
         if (curator) {
           populatedMission.curator = curator;
         }
@@ -137,6 +355,40 @@ export class MissionService {
       }
     }
 
+    // Handle fromLocation population
+    if (include?.includes('fromLocation')) {
+      try {
+        const fromLocation = await this.locationService.getLocation(
+          mission.fromLocationId,
+        );
+        if (fromLocation) {
+          populatedMission.fromLocation = fromLocation;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch from location for ${mission.fromLocationId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle toLocation population
+    if (include?.includes('toLocation')) {
+      try {
+        const toLocation = await this.locationService.getLocation(
+          mission.toLocationId,
+        );
+        if (toLocation) {
+          populatedMission.toLocation = toLocation;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch to location for ${mission.toLocationId}`,
+          error,
+        );
+      }
+    }
+
     return populatedMission;
   }
 
@@ -149,9 +401,9 @@ export class MissionService {
     // Create updated mission with ID preserved
     const updatedMission: Mission = {
       id,
+      ...mission,
       createdAt: now,
       updatedAt: now,
-      ...mission,
       journeyIds: mission.journeyIds || [],
       status: mission.status || MissionStatus.DRAFT,
     };
@@ -188,7 +440,7 @@ export class MissionService {
     const mission = await this.getMission(id);
     await this.database.del(id);
     return {
-      message: `Mission "${id}" for curator ${mission.curatorId} deleted successfully`,
+      message: `Mission "${id}" from ${mission.fromLocationId} to ${mission.toLocationId} deleted successfully`,
     };
   }
 }

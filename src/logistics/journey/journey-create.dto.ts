@@ -3,11 +3,14 @@ import {
   IsNotEmpty,
   IsNumber,
   Min,
-  IsOptional,
   IsEnum,
+  ValidateNested,
+  IsOptional,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { Journey, JourneyStatus } from './journey.types.js';
+import { ParcelHandlingInfoDto } from '../parcel/parcel-create.dto.js';
 
 export class JourneyCreateDto
   implements
@@ -63,4 +66,9 @@ export class JourneyCreateDto
     description: 'Current status of the journey',
   })
   status?: JourneyStatus;
+
+  @ValidateNested()
+  @Type(() => ParcelHandlingInfoDto)
+  @ApiProperty({ type: ParcelHandlingInfoDto })
+  parcelHandlingInfo: ParcelHandlingInfoDto;
 }

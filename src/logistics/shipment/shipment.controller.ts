@@ -35,33 +35,89 @@ export class ShipmentController {
   @Get()
   async getShipments(
     @Query('senderId') senderId?: string,
-    @Query('receiverId') receiverId?: string,
+    @Query('parcelId') parcelId?: string,
     @Query('missionId') missionId?: string,
+    @Query('journeyId') journeyId?: string,
     @Query('status') status?: ShipmentStatus,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
 
-    if (senderId && receiverId && missionId && status) {
+    if (senderId && parcelId && missionId && journeyId && status) {
       return this.shipmentService.getShipmentsByAllFilters(
         senderId,
-        receiverId,
+        parcelId,
+        missionId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && parcelId && missionId && journeyId) {
+      return this.shipmentService.getShipmentsBySenderParcelMissionAndJourney(
+        senderId,
+        parcelId,
+        missionId,
+        journeyId,
+        includeArray,
+      );
+    } else if (senderId && parcelId && missionId && status) {
+      return this.shipmentService.getShipmentsBySenderParcelMissionAndStatus(
+        senderId,
+        parcelId,
         missionId,
         status,
         includeArray,
       );
-    } else if (senderId && receiverId && missionId) {
-      return this.shipmentService.getShipmentsBySenderReceiverAndMission(
+    } else if (senderId && parcelId && journeyId && status) {
+      return this.shipmentService.getShipmentsBySenderParcelJourneyAndStatus(
         senderId,
-        receiverId,
+        parcelId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && missionId && journeyId && status) {
+      return this.shipmentService.getShipmentsBySenderMissionJourneyAndStatus(
+        senderId,
+        missionId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (parcelId && missionId && journeyId && status) {
+      return this.shipmentService.getShipmentsByParcelMissionJourneyAndStatus(
+        parcelId,
+        missionId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && parcelId && missionId) {
+      return this.shipmentService.getShipmentsBySenderParcelAndMission(
+        senderId,
+        parcelId,
         missionId,
         includeArray,
       );
-    } else if (senderId && receiverId && status) {
-      return this.shipmentService.getShipmentsBySenderReceiverAndStatus(
+    } else if (senderId && parcelId && journeyId) {
+      return this.shipmentService.getShipmentsBySenderParcelAndJourney(
         senderId,
-        receiverId,
+        parcelId,
+        journeyId,
+        includeArray,
+      );
+    } else if (senderId && parcelId && status) {
+      return this.shipmentService.getShipmentsBySenderParcelAndStatus(
+        senderId,
+        parcelId,
         status,
+        includeArray,
+      );
+    } else if (senderId && missionId && journeyId) {
+      return this.shipmentService.getShipmentsBySenderMissionAndJourney(
+        senderId,
+        missionId,
+        journeyId,
         includeArray,
       );
     } else if (senderId && missionId && status) {
@@ -71,17 +127,45 @@ export class ShipmentController {
         status,
         includeArray,
       );
-    } else if (receiverId && missionId && status) {
-      return this.shipmentService.getShipmentsByReceiverMissionAndStatus(
-        receiverId,
+    } else if (senderId && journeyId && status) {
+      return this.shipmentService.getShipmentsBySenderJourneyAndStatus(
+        senderId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (parcelId && missionId && journeyId) {
+      return this.shipmentService.getShipmentsByParcelMissionAndJourney(
+        parcelId,
+        missionId,
+        journeyId,
+        includeArray,
+      );
+    } else if (parcelId && missionId && status) {
+      return this.shipmentService.getShipmentsByParcelMissionAndStatus(
+        parcelId,
         missionId,
         status,
         includeArray,
       );
-    } else if (senderId && receiverId) {
-      return this.shipmentService.getShipmentsBySenderAndReceiver(
+    } else if (parcelId && journeyId && status) {
+      return this.shipmentService.getShipmentsByParcelJourneyAndStatus(
+        parcelId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (missionId && journeyId && status) {
+      return this.shipmentService.getShipmentsByMissionJourneyAndStatus(
+        missionId,
+        journeyId,
+        status,
+        includeArray,
+      );
+    } else if (senderId && parcelId) {
+      return this.shipmentService.getShipmentsBySenderAndParcel(
         senderId,
-        receiverId,
+        parcelId,
         includeArray,
       );
     } else if (senderId && missionId) {
@@ -90,10 +174,10 @@ export class ShipmentController {
         missionId,
         includeArray,
       );
-    } else if (receiverId && missionId) {
-      return this.shipmentService.getShipmentsByReceiverAndMission(
-        receiverId,
-        missionId,
+    } else if (senderId && journeyId) {
+      return this.shipmentService.getShipmentsBySenderAndJourney(
+        senderId,
+        journeyId,
         includeArray,
       );
     } else if (senderId && status) {
@@ -102,10 +186,28 @@ export class ShipmentController {
         status,
         includeArray,
       );
-    } else if (receiverId && status) {
-      return this.shipmentService.getShipmentsByReceiverAndStatus(
-        receiverId,
+    } else if (parcelId && missionId) {
+      return this.shipmentService.getShipmentsByParcelAndMission(
+        parcelId,
+        missionId,
+        includeArray,
+      );
+    } else if (parcelId && journeyId) {
+      return this.shipmentService.getShipmentsByParcelAndJourney(
+        parcelId,
+        journeyId,
+        includeArray,
+      );
+    } else if (parcelId && status) {
+      return this.shipmentService.getShipmentsByParcelAndStatus(
+        parcelId,
         status,
+        includeArray,
+      );
+    } else if (missionId && journeyId) {
+      return this.shipmentService.getShipmentsByMissionAndJourney(
+        missionId,
+        journeyId,
         includeArray,
       );
     } else if (missionId && status) {
@@ -114,16 +216,24 @@ export class ShipmentController {
         status,
         includeArray,
       );
-    } else if (senderId) {
-      return this.shipmentService.getShipmentsBySender(senderId, includeArray);
-    } else if (receiverId) {
-      return this.shipmentService.getShipmentsByReceiver(
-        receiverId,
+    } else if (journeyId && status) {
+      return this.shipmentService.getShipmentsByJourneyAndStatus(
+        journeyId,
+        status,
         includeArray,
       );
+    } else if (senderId) {
+      return this.shipmentService.getShipmentsBySender(senderId, includeArray);
+    } else if (parcelId) {
+      return this.shipmentService.getShipmentsByParcel(parcelId, includeArray);
     } else if (missionId) {
       return this.shipmentService.getShipmentsByMission(
         missionId,
+        includeArray,
+      );
+    } else if (journeyId) {
+      return this.shipmentService.getShipmentsByJourney(
+        journeyId,
         includeArray,
       );
     } else if (status) {
@@ -141,16 +251,13 @@ export class ShipmentController {
     return this.shipmentService.getShipmentsBySender(senderId, includeArray);
   }
 
-  @Get('receiver/:receiverId')
-  async getShipmentsByReceiver(
-    @Param('receiverId') receiverId: string,
+  @Get('parcel/:parcelId')
+  async getShipmentsByParcel(
+    @Param('parcelId') parcelId: string,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
-    return this.shipmentService.getShipmentsByReceiver(
-      receiverId,
-      includeArray,
-    );
+    return this.shipmentService.getShipmentsByParcel(parcelId, includeArray);
   }
 
   @Get('mission/:missionId')
@@ -160,6 +267,15 @@ export class ShipmentController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.shipmentService.getShipmentsByMission(missionId, includeArray);
+  }
+
+  @Get('journey/:journeyId')
+  async getShipmentsByJourney(
+    @Param('journeyId') journeyId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsByJourney(journeyId, includeArray);
   }
 
   @Get('status/:status')

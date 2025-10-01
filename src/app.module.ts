@@ -13,7 +13,6 @@ import { StepTxModule } from './onchain/step_tx/step-tx.module.js';
 import { OperatorModule } from './users/operator/operator.module.js';
 import { ColonyNodeModule } from './onchain/colony-node/colony-node.module.js';
 import { AgentModule } from './users/agent/agent.module.js';
-import { CuratorModule } from './users/curator/curator.module.js';
 import { MissionModule } from './logistics/mission/mission.module.js';
 import { ParcelModule } from './logistics/parcel/parcel.module.js';
 import { ShipmentModule } from './logistics/shipment/shipment.module.js';
@@ -66,7 +65,6 @@ const __dirname = path.dirname(__filename);
     // Users
     CustomerModule,
     AgentModule,
-    CuratorModule,
     OperatorModule,
   ],
   providers: [],

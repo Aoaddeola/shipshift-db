@@ -68,6 +68,22 @@ export class JourneyService {
     );
   }
 
+  async getJourneysByLocation(
+    locationId: string,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.fromLocationId === locationId ||
+        journey.toLocationId == locationId,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
   async getJourneysFromLocation(
     fromLocationId: string,
     include?: string[],
@@ -108,6 +124,51 @@ export class JourneyService {
     );
   }
 
+  async getJourneysByFragile(
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) => journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByPerishable(
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) => journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByHandling(
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
   async getJourneysByAgentAndLocation(
     agentId: string,
     locationId: string,
@@ -141,6 +202,40 @@ export class JourneyService {
     );
   }
 
+  async getJourneysByAgentAndFragile(
+    agentId: string,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentAndPerishable(
+    agentId: string,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
   async getJourneysByLocationAndStatus(
     locationId: string,
     status: JourneyStatus,
@@ -152,6 +247,95 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.status === status,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByLocationAndFragile(
+    locationId: string,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByLocationAndPerishable(
+    locationId: string,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByStatusAndFragile(
+    status: JourneyStatus,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByStatusAndPerishable(
+    status: JourneyStatus,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.status === status &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByStatusAndHandling(
+    status: JourneyStatus,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
     );
 
     return Promise.all(
@@ -172,6 +356,296 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.status === status,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentLocationAndFragile(
+    agentId: string,
+    locationId: string,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentLocationAndPerishable(
+    agentId: string,
+    locationId: string,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentStatusAndFragile(
+    agentId: string,
+    status: JourneyStatus,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentStatusAndPerishable(
+    agentId: string,
+    status: JourneyStatus,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByLocationStatusAndFragile(
+    locationId: string,
+    status: JourneyStatus,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByLocationStatusAndPerishable(
+    locationId: string,
+    status: JourneyStatus,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentAndHandling(
+    agentId: string,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByLocationAndHandling(
+    locationId: string,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentLocationStatusAndPerishable(
+    agentId: string,
+    locationId: string,
+    status: JourneyStatus,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.agentId === agentId &&
+        journey.parcelHandlingInfo.perishable === perishable &&
+        journey.status === status,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentLocationAndHandling(
+    agentId: string,
+    locationId: string,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentLocationStatusAndFragile(
+    agentId: string,
+    locationId: string,
+    status: JourneyStatus,
+    fragile: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.status === status,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAgentStatusAndHandling(
+    agentId: string,
+    status: JourneyStatus,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByLocationStatusAndHandling(
+    locationId: string,
+    status: JourneyStatus,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
+    );
+
+    return Promise.all(
+      journeys.map((journey) => this.populateRelations(journey, include)),
+    );
+  }
+
+  async getJourneysByAllFilters(
+    agentId: string,
+    locationId: string,
+    status: JourneyStatus,
+    fragile: boolean,
+    perishable: boolean,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const all = await this.database.all();
+    const journeys = all.filter(
+      (journey) =>
+        journey.agentId === agentId &&
+        (journey.fromLocationId === locationId ||
+          journey.toLocationId === locationId) &&
+        journey.status === status &&
+        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo.perishable === perishable,
     );
 
     return Promise.all(
@@ -262,10 +736,20 @@ export class JourneyService {
     const existingJourney = await this.getJourney(id);
     const now = new Date().toISOString();
 
+    // Handle nested parcelHandlingInfo update
+    let updatedParcelHandlingInfo = existingJourney.parcelHandlingInfo;
+    if (update.parcelHandlingInfo) {
+      updatedParcelHandlingInfo = {
+        ...existingJourney.parcelHandlingInfo,
+        ...update.parcelHandlingInfo,
+      };
+    }
+
     // Create updated journey by merging existing with update
     const updatedJourney = {
       ...existingJourney,
       ...update,
+      parcelHandlingInfo: updatedParcelHandlingInfo,
       updatedAt: now,
     };
 

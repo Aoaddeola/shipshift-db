@@ -9,9 +9,9 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
+import { OperatorService } from './operator.service.js';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
-import { OperatorService } from './operator.service.js';
 
 @Controller('operator')
 export class OperatorController {
@@ -31,33 +31,40 @@ export class OperatorController {
     return this.operatorService.getOperator(id, includeArray);
   }
 
-  @Get('address/:walletAddress')
+  @Get('address/:opAddr')
   async getOperatorByAddress(
-    @Param('walletAddress') walletAddress: string,
+    @Param('opAddr') opAddr: string,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
-    return this.operatorService.getOperatorByAddress(
-      walletAddress,
-      includeArray,
-    );
+    return this.operatorService.getOperatorByAddress(opAddr, includeArray);
   }
 
-  @Get('contact/:contactDetailsId')
-  async getOperatorsByContact(
-    @Param('contactDetailsId') contactDetailsId: string,
+  @Get('colony-node/:colonyNodeId')
+  async getOperatorsByColonyNode(
+    @Param('colonyNodeId') colonyNodeId: string,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
-    return this.operatorService.getOperatorsByContact(
-      contactDetailsId,
+    return this.operatorService.getOperatorsByColonyNode(
+      colonyNodeId,
       includeArray,
     );
   }
 
   @Get()
-  async getOperators(@Query('include') include?: string) {
+  async getOperators(
+    @Query('colonyNodeId') colonyNodeId?: string,
+    @Query('include') include?: string,
+  ) {
     const includeArray = include ? include.split(',') : [];
+
+    if (colonyNodeId) {
+      return this.operatorService.getOperatorsByColonyNode(
+        colonyNodeId,
+        includeArray,
+      );
+    }
     return this.operatorService.getOperators(includeArray);
   }
 

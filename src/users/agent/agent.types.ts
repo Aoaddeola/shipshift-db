@@ -1,5 +1,26 @@
-import { ContactDetails } from '../../common/contact-details/contact-details.types.js';
 import { Operator } from '../operator/operator.types.js';
+
+/**
+ * Agent Type Enum
+ */
+export enum AgentType {
+  Business = 0,
+  Private,
+}
+
+/**
+ * Conveyance Means Enum
+ */
+export enum ConveyanceMeans {
+  Car = 0,
+  Bus,
+  Aircraft,
+  Ship,
+  Bicycle,
+  Foot,
+  Train,
+  Drone,
+}
 
 /**
  * Agent Interface
@@ -7,9 +28,11 @@ import { Operator } from '../operator/operator.types.js';
 export interface Agent {
   id: string;
   name: string;
-  contactDetailsId: string;
   operatorId: string; // reference to Operator
-  contactDetails?: ContactDetails; // Embedded contact details
+  weightLimit: number;
+  openToDestinationsOutOfScope: boolean; // Open to deliveries to locations that is not specificially listed by the agent
+  meansOfConveyance: ConveyanceMeans;
+  type: AgentType;
   operator?: Operator; // Embedded operator
   createdAt?: string;
   updatedAt?: string;

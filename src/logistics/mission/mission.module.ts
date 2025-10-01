@@ -4,15 +4,17 @@ import { MissionController } from './mission.controller.js';
 import { MissionService } from './mission.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
 import { JourneyModule } from '../journey/journey.module.js';
-import { CuratorModule } from '../../users/curator/curator.module.js';
+import { LocationModule } from '../../common/location/location.module.js';
+import { OperatorModule } from '../../users/operator/operator.module.js';
 
 @Module({
   imports: [
     OrbitDBModule.forDatabase('mission', {
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
-    CuratorModule,
+    OperatorModule,
     JourneyModule,
+    LocationModule,
   ],
   controllers: [MissionController],
   providers: [MissionService],

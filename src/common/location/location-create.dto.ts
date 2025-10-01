@@ -1,62 +1,94 @@
 import {
   IsString,
   IsNotEmpty,
-  IsArray,
   IsNumber,
-  Validate,
+  IsOptional,
+  ValidateNested,
+  ArrayNotEmpty,
+  MinLength,
+  MaxLength,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { Location } from './location.types.js';
 
-// Custom validator for coordinates
-function IsValidCoordinates() {
-  return function (object: any, propertyName: string) {
-    const coordinates = object[propertyName];
-
-    if (!Array.isArray(coordinates) || coordinates.length !== 2) {
-      return false;
-    }
-
-    const [longitude, latitude] = coordinates;
-
-    // Validate longitude (-180 to 180)
-    if (typeof longitude !== 'number' || longitude < -180 || longitude > 180) {
-      return false;
-    }
-
-    // Validate latitude (-90 to 90)
-    if (typeof latitude !== 'number' || latitude < -90 || latitude > 90) {
-      return false;
-    }
-
-    return true;
-  };
-}
-
-export class LocationCreateDto implements Omit<Location, 'id'> {
+export class LocationCreateDto
+  implements Omit<Location, 'id' | 'createdAt' | 'updatedAt'>
+{
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: '123 Main St' })
+  @MinLength(2)
+  @MaxLength(100)
+  @ApiProperty({
+    example: 'Office',
+    description: 'Location name',
+    minLength: 2,
+    maxLength: 100,
+  })
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
+  @ApiProperty({
+    example: '123 Main St',
+    description: 'Street address',
+    minLength: 2,
+    maxLength: 100,
+  })
   street: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'New York' })
+  @MinLength(2)
+  @MaxLength(50)
+  @ApiProperty({
+    example: 'New York',
+    description: 'City name',
+    minLength: 2,
+    maxLength: 50,
+  })
   city: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'NY' })
+  @MinLength(2)
+  @MaxLength(50)
+  @ApiProperty({
+    example: 'NY',
+    description: 'State or province',
+    minLength: 2,
+    maxLength: 50,
+  })
   state: string;
 
-  @IsArray()
-  @IsNumber({}, { each: true })
-  @Validate(IsValidCoordinates, {
-    message: 'Coordinates must be [longitude, latitude] with valid ranges',
+  @IsNumber()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 10001,
+    description: 'Postal or ZIP code (optional)',
   })
+  postalCode?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(50)
+  @ApiProperty({
+    example: 'USA',
+    description: 'Country name',
+    minLength: 2,
+    maxLength: 50,
+  })
+  country: string;
+
+  @ValidateNested()
+  @Type(() => Array)
+  @ArrayNotEmpty()
   @ApiProperty({
     example: [-74.006, 40.7128],
-    description: 'Array of [longitude, latitude]',
+    description: 'Longitude and latitude coordinates',
   })
   coordinates: [number, number];
 }

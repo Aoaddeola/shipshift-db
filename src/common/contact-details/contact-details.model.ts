@@ -6,7 +6,6 @@ import {
   IsUUID,
   AllowNull,
   IsEmail,
-  // Is,
   Default,
   Unique,
   Length,
@@ -79,13 +78,20 @@ export class ContactDetailsModel extends Model {
   email?: string;
 
   /**
+   * Email address
+   */
+  @AllowNull(true)
+  @Column
+  url?: string;
+
+  /**
    * Session identifier
    */
   @AllowNull(false)
   @Length({ min: 1, max: 100 })
   @Unique('session_unique')
   @Column
-  session!: string;
+  sessionId!: string;
 
   /**
    * Created at timestamp

@@ -9,9 +9,9 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
+import { ParcelService } from './parcel.service.js';
 import { ParcelCreateDto } from './parcel-create.dto.js';
 import { ParcelUpdateDto } from './parcel-update.dto.js';
-import { ParcelService } from './parcel.service.js';
 
 @Controller('parcel')
 export class ParcelController {
@@ -23,8 +23,49 @@ export class ParcelController {
   }
 
   @Get(':id')
-  async getParcel(@Param('id') id: string) {
-    return this.parcelService.getParcel(id);
+  async getParcel(@Param('id') id: string, @Query('include') include?: string) {
+    const includeArray = include ? include.split(',') : [];
+    return this.parcelService.getParcel(id, includeArray);
+  }
+
+  @Get()
+  async getParcels(
+    @Query('currencyId') currencyId?: string,
+    @Query('fragile') fragile?: string,
+    @Query('perishable') perishable?: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    const filters: any = {};
+
+    if (currencyId) filters.currencyId = currencyId;
+    if (fragile === 'true') filters.fragile = true;
+    if (fragile === 'false') filters.fragile = false;
+    if (perishable === 'true') filters.perishable = true;
+    if (perishable === 'false') filters.perishable = false;
+
+    return this.parcelService.getParcels(filters, includeArray);
+  }
+
+  @Get('currency/:currencyId')
+  async getParcelsByCurrency(
+    @Param('currencyId') currencyId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.parcelService.getParcelsByCurrency(currencyId, includeArray);
+  }
+
+  @Get('fragile')
+  async getFragileParcels(@Query('include') include?: string) {
+    const includeArray = include ? include.split(',') : [];
+    return this.parcelService.getFragileParcels(includeArray);
+  }
+
+  @Get('perishable')
+  async getPerishableParcels(@Query('include') include?: string) {
+    const includeArray = include ? include.split(',') : [];
+    return this.parcelService.getPerishableParcels(includeArray);
   }
 
   @Put(':id')
@@ -38,29 +79,6 @@ export class ParcelController {
     @Body() update: ParcelUpdateDto,
   ) {
     return this.parcelService.partialUpdateParcel(id, update);
-  }
-
-  @Get()
-  async getParcels() {
-    return this.parcelService.getParcels();
-  }
-
-  @Get('search')
-  async searchParcels(
-    @Query('name') name?: string,
-    @Query('description') description?: string,
-  ) {
-    if (name && description) {
-      return this.parcelService.searchParcelsByNameAndDescription(
-        name,
-        description,
-      );
-    } else if (name) {
-      return this.parcelService.searchParcelsByName(name);
-    } else if (description) {
-      return this.parcelService.searchParcelsByDescription(description);
-    }
-    return this.parcelService.getParcels();
   }
 
   @Delete(':id')

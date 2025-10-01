@@ -3,4 +3,5 @@ export interface Currency {
   currencySymbol: string;
   tokenName: string;
   userFriendlyName: string;
+  isStableCoin?: boolean;
 }

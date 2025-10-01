@@ -1,6 +1,15 @@
-import { IsString, IsNumber, IsOptional, Min, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  Min,
+  IsEnum,
+  ValidateNested,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { JourneyStatus } from './journey.types.js';
+import { ParcelHandlingInfoUpdateDto } from '../parcel/parcel-update.dto.js';
 
 export class JourneyUpdateDto {
   @IsString()
@@ -47,4 +56,10 @@ export class JourneyUpdateDto {
     description: 'Updated status of the journey',
   })
   status?: JourneyStatus;
+
+  @ValidateNested()
+  @Type(() => ParcelHandlingInfoUpdateDto)
+  @IsOptional()
+  @ApiPropertyOptional({ type: ParcelHandlingInfoUpdateDto })
+  parcelHandlingInfo?: ParcelHandlingInfoUpdateDto;
 }

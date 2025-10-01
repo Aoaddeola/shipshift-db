@@ -1,42 +1,107 @@
 import {
   IsString,
-  MinLength,
-  MaxLength,
-  IsUrl,
+  IsNumber,
+  Min,
+  IsBoolean,
   IsOptional,
+  ValidateNested,
+  IsArray,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+// Nested DTO for ParcelHandlingInfo update
+export class ParcelHandlingInfoUpdateDto {
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Updated sealed status',
+  })
+  sealed?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Updated fragile status',
+  })
+  fragile?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Updated perishable status',
+  })
+  perishable?: boolean;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 3.0,
+    description: 'Updated weight of the parcel in kg',
+  })
+  weight?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 0.15,
+    description: 'Updated size of the parcel in cubic meters',
+  })
+  size?: number;
+}
 
 export class ParcelUpdateDto {
   @IsString()
   @IsOptional()
-  @MinLength(3)
-  @MaxLength(100)
   @ApiPropertyOptional({
-    example: 'Updated Package Name',
+    example: 'Updated Laptop Name',
     description: 'Updated name of the parcel',
-    minLength: 3,
-    maxLength: 100,
   })
   name?: string;
 
   @IsString()
   @IsOptional()
-  @MinLength(10)
-  @MaxLength(500)
   @ApiPropertyOptional({
-    example: 'Updated description for the parcel',
+    example: 'Updated MacBook Pro description',
     description: 'Updated description of the parcel',
-    minLength: 10,
-    maxLength: 500,
   })
   description?: string;
 
-  @IsUrl({ require_tld: true, protocols: ['http', 'https'] })
+  @IsNumber()
+  @Min(1)
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'https://example.com/updated-parcel.jpg',
+    example: 2,
+    description: 'Updated quantity of items in the parcel',
+    minimum: 1,
+  })
+  quantity?: number;
+
+  @IsArray()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: ['USD', 1600],
+    description:
+      'Updated currency ID and value as a tuple [currencyId, amount]',
+  })
+  value?: [string, number];
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'https://example.com/updated-laptop.jpg',
     description: 'Updated URL of the parcel image',
   })
   image?: string;
+
+  @ValidateNested()
+  @Type(() => ParcelHandlingInfoUpdateDto)
+  @IsOptional()
+  @ApiPropertyOptional({ type: ParcelHandlingInfoUpdateDto })
+  handlingInfo?: ParcelHandlingInfoUpdateDto;
 }

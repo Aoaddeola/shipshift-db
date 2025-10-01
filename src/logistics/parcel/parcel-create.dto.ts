@@ -1,44 +1,105 @@
 import {
   IsString,
   IsNotEmpty,
-  MinLength,
-  MaxLength,
-  IsUrl,
+  IsNumber,
+  Min,
+  IsBoolean,
   IsOptional,
+  ValidateNested,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { Parcel } from './parcel.types.js';
 
-export class ParcelCreateDto implements Omit<Parcel, 'id'> {
+// Nested DTO for ParcelHandlingInfo
+export class ParcelHandlingInfoDto {
+  @IsBoolean()
+  @ApiProperty({
+    example: true,
+    description: 'Whether the parcel is sealed',
+  })
+  sealed: boolean;
+
+  @IsBoolean()
+  @ApiProperty({
+    example: false,
+    description: 'Whether the parcel is fragile',
+  })
+  fragile: boolean;
+
+  @IsBoolean()
+  @ApiProperty({
+    example: false,
+    description: 'Whether the parcel is perishable',
+  })
+  perishable: boolean;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 2.5,
+    description: 'Weight of the parcel in kg',
+  })
+  weight?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 0.1,
+    description: 'Size of the parcel in cubic meters',
+  })
+  size?: number;
+}
+
+export class ParcelCreateDto
+  implements Omit<Parcel, 'id' | 'createdAt' | 'updatedAt' | 'currency'>
+{
   @IsString()
   @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(100)
   @ApiProperty({
-    example: 'Standard Package',
+    example: 'Laptop',
     description: 'Name of the parcel',
-    minLength: 3,
-    maxLength: 100,
   })
   name: string;
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(10)
-  @MaxLength(500)
   @ApiProperty({
-    example: 'Standard shipping package for general items',
+    example: 'New MacBook Pro',
     description: 'Description of the parcel',
-    minLength: 10,
-    maxLength: 500,
   })
   description: string;
 
-  @IsUrl({ require_tld: true, protocols: ['http', 'https'] })
+  @IsNumber()
+  @Min(1)
+  @ApiProperty({
+    example: 1,
+    description: 'Quantity of items in the parcel',
+    minimum: 1,
+  })
+  quantity: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @ApiProperty({
+    example: ['USD', 1500],
+    description: 'Currency ID and value as a tuple [currencyId, amount]',
+  })
+  value: [string, number];
+
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'https://example.com/parcel.jpg',
+    example: 'https://example.com/laptop.jpg',
     description: 'URL of the parcel image',
   })
   image?: string;
+
+  @ValidateNested()
+  @Type(() => ParcelHandlingInfoDto)
+  @ApiProperty({ type: ParcelHandlingInfoDto })
+  handlingInfo: ParcelHandlingInfoDto;
 }

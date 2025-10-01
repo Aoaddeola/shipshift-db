@@ -1,6 +1,8 @@
-import { Step } from '../../onchain/step/step.types.js';
-import { Mission } from '../../logistics/mission/mission.types.js';
+import { Mission } from '../mission/mission.types.js';
+import { Parcel } from '../parcel/parcel.types.js';
+import { Journey } from '../journey/journey.types.js';
 import { Customer } from '../../users/customer/customer.types.js';
+import { Location } from '../../common/location/location.types.js';
 
 /**
  * Shipment Status Enum
@@ -18,14 +20,19 @@ export enum ShipmentStatus {
 export interface Shipment {
   id: string;
   senderId: string;
-  receiverId: string;
-  missionId: string;
-  stepIds: string[];
+  parcelId: string;
+  quantity: string;
+  pickupDate: string; // ISO 8601 date string
+  etaDate: string; // ISO 8601 date string
+  fromLocation: Omit<Location, 'id'>;
+  toLocation: Omit<Location, 'id'>;
+  missionId?: string;
+  journeyId?: string;
   status: ShipmentStatus;
   mission?: Mission; // Embedded mission
-  steps?: Step[]; // Embedded steps
+  parcel?: Parcel; // Embedded parcel
+  journey?: Journey; // Embedded journey
   sender?: Customer; // Embedded sender
-  receiver?: Customer; // Embedded receiver
   createdAt?: string;
   updatedAt?: string;
 }

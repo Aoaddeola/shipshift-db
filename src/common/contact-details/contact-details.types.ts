@@ -7,5 +7,6 @@ export interface ContactDetails {
   phone?: string; // Phone numbers should be strings to preserve formatting
   sms?: string; // SMS notification number (can be same as phone)
   email?: string;
-  session: string;
+  url?: string;
+  sessionId: string;
 }

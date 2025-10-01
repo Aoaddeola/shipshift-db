@@ -14,6 +14,16 @@ export class MissionUpdateDto {
   @ApiPropertyOptional({ example: 'curator-456' })
   curatorId?: string;
 
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'location-111' })
+  fromLocationId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'location-222' })
+  toLocationId?: string;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

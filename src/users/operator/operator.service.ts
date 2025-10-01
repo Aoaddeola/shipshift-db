@@ -1,11 +1,12 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import { Database } from '../../orbitdb/database.js';
 import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { Operator } from './operator.types.js';
+import { Database } from '../../orbitdb/database.js';
+import { randomUUID } from 'node:crypto';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
-import { Operator } from './operator.types.js';
 import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
+import { ColonyNodeService } from '../../onchain/colony-node/colony-node.service.js';
 
 @Injectable()
 export class OperatorService {
@@ -14,14 +15,13 @@ export class OperatorService {
   constructor(
     @InjectDatabase('operator') private database: Database<Operator>,
     @Inject(ContactDetailsService)
-    private contactDetailsModel: ContactDetailsService,
+    private contactDetailsDatabase: ContactDetailsService,
+    @Inject(ColonyNodeService)
+    private colonyNodeService: ColonyNodeService,
   ) {}
 
   async createOperator(
-    operator: Omit<
-      Operator,
-      'id' | 'createdAt' | 'updatedAt' | 'contactDetails'
-    >,
+    operator: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<Operator> {
     const id = randomUUID();
     const now = new Date().toISOString();
@@ -48,27 +48,25 @@ export class OperatorService {
   }
 
   async getOperatorByAddress(
-    walletAddress: string,
+    opAddr: string,
     include?: string[],
   ): Promise<Operator> {
     const all = await this.database.all();
-    const operator = all.find((op) => op.walletAddress === walletAddress);
+    const operator = all.find((op) => op.onchain.opAddr === opAddr);
     if (!operator) {
-      throw new NotFoundException(
-        'Operator with this wallet address not found',
-      );
+      throw new NotFoundException('Operator with this address not found');
     }
 
     return this.populateRelations(operator, include);
   }
 
-  async getOperatorsByContact(
-    contactDetailsId: string,
+  async getOperatorsByColonyNode(
+    colonyNodeId: string,
     include?: string[],
   ): Promise<Operator[]> {
     const all = await this.database.all();
     const operators = all.filter(
-      (op) => op.contactDetailsId === contactDetailsId,
+      (op) => op.offchain.colonyNodeId === colonyNodeId,
     );
 
     return Promise.all(
@@ -90,20 +88,27 @@ export class OperatorService {
     // Clone the operator to avoid modifying the original
     const populatedOperator = { ...operator };
 
-    // Handle contactDetails population
-    if (include?.includes('contactDetails')) {
-      try {
-        const contactDetails = await this.contactDetailsModel.findOne(
-          operator.contactDetailsId,
-        );
-        if (contactDetails) {
-          populatedOperator.contactDetails = contactDetails;
+    // Handle offchain relations
+    if (include?.includes('offchain')) {
+      // Handle colonyNode population
+      if (include?.includes('colonyNode')) {
+        try {
+          const colonyNode = await this.colonyNodeService.getColonyNode(
+            operator.offchain.colonyNodeId,
+          );
+          if (colonyNode) {
+            // Create a copy of offchain with colonyNode
+            populatedOperator.offchain = {
+              ...operator.offchain,
+              colonyNode: colonyNode,
+            };
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Could not fetch colony node for ${operator.offchain.colonyNodeId}`,
+            error,
+          );
         }
-      } catch (error) {
-        this.logger.warn(
-          `Could not fetch contact details for ${operator.contactDetailsId}`,
-          error,
-        );
       }
     }
 
@@ -139,10 +144,33 @@ export class OperatorService {
     const existingOperator = await this.getOperator(id);
     const now = new Date().toISOString();
 
+    // Handle nested onchain update
+    let updatedOnchain = existingOperator.onchain;
+    if (update.onchain) {
+      updatedOnchain = {
+        ...existingOperator.onchain,
+        ...update.onchain,
+        opMinCollateralPerParticipant: update.onchain
+          .opMinCollateralPerParticipant
+          ? update.onchain.opMinCollateralPerParticipant
+          : existingOperator.onchain.opMinCollateralPerParticipant,
+      };
+    }
+
+    // Handle nested offchain update
+    let updatedOffchain = existingOperator.offchain;
+    if (update.offchain) {
+      updatedOffchain = {
+        ...existingOperator.offchain,
+        ...update.offchain,
+      };
+    }
+
     // Create updated operator by merging existing with update
     const updatedOperator = {
       ...existingOperator,
-      ...update,
+      onchain: updatedOnchain,
+      offchain: updatedOffchain,
       updatedAt: now,
     };
 
@@ -155,7 +183,7 @@ export class OperatorService {
     const operator = await this.getOperator(id);
     await this.database.del(id);
     return {
-      message: `Operator with wallet address ${operator.walletAddress} deleted successfully`,
+      message: `Operator with address ${operator.onchain.opAddr} deleted successfully`,
     };
   }
 }

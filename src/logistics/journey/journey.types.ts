@@ -1,5 +1,6 @@
-import { LocationCreateDto } from '../../common/location/location-create.dto.js';
+import { Location } from '../../common/location/location.types.js';
 import { Agent } from '../../users/agent/agent.types.js';
+import { ParcelHandlingInfo } from '../parcel/parcel.types.js';
 
 /**
  * Journey Status Enum
@@ -24,9 +25,10 @@ export interface Journey {
   capacity: number; // packages or weight
   price?: number; // optional agent fee
   status?: JourneyStatus; // added status field for completeness
+  parcelHandlingInfo: ParcelHandlingInfo;
   agent?: Agent; // Embedded agent
-  fromLocation?: LocationCreateDto; // Embedded from location
-  toLocation?: LocationCreateDto; // Embedded to location
+  fromLocation?: Location; // Embedded from location
+  toLocation?: Location; // Embedded to location
   createdAt?: string;
   updatedAt?: string;
 }

@@ -3,8 +3,10 @@ import { OrbitDBModule } from '../../orbitdb/orbitdb.module.js';
 import { ShipmentController } from './shipment.controller.js';
 import { ShipmentService } from './shipment.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
+import { ParcelModule } from '../parcel/parcel.module.js';
 import { MissionModule } from '../mission/mission.module.js';
-import { StepModule } from '../../onchain/step/step.module.js';
+import { JourneyModule } from '../journey/journey.module.js';
+import { LocationModule } from '../../common/location/location.module.js';
 import { CustomerModule } from '../../users/customer/customer.module.js';
 
 @Module({
@@ -12,9 +14,11 @@ import { CustomerModule } from '../../users/customer/customer.module.js';
     OrbitDBModule.forDatabase('shipment', {
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
-    MissionModule,
-    StepModule,
     CustomerModule,
+    ParcelModule,
+    MissionModule,
+    JourneyModule,
+    LocationModule,
   ],
   controllers: [ShipmentController],
   providers: [ShipmentService],

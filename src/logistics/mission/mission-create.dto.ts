@@ -2,25 +2,42 @@ import {
   IsString,
   IsNotEmpty,
   IsArray,
-  IsEnum,
   ArrayNotEmpty,
-  IsOptional,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Mission, MissionStatus } from './mission.types.js';
 
 export class MissionCreateDto
   implements
-    Omit<Mission, 'id' | 'createdAt' | 'updatedAt' | 'curator' | 'journeys'>
+    Omit<
+      Mission,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'curator'
+      | 'journeys'
+      | 'fromLocation'
+      | 'toLocation'
+    >
 {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: 'curator-123' })
   curatorId: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'location-456' })
+  fromLocationId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'location-789' })
+  toLocationId: string;
+
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
   @ArrayNotEmpty({ message: 'journeyIds array cannot be empty when provided' })
   @ApiPropertyOptional({
     example: ['journey-456', 'journey-789'],

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { IPFSAccessController } from '@orbitdb/core';
 import { OrbitDBModule } from '../../orbitdb/orbitdb.module.js';
 import { LocationController } from './location.controller.js';
 import { LocationService } from './location.service.js';
+import { IPFSAccessController } from '@orbitdb/core';
 
 @Module({
   imports: [

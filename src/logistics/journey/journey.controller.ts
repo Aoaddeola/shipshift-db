@@ -37,15 +37,129 @@ export class JourneyController {
     @Query('agentId') agentId?: string,
     @Query('locationId') locationId?: string,
     @Query('status') status?: JourneyStatus,
+    @Query('fragile') fragile?: string,
+    @Query('perishable') perishable?: string,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
 
-    if (agentId && locationId && status) {
+    if (agentId && locationId && status && fragile && perishable) {
+      return this.journeyService.getJourneysByAllFilters(
+        agentId,
+        locationId,
+        status,
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (agentId && locationId && status && fragile) {
+      return this.journeyService.getJourneysByAgentLocationStatusAndFragile(
+        agentId,
+        locationId,
+        status,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (agentId && locationId && status && perishable) {
+      return this.journeyService.getJourneysByAgentLocationStatusAndPerishable(
+        agentId,
+        locationId,
+        status,
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (agentId && locationId && fragile && perishable) {
+      return this.journeyService.getJourneysByAgentLocationAndHandling(
+        agentId,
+        locationId,
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (agentId && status && fragile && perishable) {
+      return this.journeyService.getJourneysByAgentStatusAndHandling(
+        agentId,
+        status,
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (locationId && status && fragile && perishable) {
+      return this.journeyService.getJourneysByLocationStatusAndHandling(
+        locationId,
+        status,
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (agentId && locationId && status) {
       return this.journeyService.getJourneysByAgentLocationAndStatus(
         agentId,
         locationId,
         status,
+        includeArray,
+      );
+    } else if (agentId && locationId && fragile) {
+      return this.journeyService.getJourneysByAgentLocationAndFragile(
+        agentId,
+        locationId,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (agentId && locationId && perishable) {
+      return this.journeyService.getJourneysByAgentLocationAndPerishable(
+        agentId,
+        locationId,
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (agentId && status && fragile) {
+      return this.journeyService.getJourneysByAgentStatusAndFragile(
+        agentId,
+        status,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (agentId && status && perishable) {
+      return this.journeyService.getJourneysByAgentStatusAndPerishable(
+        agentId,
+        status,
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (agentId && fragile && perishable) {
+      return this.journeyService.getJourneysByAgentAndHandling(
+        agentId,
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (locationId && status && fragile) {
+      return this.journeyService.getJourneysByLocationStatusAndFragile(
+        locationId,
+        status,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (locationId && status && perishable) {
+      return this.journeyService.getJourneysByLocationStatusAndPerishable(
+        locationId,
+        status,
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (locationId && fragile && perishable) {
+      return this.journeyService.getJourneysByLocationAndHandling(
+        locationId,
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (status && fragile && perishable) {
+      return this.journeyService.getJourneysByStatusAndHandling(
+        status,
+        fragile === 'true',
+        perishable === 'true',
         includeArray,
       );
     } else if (agentId && locationId) {
@@ -60,21 +174,73 @@ export class JourneyController {
         status,
         includeArray,
       );
+    } else if (agentId && fragile) {
+      return this.journeyService.getJourneysByAgentAndFragile(
+        agentId,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (agentId && perishable) {
+      return this.journeyService.getJourneysByAgentAndPerishable(
+        agentId,
+        perishable === 'true',
+        includeArray,
+      );
     } else if (locationId && status) {
       return this.journeyService.getJourneysByLocationAndStatus(
         locationId,
         status,
         includeArray,
       );
+    } else if (locationId && fragile) {
+      return this.journeyService.getJourneysByLocationAndFragile(
+        locationId,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (locationId && perishable) {
+      return this.journeyService.getJourneysByLocationAndPerishable(
+        locationId,
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (status && fragile) {
+      return this.journeyService.getJourneysByStatusAndFragile(
+        status,
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (status && perishable) {
+      return this.journeyService.getJourneysByStatusAndPerishable(
+        status,
+        perishable === 'true',
+        includeArray,
+      );
+    } else if (fragile && perishable) {
+      return this.journeyService.getJourneysByHandling(
+        fragile === 'true',
+        perishable === 'true',
+        includeArray,
+      );
     } else if (agentId) {
       return this.journeyService.getJourneysByAgent(agentId, includeArray);
     } else if (locationId) {
-      return this.journeyService.getJourneysFromLocation(
+      return this.journeyService.getJourneysByLocation(
         locationId,
         includeArray,
       );
     } else if (status) {
       return this.journeyService.getJourneysByStatus(status, includeArray);
+    } else if (fragile) {
+      return this.journeyService.getJourneysByFragile(
+        fragile === 'true',
+        includeArray,
+      );
+    } else if (perishable) {
+      return this.journeyService.getJourneysByPerishable(
+        perishable === 'true',
+        includeArray,
+      );
     }
     return this.journeyService.getJourneys(includeArray);
   }
@@ -119,6 +285,30 @@ export class JourneyController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.journeyService.getJourneysByStatus(status, includeArray);
+  }
+
+  @Get('fragile/:fragile')
+  async getJourneysByFragile(
+    @Param('fragile') fragile: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.journeyService.getJourneysByFragile(
+      fragile === 'true',
+      includeArray,
+    );
+  }
+
+  @Get('perishable/:perishable')
+  async getJourneysByPerishable(
+    @Param('perishable') perishable: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.journeyService.getJourneysByPerishable(
+      perishable === 'true',
+      includeArray,
+    );
   }
 
   @Put(':id')

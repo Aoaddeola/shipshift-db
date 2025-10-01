@@ -68,7 +68,7 @@ export class AuthService {
       );
       return this.jwtService.signAsync({
         sub: operator?.id,
-        address: operator?.walletAddress,
+        address: operator?.onchain.opAddr,
       });
     } catch (error) {
       console.error('User does not exist', error);

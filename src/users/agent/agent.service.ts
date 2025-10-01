@@ -1,11 +1,10 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
-import { Agent } from './agent.types.js';
+import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
 import { Database } from '../../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
-import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
 import { OperatorService } from '../operator/operator.service.js';
 
 @Injectable()
@@ -14,16 +13,12 @@ export class AgentService {
 
   constructor(
     @InjectDatabase('agent') private database: Database<Agent>,
-    @Inject(ContactDetailsService)
-    private contactDetailsDatabase: ContactDetailsService,
-    @Inject(OperatorService) private operatorDatabase: OperatorService,
+    @Inject(OperatorService)
+    private operatorService: OperatorService,
   ) {}
 
   async createAgent(
-    agent: Omit<
-      Agent,
-      'id' | 'createdAt' | 'updatedAt' | 'contactDetails' | 'operator'
-    >,
+    agent: Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'operator'>,
   ): Promise<Agent> {
     const id = randomUUID();
     const now = new Date().toISOString();
@@ -56,20 +51,6 @@ export class AgentService {
     );
   }
 
-  async getAgentsByContactDetails(
-    contactDetailsId: string,
-    include?: string[],
-  ): Promise<Agent[]> {
-    const all = await this.database.all();
-    const agents = all.filter(
-      (agent) => agent.contactDetailsId === contactDetailsId,
-    );
-
-    return Promise.all(
-      agents.map((agent) => this.populateRelations(agent, include)),
-    );
-  }
-
   async getAgentsByOperator(
     operatorId: string,
     include?: string[],
@@ -82,16 +63,88 @@ export class AgentService {
     );
   }
 
-  async getAgentsByContactAndOperator(
-    contactDetailsId: string,
+  async getAgentsByType(type: AgentType, include?: string[]): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter((agent) => agent.type === type);
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByConveyance(
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) => agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperatorAndType(
     operatorId: string,
+    type: AgentType,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) => agent.operatorId === operatorId && agent.type === type,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperatorAndConveyance(
+    operatorId: string,
+    conveyance: ConveyanceMeans,
     include?: string[],
   ): Promise<Agent[]> {
     const all = await this.database.all();
     const agents = all.filter(
       (agent) =>
-        agent.contactDetailsId === contactDetailsId &&
-        agent.operatorId === operatorId,
+        agent.operatorId === operatorId &&
+        agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByTypeAndConveyance(
+    type: AgentType,
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) => agent.type === type && agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperatorTypeAndConveyance(
+    operatorId: string,
+    type: AgentType,
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.operatorId === operatorId &&
+        agent.type === type &&
+        agent.meansOfConveyance === conveyance,
     );
 
     return Promise.all(
@@ -106,27 +159,10 @@ export class AgentService {
     // Clone the agent to avoid modifying the original
     const populatedAgent = { ...agent };
 
-    // Handle contactDetails population
-    if (include?.includes('contactDetails')) {
-      try {
-        const contactDetails = await this.contactDetailsDatabase.findOne(
-          agent.contactDetailsId,
-        );
-        if (contactDetails) {
-          populatedAgent.contactDetails = contactDetails;
-        }
-      } catch (error) {
-        this.logger.warn(
-          `Could not fetch contact details for ${agent.contactDetailsId}`,
-          error,
-        );
-      }
-    }
-
     // Handle operator population
     if (include?.includes('operator')) {
       try {
-        const operator = await this.operatorDatabase.getOperator(
+        const operator = await this.operatorService.getOperator(
           agent.operatorId,
         );
         if (operator) {
