@@ -5,32 +5,47 @@ import {
   ValidateNested,
   IsEnum,
   IsOptional,
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsISO8601,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { StepState } from './step.types.js';
 
-// Nested DTO for StepOnChain update
 class StepOnChainUpdateDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({ example: 'addr1q9abcdef1234567890' })
   spRecipient?: string;
 
-  @IsString()
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(2)
   @IsOptional()
-  @ApiPropertyOptional({ example: 'addr1q8uvwxyz0987654321' })
-  spRequester?: string;
+  @ApiPropertyOptional({
+    example: ['addr1q8uvwxyz0987654321', 'user'],
+    description: 'Tuple of [address, role]',
+    isArray: true,
+  })
+  spRequester?: [string, string];
 
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({ example: 'addr1q7defghij5678901234' })
   spHolder?: string;
 
-  @IsString()
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(2)
   @IsOptional()
-  @ApiPropertyOptional({ example: 'addr1q6klmnopqr4321098765' })
-  spPerformer?: string;
+  @ApiPropertyOptional({
+    example: ['addr1q6klmnopqr4321098765', 'executor'],
+    description: 'Tuple of [address, role]',
+    isArray: true,
+  })
+  spPerformer?: [string, string];
 
   @IsString()
   @IsOptional()
@@ -50,6 +65,22 @@ class StepOnChainUpdateDto {
   @IsOptional()
   @ApiPropertyOptional({ example: '1a2b3c4d#0' })
   spTxOutRef?: string;
+
+  @IsISO8601()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: '2024-06-15T11:00:00Z',
+    description: 'Updated Estimated Time of Arrival (ISO 8601)',
+  })
+  spETA?: string;
+
+  @IsISO8601()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: '2024-06-15T09:30:00Z',
+    description: 'Updated start time (ISO 8601)',
+  })
+  spStartTime?: string;
 }
 
 export class StepUpdateDto {

@@ -8,17 +8,20 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JourneyService } from './journey.service.js';
 import { JourneyCreateDto } from './journey-create.dto.js';
 import { JourneyUpdateDto } from './journey-update.dto.js';
 import { JourneyStatus } from './journey.types.js';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('journey')
 export class JourneyController {
   constructor(private readonly journeyService: JourneyService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   async createJourney(@Body() journey: JourneyCreateDto) {
     return this.journeyService.createJourney(journey);
   }

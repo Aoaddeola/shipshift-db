@@ -21,6 +21,7 @@ export interface ParcelHandlingInfo {
  */
 export interface Parcel {
   id: string;
+  customerId: string;
   name: string;
   description: string;
   quantity: number;

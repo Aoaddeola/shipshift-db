@@ -15,19 +15,6 @@ export enum StepState {
 }
 
 /**
- * Step On Chain Parameters Interface
- */
-export interface StepOnChain {
-  spRecipient: string;
-  spRequester: string;
-  spHolder: string;
-  spPerformer: string;
-  spDelegate: string;
-  spCost: number;
-  spTxOutRef: string;
-}
-
-/**
  * Step Interface
  */
 export interface Step {
@@ -40,4 +27,19 @@ export interface Step {
   state: StepState;
   createdAt?: string;
   updatedAt?: string;
+}
+
+type WalletAddress = string;
+type MintingPolicyId = string;
+
+interface StepOnChain {
+  spCost: number;
+  spDelegate: WalletAddress;
+  spETA: string; // ISO 8601 date string
+  spHolder: WalletAddress;
+  spPerformer: [WalletAddress, MintingPolicyId];
+  spRecipient: WalletAddress;
+  spRequester: [WalletAddress, MintingPolicyId];
+  spStartTime: string; // ISO 8601 date string
+  spTxOutRef: string;
 }

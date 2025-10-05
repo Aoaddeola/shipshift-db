@@ -5,7 +5,7 @@ import { getOrGenerateSwarmKey } from './common/swarm-key.util.js';
 import { FileConfigService } from './config/file-config.service.js';
 import { bootstrap as bootstrapNode } from './bootstrap-node.js';
 import { AppConfig, bootstrapConfigSchema } from './config/schema.js';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 
 export class AppBootstrap {
   private readonly configService: FileConfigService;
@@ -58,6 +58,16 @@ export class AppBootstrap {
     process.env.PORT = process.env.HTTPS_PORT || appConfig.port.toString();
 
     const app = await NestFactory.create(AppModule);
+
+    // Enable validation
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+
     this.setupSwagger(app);
     await app.listen(appConfig.port);
     console.log(`✅ Application started on port ${appConfig.port}`);

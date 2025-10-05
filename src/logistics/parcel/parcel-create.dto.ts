@@ -68,6 +68,14 @@ export class ParcelCreateDto
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
+    example: 'Laptop',
+    description: 'Customer id',
+  })
+  customerId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
     example: 'New MacBook Pro',
     description: 'Description of the parcel',
   })

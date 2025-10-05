@@ -2,7 +2,7 @@
 import { checkSignature, DataSignature, generateNonce } from '@meshsdk/core';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { OperatorService } from '../users/operator/operator.service.js';
+import { OperatorService } from '../../users/operator/operator.service.js';
 // import { checkSignature } from '@meshsdk/common';
 
 @Injectable()
