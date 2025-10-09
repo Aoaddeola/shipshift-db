@@ -1,6 +1,14 @@
 import { User } from '../../users/user/user.types.js';
 
 /**
+ * Coordinates Interface
+ */
+export interface Coordinates {
+  longitude: number;
+  latitude: number;
+}
+
+/**
  * Location Interface
  */
 export interface Location {
@@ -13,5 +21,7 @@ export interface Location {
   postalCode?: number;
   country: string;
   owner?: User;
-  coordinates: [number, number]; // [longitude, latitude]
+  coordinates: Coordinates;
+  createdAt?: string;
+  updatedAt?: string;
 }

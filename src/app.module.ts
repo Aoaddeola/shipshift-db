@@ -28,6 +28,7 @@ import { User } from './users/user/user.model.js';
 import { UserAuthModule } from './auth/users/auth.module.js';
 import { CustomerModule } from './profiles/customer/customer.module.js';
 import { AgentModule } from './profiles/agent/agent.module.js';
+import { PlanningModule } from './planning/planning.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +75,9 @@ const __dirname = path.dirname(__filename);
     AgentModule,
     OperatorModule,
     UserModule,
+
+    // Algorithm
+    PlanningModule,
   ],
   providers: [],
 })

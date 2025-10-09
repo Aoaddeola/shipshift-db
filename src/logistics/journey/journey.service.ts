@@ -130,7 +130,7 @@ export class JourneyService {
   ): Promise<Journey[]> {
     const all = await this.database.all();
     const journeys = all.filter(
-      (journey) => journey.parcelHandlingInfo.fragile === fragile,
+      (journey) => journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -144,7 +144,7 @@ export class JourneyService {
   ): Promise<Journey[]> {
     const all = await this.database.all();
     const journeys = all.filter(
-      (journey) => journey.parcelHandlingInfo.perishable === perishable,
+      (journey) => journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -160,8 +160,8 @@ export class JourneyService {
     const all = await this.database.all();
     const journeys = all.filter(
       (journey) =>
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -211,7 +211,7 @@ export class JourneyService {
     const journeys = all.filter(
       (journey) =>
         journey.agentId === agentId &&
-        journey.parcelHandlingInfo.fragile === fragile,
+        journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -228,7 +228,7 @@ export class JourneyService {
     const journeys = all.filter(
       (journey) =>
         journey.agentId === agentId &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -264,7 +264,7 @@ export class JourneyService {
       (journey) =>
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.fragile === fragile,
+        journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -282,7 +282,7 @@ export class JourneyService {
       (journey) =>
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -299,7 +299,7 @@ export class JourneyService {
     const journeys = all.filter(
       (journey) =>
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile,
+        journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -316,7 +316,7 @@ export class JourneyService {
     const journeys = all.filter(
       (journey) =>
         journey.status === status &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -334,8 +334,8 @@ export class JourneyService {
     const journeys = all.filter(
       (journey) =>
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -375,7 +375,7 @@ export class JourneyService {
         journey.agentId === agentId &&
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.fragile === fragile,
+        journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -395,7 +395,7 @@ export class JourneyService {
         journey.agentId === agentId &&
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -414,7 +414,7 @@ export class JourneyService {
       (journey) =>
         journey.agentId === agentId &&
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile,
+        journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -433,7 +433,7 @@ export class JourneyService {
       (journey) =>
         journey.agentId === agentId &&
         journey.status === status &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -453,7 +453,7 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile,
+        journey.parcelHandlingInfo!.fragile === fragile,
     );
 
     return Promise.all(
@@ -473,7 +473,7 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.status === status &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -491,8 +491,8 @@ export class JourneyService {
     const journeys = all.filter(
       (journey) =>
         journey.agentId === agentId &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -511,8 +511,8 @@ export class JourneyService {
       (journey) =>
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -533,7 +533,7 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.agentId === agentId &&
-        journey.parcelHandlingInfo.perishable === perishable &&
+        journey.parcelHandlingInfo!.perishable === perishable &&
         journey.status === status,
     );
 
@@ -555,8 +555,8 @@ export class JourneyService {
         journey.agentId === agentId &&
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -577,7 +577,7 @@ export class JourneyService {
         journey.agentId === agentId &&
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
-        journey.parcelHandlingInfo.fragile === fragile &&
+        journey.parcelHandlingInfo!.fragile === fragile &&
         journey.status === status,
     );
 
@@ -598,8 +598,8 @@ export class JourneyService {
       (journey) =>
         journey.agentId === agentId &&
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -620,8 +620,8 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -644,8 +644,8 @@ export class JourneyService {
         (journey.fromLocationId === locationId ||
           journey.toLocationId === locationId) &&
         journey.status === status &&
-        journey.parcelHandlingInfo.fragile === fragile &&
-        journey.parcelHandlingInfo.perishable === perishable,
+        journey.parcelHandlingInfo!.fragile === fragile &&
+        journey.parcelHandlingInfo!.perishable === perishable,
     );
 
     return Promise.all(
@@ -740,8 +740,8 @@ export class JourneyService {
     let updatedParcelHandlingInfo = existingJourney.parcelHandlingInfo;
     if (update.parcelHandlingInfo) {
       updatedParcelHandlingInfo = {
-        ...existingJourney.parcelHandlingInfo,
         ...update.parcelHandlingInfo,
+        ...existingJourney.parcelHandlingInfo,
       };
     }
 

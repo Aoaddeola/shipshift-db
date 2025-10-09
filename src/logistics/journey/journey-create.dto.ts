@@ -50,9 +50,8 @@ export class JourneyCreateDto
 
   @IsNumber()
   @Min(0)
-  @IsOptional()
   @ApiPropertyOptional({ example: 50, description: 'Optional agent fee' })
-  price?: number;
+  price: number;
 
   @IsEnum(JourneyStatus)
   @IsOptional()

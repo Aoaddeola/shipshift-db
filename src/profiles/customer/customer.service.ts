@@ -130,8 +130,8 @@ export class CustomerService {
     let updatedAddress = existingCustomer.address;
     if (update.address) {
       updatedAddress = {
-        ...existingCustomer.address,
         ...update.address,
+        ...existingCustomer.address,
       };
     }
 

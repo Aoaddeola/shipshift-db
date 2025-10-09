@@ -739,8 +739,8 @@ export class ShipmentService {
     let updatedFromLocation = existingShipment.fromLocation;
     if (update.fromLocation) {
       updatedFromLocation = {
-        ...existingShipment.fromLocation,
         ...update.fromLocation,
+        ...existingShipment.fromLocation,
       };
     }
 
@@ -748,15 +748,15 @@ export class ShipmentService {
     let updatedToLocation = existingShipment.toLocation;
     if (update.toLocation) {
       updatedToLocation = {
-        ...existingShipment.toLocation,
         ...update.toLocation,
+        ...existingShipment.toLocation,
       };
     }
 
     // Create updated shipment by merging existing with update
     const updatedShipment = {
-      ...existingShipment,
       ...update,
+      ...existingShipment,
       fromLocation: updatedFromLocation,
       toLocation: updatedToLocation,
       updatedAt: now,

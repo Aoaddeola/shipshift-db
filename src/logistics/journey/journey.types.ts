@@ -23,7 +23,7 @@ export interface Journey {
   availableFrom: string; // ISO 8601 date string
   availableTo: string; // ISO 8601 date string
   capacity: number; // packages or weight
-  price?: number; // optional agent fee
+  price: number; // optional agent fee
   status?: JourneyStatus; // added status field for completeness
   parcelHandlingInfo: ParcelHandlingInfo;
   agent?: Agent; // Embedded agent
