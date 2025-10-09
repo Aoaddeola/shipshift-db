@@ -6,11 +6,14 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ContactDetailsService } from './contact-details.service.js';
 import { ContactDetailsModel } from './contact-details.model.js';
 import { ContactDetails } from './contact-details.types.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('contact-details')
 export class ContactDetailsController {
   constructor(private readonly contactDetailsService: ContactDetailsService) {}

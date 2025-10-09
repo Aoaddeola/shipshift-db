@@ -1,3 +1,4 @@
+import { OperatorBadge } from '../../onchain/operator-badge/operator-badge.types.js';
 import { ColonyNode } from '../../onchain/colony-node/colony-node.types.js';
 
 /**
@@ -41,6 +42,9 @@ export interface OnchainOperator {
 export interface OffchainOperator {
   colonyNodeId: string;
   colonyNode?: ColonyNode;
+  badgeId: string;
+  badge?: OperatorBadge;
+  agentCommission: number;
 }
 
 /**

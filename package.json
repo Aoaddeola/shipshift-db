@@ -41,6 +41,7 @@
     "@orbitdb/core": "^2.5.0",
     "@super-protocol/tunnels-lib": "^1.0.6",
     "bcryptjs": "^3.0.2",
+    "bech32": "^2.0.0",
     "blockstore-fs": "^2.0.2",
     "blockstore-level": "^2.0.1",
     "class-transformer": "^0.5.1",

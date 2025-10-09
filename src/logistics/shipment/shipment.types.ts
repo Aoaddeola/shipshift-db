@@ -1,7 +1,7 @@
 import { Mission } from '../mission/mission.types.js';
 import { Parcel } from '../parcel/parcel.types.js';
 import { Journey } from '../journey/journey.types.js';
-import { Customer } from '../../users/customer/customer.types.js';
+import { Customer } from '../../profiles/customer/customer.types.js';
 import { Location } from '../../common/location/location.types.js';
 
 /**

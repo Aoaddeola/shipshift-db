@@ -9,7 +9,7 @@ import { ParcelService } from '../parcel/parcel.service.js';
 import { MissionService } from '../mission/mission.service.js';
 import { JourneyService } from '../journey/journey.service.js';
 import { LocationService } from '../../common/location/location.service.js';
-import { CustomerService } from '../../users/customer/customer.service.js';
+import { CustomerService } from '../../profiles/customer/customer.service.js';
 
 @Injectable()
 export class ShipmentService {

@@ -15,6 +15,7 @@ import { OAuthProfile } from '../../auth/oauth/oauth.service.js';
 import { randomUUID } from 'node:crypto';
 import { Op } from 'sequelize';
 import { EmailService } from '../../notification/email.service.js';
+import { UserType } from './user.types.js';
 
 @Injectable()
 export class UserService {
@@ -190,6 +191,7 @@ export class UserService {
     email: string,
     password: string,
     name: string,
+    userType: UserType,
   ): Promise<User> {
     const existingUser = await this.findByEmail(email);
     if (existingUser) {
@@ -204,6 +206,7 @@ export class UserService {
       email,
       name,
       password: hashedPassword,
+      userType: userType,
       isVerified: false,
     });
   }
@@ -412,7 +415,15 @@ export class UserService {
   ): Promise<User | null> {
     const user = await this.userModel.findOne({
       where: { email },
-      attributes: ['id', 'email', 'password', 'name', 'isVerified', 'avatar'],
+      attributes: [
+        'id',
+        'email',
+        'password',
+        'name',
+        'isVerified',
+        'avatar',
+        'userType',
+      ],
     });
 
     if (!user || !user.password) {

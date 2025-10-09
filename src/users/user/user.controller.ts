@@ -8,9 +8,11 @@ import {
   Param,
   Body,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service.js';
 import { User } from './user.model.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
 @Controller('users')
 export class UserController {
@@ -21,11 +23,13 @@ export class UserController {
     return this.userService.create(user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll() {
     return this.userService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -38,11 +42,13 @@ export class UserController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(@Param('id') id: string, @Body() user: Partial<User>) {
     return this.userService.update(id, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.userService.remove(id);

@@ -12,7 +12,6 @@ import { OperatorBadgeModule } from './onchain/operator-badge/operator-badge.mod
 import { StepTxModule } from './onchain/step_tx/step-tx.module.js';
 import { OperatorModule } from './users/operator/operator.module.js';
 import { ColonyNodeModule } from './onchain/colony-node/colony-node.module.js';
-import { AgentModule } from './users/agent/agent.module.js';
 import { MissionModule } from './logistics/mission/mission.module.js';
 import { ParcelModule } from './logistics/parcel/parcel.module.js';
 import { ShipmentModule } from './logistics/shipment/shipment.module.js';
@@ -22,12 +21,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ContactDetailsModel } from './common/contact-details/contact-details.model.js';
 import { ContactDetailsModule } from './common/contact-details/contact-details.module.js';
-import { CustomerModule } from './users/customer/customer.module.js';
 import { OAuthModule } from './auth/oauth/oauth.module.js';
 import { UserModule } from './users/user/user.module.js';
 import { OAuthProvider } from './auth/oauth/oauth-provider.entity.js';
 import { User } from './users/user/user.model.js';
 import { UserAuthModule } from './auth/users/auth.module.js';
+import { CustomerModule } from './profiles/customer/customer.module.js';
+import { AgentModule } from './profiles/agent/agent.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

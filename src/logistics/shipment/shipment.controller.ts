@@ -8,12 +8,15 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ShipmentService } from './shipment.service.js';
 import { ShipmentCreateDto } from './shipment-create.dto.js';
 import { ShipmentUpdateDto } from './shipment-update.dto.js';
 import { ShipmentStatus } from './shipment.types.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('shipment')
 export class ShipmentController {
   constructor(private readonly shipmentService: ShipmentService) {}

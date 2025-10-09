@@ -120,10 +120,10 @@ class OffchainOperatorDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    example: 'contact-123',
-    description: 'ID of the contact details',
+    example: 'colony-node-456',
+    description: 'ID of the colony node',
   })
-  contactDetailsId: string;
+  colonyNodeId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -131,7 +131,15 @@ class OffchainOperatorDto {
     example: 'colony-node-456',
     description: 'ID of the colony node',
   })
-  colonyNodeId: string;
+  badgeId: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'colony-node-456',
+    description: 'Agent',
+  })
+  agentCommission: number;
 }
 
 export class OperatorCreateDto

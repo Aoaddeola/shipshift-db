@@ -55,8 +55,16 @@ export class ParcelHandlingInfoDto {
 }
 
 export class ParcelCreateDto
-  implements Omit<Parcel, 'id' | 'createdAt' | 'updatedAt' | 'currency'>
+  implements Omit<Parcel, 'id' | 'createdAt' | 'updatedAt'>
 {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'user-123',
+    description: 'ID of the owner of the parcel',
+  })
+  ownerId: string;
+
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
@@ -64,14 +72,6 @@ export class ParcelCreateDto
     description: 'Name of the parcel',
   })
   name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    example: 'Laptop',
-    description: 'Customer id',
-  })
-  customerId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -91,7 +91,7 @@ export class ParcelCreateDto
   quantity: number;
 
   @IsArray()
-  @IsString({ each: true })
+  // @IsString({ each: false })
   @ApiProperty({
     example: ['USD', 1500],
     description: 'Currency ID and value as a tuple [currencyId, amount]',

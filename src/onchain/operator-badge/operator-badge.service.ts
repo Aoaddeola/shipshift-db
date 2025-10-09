@@ -53,8 +53,8 @@ export class OperatorBadgeService {
     const updatedOperatorBadge: OperatorBadge = {
       id,
       createdAt: now,
-      updatedAt: now,
       ...operatorBadge,
+      updatedAt: now,
     };
 
     this.logger.log(`Updating operator badge: ${id}`);
@@ -90,6 +90,13 @@ export class OperatorBadgeService {
   ): Promise<OperatorBadge[]> {
     const all = await this.database.all();
     return all.filter((badge) => badge.stepAddress === stepAddress);
+  }
+
+  async getOperatorBadgesByOpWalletAddress(
+    walletAddress: string,
+  ): Promise<OperatorBadge[]> {
+    const all = await this.database.all();
+    return all.filter((badge) => badge.opWalletAddress === walletAddress);
   }
 
   async getOperatorBadgesByPolicy(policyId: string): Promise<OperatorBadge[]> {

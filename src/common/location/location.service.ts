@@ -44,6 +44,11 @@ export class LocationService {
     return all.filter((location) => location.city === city);
   }
 
+  async getLocationsByOwner(ownerId: string): Promise<Location[]> {
+    const all = await this.database.all();
+    return all.filter((location) => location.ownerId === ownerId);
+  }
+
   async getLocationsByState(state: string): Promise<Location[]> {
     const all = await this.database.all();
     return all.filter((location) => location.state === state);

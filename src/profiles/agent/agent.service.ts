@@ -5,7 +5,7 @@ import { Database } from '../../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
-import { OperatorService } from '../operator/operator.service.js';
+import { OperatorService } from '../../users/operator/operator.service.js';
 
 @Injectable()
 export class AgentService {

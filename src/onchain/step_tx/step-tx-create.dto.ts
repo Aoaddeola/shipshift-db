@@ -2,7 +2,8 @@
 
 import { IsString, IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { StepState, StepTxDbEntry } from './types.js';
+import { StepTxDbEntry } from './types.js';
+import { StepState } from '../step/step.types.js';
 
 export class StepTxCreateDto implements Omit<StepTxDbEntry, 'id'> {
   @IsString()

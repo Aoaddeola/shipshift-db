@@ -43,7 +43,7 @@ export const databaseSchema = z.object({
 export const jwtSchema = z.object({
   accessSecret: z.string().default('your-access-secret'),
   refreshSecret: z.string().default('your-refresh-secret'),
-  accessExpiration: z.string().default('15m'),
+  accessExpiration: z.string().default('1d'),
   refreshExpiration: z.string().default('7d'),
 });
 

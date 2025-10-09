@@ -1,7 +1,7 @@
 /**
  * User Type Enum
  */
-export type UserType = 'customer' | 'agent';
+export type UserType = 'customer' | 'agent' | 'user';
 
 /**
  * User Interface
@@ -11,7 +11,9 @@ export interface User {
   name: string;
   email: string;
   password: string; // Note: This should be hashed in the database
-  type: UserType;
-  createdAt?: string;
-  updatedAt?: string;
+  avatar: string;
+  isVerified: boolean;
+  userType: UserType;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

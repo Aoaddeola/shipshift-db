@@ -6,6 +6,7 @@ import { IPFSAccessController } from '@orbitdb/core';
 import { JourneyModule } from '../journey/journey.module.js';
 import { LocationModule } from '../../common/location/location.module.js';
 import { OperatorModule } from '../../users/operator/operator.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { OperatorModule } from '../../users/operator/operator.module.js';
     }),
     OperatorModule,
     JourneyModule,
+    JwtModule,
     LocationModule,
   ],
   controllers: [MissionController],

@@ -8,10 +8,12 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { OperatorBadgeService } from './operator-badge.service.js';
 import { OperatorBadgeCreateDto } from './operator-badge-create.dto.js';
 import { OperatorBadgeUpdateDto } from './operator-badge-update.dto.js';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('operator-badge')
 export class OperatorBadgeController {
@@ -27,6 +29,7 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.getOperatorBadge(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Put(':id')
   async updateOperatorBadge(
     @Param('id') id: string,
@@ -35,6 +38,7 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.updateOperatorBadge(id, operatorBadge);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   async partialUpdateOperatorBadge(
     @Param('id') id: string,
@@ -72,11 +76,13 @@ export class OperatorBadgeController {
     );
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('policy/:policyId')
   async getOperatorBadgesByPolicy(@Param('policyId') policyId: string) {
     return this.operatorBadgeService.getOperatorBadgesByPolicy(policyId);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   async deleteOperatorBadge(@Param('id') id: string) {
     return this.operatorBadgeService.deleteOperatorBadge(id);

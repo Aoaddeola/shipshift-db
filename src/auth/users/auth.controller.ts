@@ -15,7 +15,7 @@ import { LoginDto } from './login.dto.js';
 import { RegisterDto } from './register.dto.js';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
-@Controller('user/auth')
+@Controller('web2/auth')
 export class AuthController {
   constructor(private readonly authService: UserAuthService) {}
 

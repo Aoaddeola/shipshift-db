@@ -60,7 +60,7 @@ export class UserAuthService {
    * Register new user
    */
   async register(registerDto: RegisterDto) {
-    const { name, email, password, confirmPassword } = registerDto;
+    const { name, email, password, confirmPassword, userType } = registerDto;
 
     // Check if passwords match
     if (password !== confirmPassword) {
@@ -74,16 +74,23 @@ export class UserAuthService {
     }
 
     // Create new user
-    const user = await this.userService.createWithEmail(email, password, name);
+    const user = await this.userService.createWithEmail(
+      email,
+      password,
+      name,
+      userType,
+    );
+
+    const user_ = user.dataValues;
 
     // Generate tokens
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user_);
 
     // TODO: Implement email sending service
     await this.userService.sendEmailVerification(user.id, tokens.accessToken);
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(user_),
       ...tokens,
     };
   }
@@ -98,6 +105,7 @@ export class UserAuthService {
       sub: user.id,
       email: user.email,
       name: user.name,
+      userType: user.type,
     };
 
     const accessToken = await this.jwtService.signAsync(payload);
@@ -294,7 +302,6 @@ export class UserAuthService {
     console.log('userId', userId);
 
     const user = await this.userService.findById(userId);
-    console.log('user', user);
     if (!user) {
       throw new BadRequestException('User not found');
     }

@@ -8,11 +8,14 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { LocationService } from './location.service.js';
 import { LocationCreateDto } from './location-create.dto.js';
 import { LocationUpdateDto } from './location-update.dto.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('location')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
@@ -68,6 +71,11 @@ export class LocationController {
   @Get('city/:city')
   async getLocationsByCity(@Param('city') city: string) {
     return this.locationService.getLocationsByCity(city);
+  }
+
+  @Get('owner/:ownerId')
+  async getLocationsByOwner(@Param('ownerId') ownerId: string) {
+    return this.locationService.getLocationsByOwner(ownerId);
   }
 
   @Get('state/:state')

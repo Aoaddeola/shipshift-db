@@ -13,11 +13,7 @@ import { Journey, JourneyStatus } from './journey.types.js';
 import { ParcelHandlingInfoDto } from '../parcel/parcel-create.dto.js';
 
 export class JourneyCreateDto
-  implements
-    Omit<
-      Journey,
-      'id' | 'createdAt' | 'updatedAt' | 'agent' | 'fromLocation' | 'toLocation'
-    >
+  implements Omit<Journey, 'id' | 'createdAt' | 'updatedAt'>
 {
   @IsString()
   @IsNotEmpty()

@@ -7,7 +7,8 @@ import { ParcelModule } from '../parcel/parcel.module.js';
 import { MissionModule } from '../mission/mission.module.js';
 import { JourneyModule } from '../journey/journey.module.js';
 import { LocationModule } from '../../common/location/location.module.js';
-import { CustomerModule } from '../../users/customer/customer.module.js';
+import { CustomerModule } from '../../profiles/customer/customer.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CustomerModule } from '../../users/customer/customer.module.js';
     MissionModule,
     JourneyModule,
     LocationModule,
+    JwtModule,
   ],
   controllers: [ShipmentController],
   providers: [ShipmentService],

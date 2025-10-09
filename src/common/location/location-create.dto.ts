@@ -3,10 +3,10 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  ValidateNested,
   ArrayNotEmpty,
   MinLength,
   MaxLength,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -83,7 +83,12 @@ export class LocationCreateDto
   })
   country: string;
 
-  @ValidateNested()
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'agent-123' })
+  ownerId: string;
+
+  @IsArray()
   @Type(() => Array)
   @ArrayNotEmpty()
   @ApiProperty({

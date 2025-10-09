@@ -8,12 +8,15 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { MissionService } from './mission.service.js';
 import { MissionCreateDto } from './mission-create.dto.js';
 import { MissionUpdateDto } from './mission-update.dto.js';
 import { MissionStatus } from './mission.types.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('mission')
 export class MissionController {
   constructor(private readonly missionService: MissionService) {}

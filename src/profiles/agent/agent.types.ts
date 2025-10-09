@@ -1,4 +1,4 @@
-import { Operator } from '../operator/operator.types.js';
+import { Operator } from '../../users/operator/operator.types.js';
 
 /**
  * Agent Type Enum

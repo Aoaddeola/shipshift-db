@@ -9,9 +9,10 @@ export enum StepState {
   COMPLETED,
   DELEGATED,
   FULFILLED,
+  CLAIMED,
   CANCELLED,
   REJECTED,
-  CLAIMED,
+  ACCEPTED,
 }
 
 /**

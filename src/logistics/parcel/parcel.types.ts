@@ -1,3 +1,4 @@
+import { User } from '../../users/user/user.types.js';
 import { Currency } from '../../common/currency/currency.types.js';
 
 /**
@@ -21,7 +22,7 @@ export interface ParcelHandlingInfo {
  */
 export interface Parcel {
   id: string;
-  customerId: string;
+  ownerId: string;
   name: string;
   description: string;
   quantity: number;
@@ -29,6 +30,7 @@ export interface Parcel {
   image?: string;
   handlingInfo: ParcelHandlingInfo;
   currency?: Currency;
+  owner?: User;
   createdAt?: string;
   updatedAt?: string;
 }

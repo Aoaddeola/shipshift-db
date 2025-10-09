@@ -1,5 +1,5 @@
 import { Location } from '../../common/location/location.types.js';
-import { Agent } from '../../users/agent/agent.types.js';
+import { Agent } from '../../profiles/agent/agent.types.js';
 import { ParcelHandlingInfo } from '../parcel/parcel.types.js';
 
 /**

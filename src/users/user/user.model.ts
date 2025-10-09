@@ -12,6 +12,7 @@ import {
   Unique,
   AllowNull,
 } from 'sequelize-typescript';
+import { UserType } from './user.types.js';
 
 @Table({
   tableName: 'users',
@@ -42,6 +43,12 @@ export class User extends Model {
   @Default(false)
   @Column(DataType.BOOLEAN)
   isVerified: boolean;
+
+  @Column({
+    type: DataType.ENUM('customer', 'agent'),
+    defaultValue: 'customer',
+  })
+  userType: UserType;
 
   @CreatedAt
   createdAt: Date;

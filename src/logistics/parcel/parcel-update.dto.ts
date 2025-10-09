@@ -59,6 +59,14 @@ export class ParcelUpdateDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
+    example: 'user-456',
+    description: 'Updated owner ID of the parcel',
+  })
+  ownerId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
     example: 'Updated Laptop Name',
     description: 'Updated name of the parcel',
   })
