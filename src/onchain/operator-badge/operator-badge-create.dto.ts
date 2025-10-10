@@ -11,6 +11,13 @@ export class OperatorBadgeCreateDto
   implements Omit<OperatorBadge, 'id' | 'createdAt' | 'updatedAt'>
 {
   @IsString()
+  @ApiProperty({
+    example: 'operator-id',
+    description: 'operator id',
+  })
+  operatorId: string;
+
+  @IsString()
   @IsNotEmpty()
   // @Matches(ADDRESS_REGEX, {
   //   message: 'Step address must be a valid Cardano address',

@@ -29,6 +29,7 @@ import { UserAuthModule } from './auth/users/auth.module.js';
 import { CustomerModule } from './profiles/customer/customer.module.js';
 import { AgentModule } from './profiles/agent/agent.module.js';
 import { PlanningModule } from './planning/planning.module.js';
+import { CacheModule } from './cache/cache.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,7 @@ const __dirname = path.dirname(__filename);
     }),
     ScheduleModule.forRoot(),
     OrbitDBRootModule,
+    CacheModule,
 
     // Auth
     AuthModule,

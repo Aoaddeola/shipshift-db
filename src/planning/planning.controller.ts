@@ -19,6 +19,7 @@ export class PlanningController {
     @Body() planJourneyRequestDto: PlanJourneyRequestDto,
   ): Promise<PlanJourneyResponseDto> {
     try {
+      console.log('00000000000000000000000', planJourneyRequestDto);
       return await this.planningService.planJourney(planJourneyRequestDto);
     } catch (error) {
       throw new HttpException(

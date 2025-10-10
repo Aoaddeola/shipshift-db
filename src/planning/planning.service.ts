@@ -28,6 +28,7 @@ export class PlanningService {
     const endLocation = await this.locationsService.getLocation(
       request.endLocationId,
     );
+    console.log('111111111111111111111', startLocation, endLocation);
 
     if (!startLocation || !endLocation) {
       return new PlanJourneyResponseDto({
@@ -40,10 +41,12 @@ export class PlanningService {
         message: 'Start or end location not found',
       });
     }
+    console.log('222222222222222222222222', startLocation, endLocation);
 
     const activeJourneys = await this.journeysService.getJourneysByStatus(
       'available' as JourneyStatus,
     );
+    // console.log('3333333333333333333333 activeJourneys', activeJourneys);
 
     if (activeJourneys.length === 0) {
       return new PlanJourneyResponseDto({
@@ -66,6 +69,7 @@ export class PlanningService {
       request.beta,
       request.gamma,
     );
+    console.log('4444444444444444444444', path, totalCost);
 
     if (!path) {
       return new PlanJourneyResponseDto({
