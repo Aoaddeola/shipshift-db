@@ -1,72 +1,68 @@
-import {
-  IsString,
-  IsDate,
-  IsEnum,
-  ValidateNested,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsDateString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { LocationUpdateDto } from '../../common/location/location-update.dto.js';
 import { ShipmentStatus } from './shipment.types.js';
 
 export class ShipmentUpdateDto {
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ example: 'customer-456' })
+  @ApiPropertyOptional({
+    example: 'customer-456',
+    description: 'Updated sender ID (customer)',
+  })
   senderId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ example: 'parcel-789' })
+  @ApiPropertyOptional({
+    example: 'parcel-789',
+    description: 'Updated parcel ID',
+  })
   parcelId?: string;
 
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
     example: '2',
-    description: 'Updated quantity as string',
+    description: 'Updated quantity (as string)',
   })
   quantity?: string;
 
-  @IsDate()
+  @IsDateString()
   @IsOptional()
   @ApiPropertyOptional({
     example: '2025-04-02T09:00:00Z',
-    description: 'Updated pickup date',
+    description: 'Updated pickup date and time (ISO 8601)',
   })
   pickupDate?: string;
 
-  @IsDate()
+  @IsDateString()
   @IsOptional()
   @ApiPropertyOptional({
     example: '2025-04-06T17:00:00Z',
-    description: 'Updated ETA date',
+    description: 'Updated estimated time of arrival (ISO 8601)',
   })
   etaDate?: string;
-
-  @ValidateNested()
-  @Type(() => LocationUpdateDto)
-  @IsOptional()
-  @ApiPropertyOptional({
-    type: LocationUpdateDto,
-    description: 'Updated from location details',
-  })
-  fromLocation?: LocationUpdateDto;
-
-  @ValidateNested()
-  @Type(() => LocationUpdateDto)
-  @IsOptional()
-  @ApiPropertyOptional({
-    type: LocationUpdateDto,
-    description: 'Updated to location details',
-  })
-  toLocation?: LocationUpdateDto;
 
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'mission-345',
+    example: 'location-111',
+    description: 'Updated pickup location ID',
+  })
+  fromLocationId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'location-222',
+    description: 'Updated delivery location ID',
+  })
+  toLocationId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'mission-333',
     description: 'Updated mission ID',
   })
   missionId?: string;
@@ -74,7 +70,7 @@ export class ShipmentUpdateDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'journey-678',
+    example: 'journey-444',
     description: 'Updated journey ID',
   })
   journeyId?: string;

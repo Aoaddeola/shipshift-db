@@ -6,7 +6,7 @@ import { JourneyPlannerAlgorithm } from './algorithms/journey-planner.algorithm.
 import { PlanJourneyRequestDto } from './plan-journey-request.dto.js';
 import { PlanJourneyResponseDto } from './plan-journey-response.dto.js';
 import { LocationService } from '../common/location/location.service.js';
-import { JourneyStatus } from 'src/types.js';
+import { JourneyStatus } from '../logistics/journey/journey.types.js';
 
 @Injectable()
 export class PlanningService {

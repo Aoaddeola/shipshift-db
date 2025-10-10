@@ -1,13 +1,10 @@
 import {
   IsString,
   IsNotEmpty,
-  MinLength,
-  MaxLength,
-  IsNumber,
-  Min,
   IsBoolean,
   IsEnum,
-  IsOptional,
+  MinLength,
+  MaxLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
@@ -35,14 +32,13 @@ export class AgentCreateDto
   })
   operatorId: string;
 
-  @IsNumber()
-  @Min(0.001)
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({
-    example: 50,
-    description: 'Maximum weight the agent can carry (in kg)',
-    minimum: 0.001,
+    example: 'user-123',
+    description: 'ID of the owner',
   })
-  weightLimit: number;
+  ownerId: string;
 
   @IsBoolean()
   @ApiProperty({
@@ -53,7 +49,6 @@ export class AgentCreateDto
   openToDestinationsOutOfScope: boolean;
 
   @IsEnum(ConveyanceMeans)
-  @IsOptional()
   @ApiProperty({
     enum: ConveyanceMeans,
     example: ConveyanceMeans.Car,

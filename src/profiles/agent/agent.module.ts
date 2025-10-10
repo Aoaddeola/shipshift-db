@@ -4,6 +4,7 @@ import { AgentController } from './agent.controller.js';
 import { AgentService } from './agent.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
 import { OperatorModule } from '../../users/operator/operator.module.js';
+import { UserModule } from '../../users/user/user.module.js';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { OperatorModule } from '../../users/operator/operator.module.js';
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
     OperatorModule,
+    UserModule,
   ],
   controllers: [AgentController],
   providers: [AgentService],

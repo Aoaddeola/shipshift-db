@@ -24,11 +24,13 @@ export interface Shipment {
   quantity: string;
   pickupDate: string; // ISO 8601 date string
   etaDate: string; // ISO 8601 date string
-  fromLocation: Omit<Location, 'id'>;
-  toLocation: Omit<Location, 'id'>;
+  fromLocationId: string;
+  toLocationId: string;
   missionId?: string;
   journeyId?: string;
   status: ShipmentStatus;
+  fromLocation?: Location;
+  toLocation?: Location;
   mission?: Mission; // Embedded mission
   parcel?: Parcel; // Embedded parcel
   journey?: Journey; // Embedded journey

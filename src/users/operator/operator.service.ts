@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
 import { Operator } from './operator.types.js';
 import { Database } from '../../orbitdb/database.js';
@@ -41,7 +47,7 @@ export class OperatorService {
   async getOperator(id: string, include?: string[]): Promise<Operator> {
     const entry = await this.database.get(id);
     if (!entry) {
-      throw new NotFoundException('Operator not found');
+      throw new UnprocessableEntityException('Operator not found');
     }
 
     return this.populateRelations(entry, include);

@@ -309,7 +309,7 @@ export class UserService {
    */
   async updateProfile(
     userId: string,
-    updates: Partial<Pick<User, 'name' | 'avatar'>>,
+    updates: Partial<Pick<User, 'name' | 'avatar' | 'userType'>>,
   ): Promise<User | null> {
     const user = await this.findById(userId);
     if (!user) {
@@ -475,16 +475,19 @@ export class UserService {
   }
 
   async update(id: string, user: Partial<User>): Promise<User> {
-    const [affectedCount, [updatedUser]] = await this.userModel.update(user, {
+    console.log('0000000000000000000', user);
+    const [affectedCount, updatedUser] = await this.userModel.update(user, {
       where: { id },
       returning: true,
     });
+    console.log('44444444444444444444444444444', affectedCount, updatedUser);
 
     if (affectedCount === 0) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+    console.log('1111111111111111111111111', user);
 
-    return updatedUser;
+    return updatedUser[0] ?? '';
   }
 
   async remove(id: string): Promise<void> {

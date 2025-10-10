@@ -4,8 +4,8 @@ import { Operator } from '../../users/operator/operator.types.js';
  * Agent Type Enum
  */
 export enum AgentType {
-  Business = 0,
-  Private,
+  Business = 'Business',
+  Private = 'Private',
 }
 
 /**
@@ -20,6 +20,7 @@ export enum ConveyanceMeans {
   Foot,
   Train,
   Drone,
+  None,
 }
 
 /**
@@ -29,7 +30,7 @@ export interface Agent {
   id: string;
   name: string;
   operatorId: string; // reference to Operator
-  weightLimit: number;
+  ownerId: string; // reference to Operator
   openToDestinationsOutOfScope: boolean; // Open to deliveries to locations that is not specificially listed by the agent
   meansOfConveyance: ConveyanceMeans;
   type: AgentType;

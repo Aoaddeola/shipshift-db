@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
+import { UserService } from '../../users/user/user.service.js';
 
 @Injectable()
 export class AgentService {
@@ -15,6 +16,8 @@ export class AgentService {
     @InjectDatabase('agent') private database: Database<Agent>,
     @Inject(OperatorService)
     private operatorService: OperatorService,
+    @Inject(UserService)
+    private userService: UserService,
   ) {}
 
   async createAgent(
@@ -23,15 +26,20 @@ export class AgentService {
     const id = randomUUID();
     const now = new Date().toISOString();
 
+    await this.operatorService.getOperator(agent.operatorId);
+
     this.logger.log(`Creating agent: ${id}`);
     const newAgent: Agent = {
+      ...agent,
       id,
       createdAt: now,
       updatedAt: now,
-      ...agent,
     };
 
     await this.database.put(newAgent);
+    await this.userService.update(newAgent.ownerId, {
+      userType: 'agent',
+    });
     return newAgent;
   }
 
