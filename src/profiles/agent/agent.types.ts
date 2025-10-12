@@ -1,4 +1,5 @@
 import { Operator } from '../../users/operator/operator.types.js';
+import { User } from '../../users/user/user.types.js';
 
 /**
  * Agent Type Enum
@@ -30,10 +31,11 @@ export interface Agent {
   id: string;
   name: string;
   operatorId: string; // reference to Operator
-  ownerId: string; // reference to Operator
+  ownerId: string; // reference to User
   openToDestinationsOutOfScope: boolean; // Open to deliveries to locations that is not specificially listed by the agent
   meansOfConveyance: ConveyanceMeans;
   type: AgentType;
+  owner?: User;
   operator?: Operator; // Embedded operator
   createdAt?: string;
   updatedAt?: string;

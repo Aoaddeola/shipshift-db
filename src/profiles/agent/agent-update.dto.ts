@@ -31,8 +31,8 @@ export class AgentUpdateDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'operator-456',
-    description: 'Updated operator ID',
+    example: 'user-789',
+    description: 'Updated owner ID',
   })
   ownerId?: string;
 
@@ -40,8 +40,7 @@ export class AgentUpdateDto {
   @IsOptional()
   @ApiPropertyOptional({
     example: false,
-    description:
-      'Whether the agent is open to destinations outside their listed scope',
+    description: 'Updated open to destinations out of scope',
   })
   openToDestinationsOutOfScope?: boolean;
 

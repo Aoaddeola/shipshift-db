@@ -10,7 +10,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
 
 export class AgentCreateDto
-  implements Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'operator'>
+  implements
+    Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'owner' | 'operator'>
 {
   @IsString()
   @IsNotEmpty()
@@ -35,8 +36,8 @@ export class AgentCreateDto
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    example: 'user-123',
-    description: 'ID of the owner',
+    example: 'user-456',
+    description: 'ID of the owner (user)',
   })
   ownerId: string;
 

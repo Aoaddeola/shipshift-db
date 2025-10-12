@@ -67,9 +67,13 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.getOperatorBadges();
   }
 
-  @Get('operator/:operatorId')
-  async getOperatorBadgesByOperatorId(@Param('operatorId') operatorId: string) {
-    return this.operatorBadgeService.getOperatorBadgesByOperatorId(operatorId);
+  @Get('wallet-address/:walletAddress')
+  async getOperatorBadgesByWalletAddress(
+    @Param('walletAddress') walletAddress: string,
+  ) {
+    return this.operatorBadgeService.getOperatorBadgesByWalletAddress(
+      walletAddress,
+    );
   }
 
   @Get('step-address/:stepAddress')

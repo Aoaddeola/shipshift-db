@@ -92,11 +92,11 @@ export class OperatorBadgeService {
     return all.filter((badge) => badge.stepAddress === stepAddress);
   }
 
-  async getOperatorBadgesByOperatorId(
-    operatorId: string,
+  async getOperatorBadgesByWalletAddress(
+    opWalletAddress: string,
   ): Promise<OperatorBadge[]> {
     const all = await this.database.all();
-    return all.filter((badge) => badge.operatorId === operatorId);
+    return all.filter((badge) => badge.opWalletAddress === opWalletAddress);
   }
 
   async getOperatorBadgesByOpWalletAddress(

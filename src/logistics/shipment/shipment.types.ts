@@ -9,6 +9,7 @@ import { Location } from '../../common/location/location.types.js';
  */
 export enum ShipmentStatus {
   PENDING = 'pending',
+  INITIALIZED = 'initialized',
   IN_TRANSIT = 'in-transit',
   DELIVERED = 'delivered',
   FAILED = 'failed',
