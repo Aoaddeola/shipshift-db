@@ -69,8 +69,8 @@ export class AppBootstrap {
     );
 
     this.setupSwagger(app);
-    await app.listen(appConfig.port);
-    console.log(`✅ Application started on port ${appConfig.port}`);
+    await app.listen(process.env.PORT);
+    console.log(`✅ Application started on port ${process.env.PORT}`);
   }
 
   private setupSwagger(app: INestApplication): void {

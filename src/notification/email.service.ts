@@ -48,25 +48,25 @@ export class EmailService {
 
   constructor(private configService: ConfigService) {
     this.fromEmail =
-      this.configService.get('EMAIL_FROM') || 'noreply@yourapp.com';
-    this.appName = this.configService.get('APP_NAME') || 'Your App';
+      process.env.EMAIL_FROM || 'noreply@yourapp.com';
+    this.appName = process.env.APP_NAME || 'Your App';
     this.baseUrl =
-      this.configService.get('BASE_URL') || 'http://localhost:3000';
+      process.env.BASE_URL || 'http://localhost:3000';
 
     this.initializeTransporter();
   }
 
   private initializeTransporter() {
-    const host = this.configService.get('EMAIL_HOST') || process.env.EMAIL_HOST;
+     const host = process.env.EMAIL_HOST || this.configService.get('EMAIL_HOST');
     const port = parseInt(
-      this.configService.get('EMAIL_PORT') || process.env.EMAIL_PORT!,
+       process.env.EMAIL_PORT! || this.configService.get('EMAIL_PORT')!,
     );
-    const secure = this.configService.get('EMAIL_SECURE') === 'true';
+    const secure = process.env.EMAIL_SECURE! || this.configService.get('EMAIL_SECURE');
     const user =
-      this.configService.get('EMAIL_USER') || process.env.EMAIL_USER!;
+       process.env.EMAIL_USER! || this.configService.get('EMAIL_USER');
     const pass =
-      this.configService.get('EMAIL_PASS') || process.env.EMAIL_PASS!;
-
+       process.env.EMAIL_PASS! || this.configService.get('EMAIL_PASS');
+    
     // For development without SMTP credentials
     if (!host || !user || !pass) {
       this.logger.warn(
@@ -77,12 +77,17 @@ export class EmailService {
     }
 
     this.transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
+      host: host,
+      port: port,
+      secure: false, // === 465, // true for 465, false for other ports
       auth: {
-        user,
-        pass,
+        user: user,
+        pass: pass,
+      },
+      logger: true,
+      debug: true,
+      tls: {
+        rejectUnauthorized: false, // sometimes needed for self-signed certs
       },
     } as nodemailer.TransportOptions);
 
@@ -233,6 +238,8 @@ export class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
+
+      console.log("result", result)
 
       this.logger.log(`Email sent successfully to ${to}`);
       this.logger.debug(`Message ID: ${result.messageId}`);
