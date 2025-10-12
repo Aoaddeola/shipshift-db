@@ -110,7 +110,7 @@ export const appConfigSchema = z.object({
   appName: z.string().default('ShipShift'),
   baseUrl: z.string().default('http://localhost:3001'),
   nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
-  port: z.number().int().positive().default(3004),
+  port: z.number().int().positive().default(3003),
   runMode: z.enum(['node', 'bootstrap']).default('node'),
   ipfs: ipfsSchema.default({}),
   orbitdb: orbitdbSchema.default({}),
