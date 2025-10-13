@@ -1,3 +1,10 @@
+import { Shipment } from '../../logistics/shipment/shipment.types.js';
+import { ColonyNode } from '../colony-node/colony-node.types.js';
+import { Journey } from '../../logistics/journey/journey.types.js';
+import { Operator } from '../../users/operator/operator.types.js';
+import { User } from '../../users/user/user.types.js';
+import { Agent } from '../../profiles/agent/agent.types.js';
+
 /**
  * Step State Enum (numeric values)
  */
@@ -13,6 +20,42 @@ export enum StepState {
   CANCELLED,
   REJECTED,
   ACCEPTED,
+  REFUNDED,
+}
+
+/**
+ * Wallet Address Type
+ */
+export type WalletAddress = string;
+
+/**
+ * Minting Policy ID Type
+ */
+export type MintingPolicyId = string;
+
+/**
+ * Requester Type
+ */
+export type Requester = [WalletAddress, MintingPolicyId | undefined];
+
+/**
+ * Performer Type
+ */
+export type Performer = [WalletAddress, MintingPolicyId];
+
+/**
+ * Step OnChain Interface
+ */
+export interface StepOnChain {
+  spCost: number;
+  spDelegate?: WalletAddress;
+  spETA?: string; // ISO 8601 date string
+  spHolder?: WalletAddress;
+  spPerformer: Performer;
+  spRecipient?: WalletAddress;
+  spRequester: Requester;
+  spStartTime?: string; // ISO 8601 date string
+  spTxOutRef?: string;
 }
 
 /**
@@ -25,22 +68,16 @@ export interface Step {
   shipmentId: string;
   journeyId: string;
   operatorId: string;
+  colonyId: string;
+  agentId: string;
+  senderId: string;
   state: StepState;
+  shipment?: Shipment; // Embedded shipment
+  journey?: Journey; // Embedded journey
+  operator?: Operator; // Embedded operator
+  colony?: ColonyNode; // Embedded colony node
+  sender?: User; // Embedded colony node
+  agent?: Agent; // Embedded colony node
   createdAt?: string;
   updatedAt?: string;
-}
-
-type WalletAddress = string;
-type MintingPolicyId = string;
-
-interface StepOnChain {
-  spCost: number;
-  spDelegate: WalletAddress;
-  spETA: string; // ISO 8601 date string
-  spHolder: WalletAddress;
-  spPerformer: [WalletAddress, MintingPolicyId];
-  spRecipient: WalletAddress;
-  spRequester: [WalletAddress, MintingPolicyId];
-  spStartTime: string; // ISO 8601 date string
-  spTxOutRef: string;
 }
