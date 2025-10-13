@@ -86,12 +86,13 @@ export class OperatorService {
     const filteredOperators = await Promise.all(
       all.map(async (operator) => {
         const opBadge =
-          await this.operatorBadgeService.getOperatorBadgesByOpWalletAddress(
-            operator.onchain.opAddr,
-          );
-        return opBadge.length === 0 ? operator : null;
+        await this.operatorBadgeService.getOperatorBadgesByOpWalletAddress(
+          operator.onchain.opAddr,
+        );
+        return opBadge.length !== 0 ? operator : null;
       }),
     );
+
 
     // Filter out null values and populate relations
     return Promise.all(
