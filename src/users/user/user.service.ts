@@ -528,7 +528,7 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const verificationUrl = `${process.env.BASE_URL}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.BASE_URL}/web2/auth/verify-email?token=${verificationToken}`;
 
     await this.emailService.sendVerificationEmail(user.email, {
       name: user.name,
@@ -546,7 +546,7 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const loginUrl = `${process.env.BASE_URL}/auth`;
+    const loginUrl = `${process.env.BASE_URL}/web2/auth`;
 
     await this.emailService.sendWelcomeEmail(user.email, {
       name: user.name,
@@ -567,7 +567,7 @@ export class UserService {
       return;
     }
 
-    const resetUrl = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.BASE_URL}/web2/auth/reset-password?token=${resetToken}`;
 
     await this.emailService.sendPasswordResetEmail(user.email, {
       name: user.name,
@@ -585,7 +585,7 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const loginUrl = `${process.env.BASE_URL}/login`;
+    const loginUrl = `${process.env.BASE_URL}/web2/auth`;
     const timestamp = new Date().toLocaleString();
 
     await this.emailService.sendPasswordChangedEmail(user.email, {

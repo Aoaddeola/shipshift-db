@@ -58,6 +58,21 @@ export class AppBootstrap {
     process.env.PORT = process.env.HTTPS_PORT || appConfig.port.toString();
 
     const app = await NestFactory.create(AppModule);
+    
+    // Updated CORS configuration with more headers
+    app.enableCors({
+        origin: process.env.BASE_URL || appConfig.baseUrl.toString(),
+        methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: [
+            'Content-Type', 
+            'Accept', 
+            'Authorization',
+            'Cache-Control',  // Add this
+            'Pragma',         // Add common cache headers
+            'If-Modified-Since'
+        ],
+        credentials: true
+    });
 
     // Enable validation
     app.useGlobalPipes(
@@ -71,7 +86,7 @@ export class AppBootstrap {
     this.setupSwagger(app);
     await app.listen(process.env.PORT);
     console.log(`✅ Application started on port ${process.env.PORT}`);
-  }
+}
 
   private setupSwagger(app: INestApplication): void {
     const swaggerConfig = new DocumentBuilder()
@@ -91,3 +106,4 @@ export class AppBootstrap {
     return validatedConfig;
   }
 }
+
