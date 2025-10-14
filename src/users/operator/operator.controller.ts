@@ -13,7 +13,6 @@ import {
 import { OperatorService } from './operator.service.js';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
-import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
 @Controller('operator')
@@ -75,7 +74,7 @@ export class OperatorController {
     return this.operatorService.getOperators(includeArray);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateOperator(
     @Param('id') id: string,
@@ -84,7 +83,7 @@ export class OperatorController {
     return this.operatorService.updateOperator(id, operator);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async partialUpdateOperator(
     @Param('id') id: string,
@@ -93,7 +92,7 @@ export class OperatorController {
     return this.operatorService.partialUpdateOperator(id, update);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteOperator(@Param('id') id: string) {
     return this.operatorService.deleteOperator(id);

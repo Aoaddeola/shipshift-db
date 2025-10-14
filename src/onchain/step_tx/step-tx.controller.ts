@@ -11,9 +11,9 @@ import {
 } from '@nestjs/common';
 import { StepTxService } from './step-tx.service.js';
 import { StepTxCreateDto } from './step-tx-create.dto.js';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('step-tx')
 export class StepTxController {
   constructor(private readonly stepTxService: StepTxService) {}
