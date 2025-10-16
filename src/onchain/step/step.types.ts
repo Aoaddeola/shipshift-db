@@ -3,7 +3,7 @@ import { ColonyNode } from '../colony-node/colony-node.types.js';
 import { Journey } from '../../logistics/journey/journey.types.js';
 import { Operator } from '../../users/operator/operator.types.js';
 import { User } from '../../users/user/user.types.js';
-import { Agent } from 'src/profiles/agent/agent.types.js';
+import { Agent } from '../../profiles/agent/agent.types.js';
 
 /**
  * Step State Enum (numeric values)

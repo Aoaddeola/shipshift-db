@@ -18,14 +18,14 @@ class CoordinatesDto {
     example: '-74.0060',
     description: 'Longitude coordinate',
   })
-  longitude: number;
+  longitude!: number;
 
   @IsLatitude()
   @ApiProperty({
     example: '40.7128',
     description: 'Latitude coordinate',
   })
-  latitude: number;
+  latitude!: number;
 }
 
 export class LocationCreateDto
@@ -37,7 +37,7 @@ export class LocationCreateDto
     example: 'user-123',
     description: 'ID of the owner of the location',
   })
-  ownerId: string;
+  ownerId!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -45,7 +45,7 @@ export class LocationCreateDto
     example: 'Home Address',
     description: 'Name of the location',
   })
-  name: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -53,7 +53,7 @@ export class LocationCreateDto
     example: '123 Main St',
     description: 'Street address',
   })
-  street: string;
+  street!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -61,7 +61,7 @@ export class LocationCreateDto
     example: 'New York',
     description: 'City name',
   })
-  city: string;
+  city!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -69,7 +69,7 @@ export class LocationCreateDto
     example: 'NY',
     description: 'State or region',
   })
-  state: string;
+  state!: string;
 
   @IsNumber()
   @IsOptional()
@@ -85,10 +85,10 @@ export class LocationCreateDto
     example: 'USA',
     description: 'Country name',
   })
-  country: string;
+  country!: string;
 
   @ValidateNested()
   @Type(() => CoordinatesDto)
   @ApiProperty({ type: CoordinatesDto })
-  coordinates: CoordinatesDto;
+  coordinates!: CoordinatesDto;
 }
