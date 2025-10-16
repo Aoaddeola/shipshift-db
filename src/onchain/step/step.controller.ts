@@ -39,6 +39,8 @@ export class StepController {
     @Query('senderId') senderId?: string,
     @Query('state') state?: StepState,
     @Query('include') include?: string,
+    @Query('recipientId') recipientId?: string,
+    @Query('holderId') holderId?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
 
@@ -333,6 +335,16 @@ export class StepController {
         state,
         includeArray,
       );
+    } else if (recipientId && holderId) {
+      return this.stepService.getStepsByRecipientAndHolder(
+        recipientId,
+        holderId,
+        includeArray,
+      );
+    } else if (recipientId) {
+      return this.stepService.getStepsByRecipient(recipientId, includeArray);
+    } else if (holderId) {
+      return this.stepService.getStepsByHolder(holderId, includeArray);
       // } else if (journeyId && operatorId && colonyId && senderId && state) {
       //   return this.stepService.getStepsByJourneyOperatorColonySenderAndState(
       //     journeyId,
@@ -1063,6 +1075,24 @@ export class StepController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.stepService.getStepsByOperator(operatorId, includeArray);
+  }
+
+  @Get('recipient/:recipientId')
+  async getStepsByRecipient(
+    @Param('recipientId') recipientId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.stepService.getStepsByRecipient(recipientId, includeArray);
+  }
+
+  @Get('holder/:holderId')
+  async getStepsByHolder(
+    @Param('holderId') holderId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.stepService.getStepsByHolder(holderId, includeArray);
   }
 
   @Get('colony/:colonyId')

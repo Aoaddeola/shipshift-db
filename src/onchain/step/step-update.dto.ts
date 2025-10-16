@@ -95,11 +95,7 @@ export class StepUpdateDto {
   @IsNumber()
   @Min(0)
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 1,
-    description: 'Updated index of the step in the journey',
-    minimum: 0,
-  })
+  @ApiPropertyOptional({ example: 1 })
   index?: number;
 
   @ValidateNested()
@@ -110,57 +106,46 @@ export class StepUpdateDto {
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'shipment-456',
-    description: 'Updated shipment ID',
-  })
+  @ApiPropertyOptional({ example: 'shipment-456' })
   shipmentId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'journey-789',
-    description: 'Updated journey ID',
-  })
+  @ApiPropertyOptional({ example: 'journey-789' })
   journeyId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'operator-012',
-    description: 'Updated operator ID',
-  })
+  @ApiPropertyOptional({ example: 'operator-012' })
   operatorId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'colony-node-345',
-    description: 'Updated colony node ID',
-  })
+  @ApiPropertyOptional({ example: 'colony-node-345' })
   colonyId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'agent-678',
-    description: 'Updated agent ID',
-  })
+  @ApiPropertyOptional({ example: 'agent-678' })
   agentId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({
-    example: 'sender-901',
-    description: 'Updated sender ID',
-  })
+  @ApiPropertyOptional({ example: 'sender-901' })
   senderId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'user-recipient-2' })
+  recipientId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'user-holder-2' })
+  holderId?: string;
 
   @IsEnum(StepState)
   @IsOptional()
-  @ApiPropertyOptional({
-    enum: StepState,
-    description: 'Updated state of the step',
-  })
+  @ApiPropertyOptional({ enum: StepState })
   state?: StepState;
 }

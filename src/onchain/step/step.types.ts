@@ -3,7 +3,7 @@ import { ColonyNode } from '../colony-node/colony-node.types.js';
 import { Journey } from '../../logistics/journey/journey.types.js';
 import { Operator } from '../../users/operator/operator.types.js';
 import { User } from '../../users/user/user.types.js';
-import { Agent } from '../../profiles/agent/agent.types.js';
+import { Agent } from 'src/profiles/agent/agent.types.js';
 
 /**
  * Step State Enum (numeric values)
@@ -21,6 +21,8 @@ export enum StepState {
   REJECTED,
   ACCEPTED,
   REFUNDED,
+  // HANDED_OVER, // New types
+  // RECEIVED,     // New types
 }
 
 /**
@@ -71,13 +73,17 @@ export interface Step {
   colonyId: string;
   agentId: string;
   senderId: string;
+  recipientId: string;
+  holderId: string;
   state: StepState;
-  shipment?: Shipment; // Embedded shipment
-  journey?: Journey; // Embedded journey
-  operator?: Operator; // Embedded operator
-  colony?: ColonyNode; // Embedded colony node
-  sender?: User; // Embedded colony node
-  agent?: Agent; // Embedded colony node
+  shipment?: Shipment;
+  journey?: Journey;
+  operator?: Operator;
+  colony?: ColonyNode;
+  agent?: Agent;
+  sender?: User; // Assuming sender is a User, not Agent
+  recipient?: User; // Optional embedded recipient
+  holder?: User; // Optional embedded holder
   createdAt?: string;
   updatedAt?: string;
 }

@@ -98,6 +98,10 @@ export class StepCreateDto
       | 'journey'
       | 'operator'
       | 'colony'
+      | 'agent'
+      | 'sender'
+      | 'recipient'
+      | 'holder'
     >
 {
   @IsNumber()
@@ -116,57 +120,45 @@ export class StepCreateDto
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'shipment-123',
-    description: 'ID of the shipment',
-  })
+  @ApiProperty({ example: 'shipment-123' })
   shipmentId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'journey-456',
-    description: 'ID of the journey',
-  })
+  @ApiProperty({ example: 'journey-456' })
   journeyId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'operator-789',
-    description: 'ID of the operator',
-  })
+  @ApiProperty({ example: 'operator-789' })
   operatorId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'colony-node-012',
-    description: 'ID of the colony node',
-  })
+  @ApiProperty({ example: 'colony-node-012' })
   colonyId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'agent-345',
-    description: 'ID of the agent',
-  })
+  @ApiProperty({ example: 'agent-345' })
   agentId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    example: 'sender-678',
-    description: 'ID of the sender',
-  })
+  @ApiProperty({ example: 'sender-678' })
   senderId: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'user-recipient' })
+  recipientId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ example: 'user-holder' })
+  holderId: string;
+
   @IsEnum(StepState)
-  @ApiProperty({
-    enum: StepState,
-    default: StepState.PENDING,
-    description: 'Current state of the step',
-  })
+  @ApiProperty({ enum: StepState, default: StepState.PENDING })
   state: StepState = StepState.PENDING;
 }

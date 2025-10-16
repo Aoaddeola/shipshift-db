@@ -358,6 +358,45 @@ export class StepService {
     );
   }
 
+  async getStepsByRecipientAndHolder(
+    recipientId: string,
+    holderId: string,
+    include?: string[],
+  ): Promise<Step[]> {
+    const all = await this.database.all();
+    const steps = all.filter(
+      (step) => step.recipientId === recipientId && step.holderId === holderId,
+    );
+
+    return Promise.all(
+      steps.map((step) => this.populateRelations(step, include)),
+    );
+  }
+
+  async getStepsByRecipient(
+    recipientId: string,
+    include?: string[],
+  ): Promise<Step[]> {
+    const all = await this.database.all();
+    const steps = all.filter((step) => step.recipientId === recipientId);
+
+    return Promise.all(
+      steps.map((step) => this.populateRelations(step, include)),
+    );
+  }
+
+  async getStepsByHolder(
+    holderId: string,
+    include?: string[],
+  ): Promise<Step[]> {
+    const all = await this.database.all();
+    const steps = all.filter((step) => step.holderId === holderId);
+
+    return Promise.all(
+      steps.map((step) => this.populateRelations(step, include)),
+    );
+  }
+
   async getStepsByOperatorAndState(
     operatorId: string,
     state: StepState,
@@ -2421,6 +2460,35 @@ export class StepService {
       }
     }
 
+    if (include?.includes('sender')) {
+      try {
+        const sender = await this.userService.findById(step.senderId);
+        if (sender) populatedStep.sender = sender;
+      } catch (e) {
+        this.logger.warn(`Could not fetch sender for ${step.senderId}`, e);
+      }
+    }
+
+    if (include?.includes('recipient')) {
+      try {
+        const recipient = await this.userService.findById(step.recipientId);
+        if (recipient) populatedStep.recipient = recipient;
+      } catch (e) {
+        this.logger.warn(
+          `Could not fetch recipient for ${step.recipientId}`,
+          e,
+        );
+      }
+    }
+
+    if (include?.includes('holder')) {
+      try {
+        const holder = await this.userService.findById(step.holderId);
+        if (holder) populatedStep.holder = holder;
+      } catch (e) {
+        this.logger.warn(`Could not fetch holder for ${step.holderId}`, e);
+      }
+    }
     return populatedStep;
   }
 
