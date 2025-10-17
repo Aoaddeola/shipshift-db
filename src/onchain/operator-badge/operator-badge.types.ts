@@ -3,6 +3,7 @@
  */
 export interface OperatorBadge {
   id: string;
+  opWalletAddress: string;
   stepAddress: string;
   treasuryAddress: string;
   operatorBadgeAddress: string;

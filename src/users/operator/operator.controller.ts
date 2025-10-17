@@ -8,10 +8,12 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { OperatorService } from './operator.service.js';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
 @Controller('operator')
 export class OperatorController {
@@ -22,6 +24,7 @@ export class OperatorController {
     return this.operatorService.createOperator(operator);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getOperator(
     @Param('id') id: string,
@@ -31,6 +34,7 @@ export class OperatorController {
     return this.operatorService.getOperator(id, includeArray);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('address/:opAddr')
   async getOperatorByAddress(
     @Param('opAddr') opAddr: string,
@@ -40,6 +44,7 @@ export class OperatorController {
     return this.operatorService.getOperatorByAddress(opAddr, includeArray);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('colony-node/:colonyNodeId')
   async getOperatorsByColonyNode(
     @Param('colonyNodeId') colonyNodeId: string,
@@ -52,6 +57,7 @@ export class OperatorController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async getOperators(
     @Query('colonyNodeId') colonyNodeId?: string,
@@ -68,6 +74,7 @@ export class OperatorController {
     return this.operatorService.getOperators(includeArray);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateOperator(
     @Param('id') id: string,
@@ -76,6 +83,7 @@ export class OperatorController {
     return this.operatorService.updateOperator(id, operator);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async partialUpdateOperator(
     @Param('id') id: string,
@@ -84,6 +92,7 @@ export class OperatorController {
     return this.operatorService.partialUpdateOperator(id, update);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteOperator(@Param('id') id: string) {
     return this.operatorService.deleteOperator(id);

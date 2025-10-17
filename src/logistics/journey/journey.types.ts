@@ -1,5 +1,5 @@
 import { Location } from '../../common/location/location.types.js';
-import { Agent } from '../../users/agent/agent.types.js';
+import { Agent } from '../../profiles/agent/agent.types.js';
 import { ParcelHandlingInfo } from '../parcel/parcel.types.js';
 
 /**
@@ -23,7 +23,7 @@ export interface Journey {
   availableFrom: string; // ISO 8601 date string
   availableTo: string; // ISO 8601 date string
   capacity: number; // packages or weight
-  price?: number; // optional agent fee
+  price: number; // optional agent fee
   status?: JourneyStatus; // added status field for completeness
   parcelHandlingInfo: ParcelHandlingInfo;
   agent?: Agent; // Embedded agent

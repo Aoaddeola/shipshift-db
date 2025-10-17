@@ -1,19 +1,17 @@
 import {
   IsString,
   IsNotEmpty,
-  MinLength,
-  MaxLength,
-  IsNumber,
-  Min,
   IsBoolean,
   IsEnum,
-  IsOptional,
+  MinLength,
+  MaxLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
 
 export class AgentCreateDto
-  implements Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'operator'>
+  implements
+    Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'owner' | 'operator'>
 {
   @IsString()
   @IsNotEmpty()
@@ -35,14 +33,13 @@ export class AgentCreateDto
   })
   operatorId: string;
 
-  @IsNumber()
-  @Min(0.001)
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({
-    example: 50,
-    description: 'Maximum weight the agent can carry (in kg)',
-    minimum: 0.001,
+    example: 'user-456',
+    description: 'ID of the owner (user)',
   })
-  weightLimit: number;
+  ownerId: string;
 
   @IsBoolean()
   @ApiProperty({
@@ -53,7 +50,6 @@ export class AgentCreateDto
   openToDestinationsOutOfScope: boolean;
 
   @IsEnum(ConveyanceMeans)
-  @IsOptional()
   @ApiProperty({
     enum: ConveyanceMeans,
     example: ConveyanceMeans.Car,

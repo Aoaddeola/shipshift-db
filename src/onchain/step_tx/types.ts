@@ -1,17 +1,4 @@
-/**
- * Step State Enum
- */
-export enum StepState {
-  PENDING = 'PENDING',
-  INITIALIZED = 'INITIALIZED',
-  COMMITTED = 'COMMITTED',
-  COMMENCED = 'COMMENCED',
-  DELEGATED = 'DELEGATED',
-  FULFILLED = 'FULFILLED',
-  CANCELLED = 'CANCELLED',
-  REJECTED = 'REJECTED',
-  CLAIMED = 'CLAIMED',
-}
+import { StepState } from '../step/step.types.js';
 
 /**
  * Step Transaction Database Entry Interface

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Body,
   Controller,
@@ -36,6 +37,8 @@ export class ShipmentController {
   async getShipments(
     @Query('senderId') senderId?: string,
     @Query('parcelId') parcelId?: string,
+    @Query('fromLocationId') fromLocationId?: string,
+    @Query('toLocationId') toLocationId?: string,
     @Query('missionId') missionId?: string,
     @Query('journeyId') journeyId?: string,
     @Query('status') status?: ShipmentStatus,
@@ -43,67 +46,35 @@ export class ShipmentController {
   ) {
     const includeArray = include ? include.split(',') : [];
 
-    if (senderId && parcelId && missionId && journeyId && status) {
+    if (senderId && parcelId && fromLocationId && toLocationId && status) {
       return this.shipmentService.getShipmentsByAllFilters(
         senderId,
         parcelId,
-        missionId,
-        journeyId,
+        fromLocationId,
+        toLocationId,
         status,
         includeArray,
       );
-    } else if (senderId && parcelId && missionId && journeyId) {
-      return this.shipmentService.getShipmentsBySenderParcelMissionAndJourney(
+    } else if (senderId && parcelId && fromLocationId && toLocationId) {
+      return this.shipmentService.getShipmentsBySenderParcelAndLocations(
         senderId,
         parcelId,
-        missionId,
-        journeyId,
+        fromLocationId,
+        toLocationId,
         includeArray,
       );
-    } else if (senderId && parcelId && missionId && status) {
-      return this.shipmentService.getShipmentsBySenderParcelMissionAndStatus(
+    } else if (senderId && parcelId && fromLocationId) {
+      return this.shipmentService.getShipmentsBySenderParcelAndFromLocation(
         senderId,
         parcelId,
-        missionId,
-        status,
+        fromLocationId,
         includeArray,
       );
-    } else if (senderId && parcelId && journeyId && status) {
-      return this.shipmentService.getShipmentsBySenderParcelJourneyAndStatus(
+    } else if (senderId && parcelId && toLocationId) {
+      return this.shipmentService.getShipmentsBySenderParcelAndToLocation(
         senderId,
         parcelId,
-        journeyId,
-        status,
-        includeArray,
-      );
-    } else if (senderId && missionId && journeyId && status) {
-      return this.shipmentService.getShipmentsBySenderMissionJourneyAndStatus(
-        senderId,
-        missionId,
-        journeyId,
-        status,
-        includeArray,
-      );
-    } else if (parcelId && missionId && journeyId && status) {
-      return this.shipmentService.getShipmentsByParcelMissionJourneyAndStatus(
-        parcelId,
-        missionId,
-        journeyId,
-        status,
-        includeArray,
-      );
-    } else if (senderId && parcelId && missionId) {
-      return this.shipmentService.getShipmentsBySenderParcelAndMission(
-        senderId,
-        parcelId,
-        missionId,
-        includeArray,
-      );
-    } else if (senderId && parcelId && journeyId) {
-      return this.shipmentService.getShipmentsBySenderParcelAndJourney(
-        senderId,
-        parcelId,
-        journeyId,
+        toLocationId,
         includeArray,
       );
     } else if (senderId && parcelId && status) {
@@ -113,52 +84,52 @@ export class ShipmentController {
         status,
         includeArray,
       );
-    } else if (senderId && missionId && journeyId) {
-      return this.shipmentService.getShipmentsBySenderMissionAndJourney(
+    } else if (senderId && fromLocationId && toLocationId) {
+      return this.shipmentService.getShipmentsBySenderAndLocations(
         senderId,
-        missionId,
-        journeyId,
+        fromLocationId,
+        toLocationId,
         includeArray,
       );
-    } else if (senderId && missionId && status) {
-      return this.shipmentService.getShipmentsBySenderMissionAndStatus(
+    } else if (senderId && fromLocationId && status) {
+      return this.shipmentService.getShipmentsBySenderFromLocationAndStatus(
         senderId,
-        missionId,
+        fromLocationId,
         status,
         includeArray,
       );
-    } else if (senderId && journeyId && status) {
-      return this.shipmentService.getShipmentsBySenderJourneyAndStatus(
+    } else if (senderId && toLocationId && status) {
+      return this.shipmentService.getShipmentsBySenderToLocationAndStatus(
         senderId,
-        journeyId,
+        toLocationId,
         status,
         includeArray,
       );
-    } else if (parcelId && missionId && journeyId) {
-      return this.shipmentService.getShipmentsByParcelMissionAndJourney(
+    } else if (parcelId && fromLocationId && toLocationId) {
+      return this.shipmentService.getShipmentsByParcelAndLocations(
         parcelId,
-        missionId,
-        journeyId,
+        fromLocationId,
+        toLocationId,
         includeArray,
       );
-    } else if (parcelId && missionId && status) {
-      return this.shipmentService.getShipmentsByParcelMissionAndStatus(
+    } else if (parcelId && fromLocationId && status) {
+      return this.shipmentService.getShipmentsByParcelFromLocationAndStatus(
         parcelId,
-        missionId,
+        fromLocationId,
         status,
         includeArray,
       );
-    } else if (parcelId && journeyId && status) {
-      return this.shipmentService.getShipmentsByParcelJourneyAndStatus(
+    } else if (parcelId && toLocationId && status) {
+      return this.shipmentService.getShipmentsByParcelToLocationAndStatus(
         parcelId,
-        journeyId,
+        toLocationId,
         status,
         includeArray,
       );
-    } else if (missionId && journeyId && status) {
-      return this.shipmentService.getShipmentsByMissionJourneyAndStatus(
-        missionId,
-        journeyId,
+    } else if (fromLocationId && toLocationId && status) {
+      return this.shipmentService.getShipmentsByLocationsAndStatus(
+        fromLocationId,
+        toLocationId,
         status,
         includeArray,
       );
@@ -168,16 +139,16 @@ export class ShipmentController {
         parcelId,
         includeArray,
       );
-    } else if (senderId && missionId) {
-      return this.shipmentService.getShipmentsBySenderAndMission(
+    } else if (senderId && fromLocationId) {
+      return this.shipmentService.getShipmentsBySenderAndFromLocation(
         senderId,
-        missionId,
+        fromLocationId,
         includeArray,
       );
-    } else if (senderId && journeyId) {
-      return this.shipmentService.getShipmentsBySenderAndJourney(
+    } else if (senderId && toLocationId) {
+      return this.shipmentService.getShipmentsBySenderAndToLocation(
         senderId,
-        journeyId,
+        toLocationId,
         includeArray,
       );
     } else if (senderId && status) {
@@ -186,16 +157,16 @@ export class ShipmentController {
         status,
         includeArray,
       );
-    } else if (parcelId && missionId) {
-      return this.shipmentService.getShipmentsByParcelAndMission(
+    } else if (parcelId && fromLocationId) {
+      return this.shipmentService.getShipmentsByParcelAndFromLocation(
         parcelId,
-        missionId,
+        fromLocationId,
         includeArray,
       );
-    } else if (parcelId && journeyId) {
-      return this.shipmentService.getShipmentsByParcelAndJourney(
+    } else if (parcelId && toLocationId) {
+      return this.shipmentService.getShipmentsByParcelAndToLocation(
         parcelId,
-        journeyId,
+        toLocationId,
         includeArray,
       );
     } else if (parcelId && status) {
@@ -204,21 +175,21 @@ export class ShipmentController {
         status,
         includeArray,
       );
-    } else if (missionId && journeyId) {
-      return this.shipmentService.getShipmentsByMissionAndJourney(
-        missionId,
-        journeyId,
+    } else if (fromLocationId && toLocationId) {
+      return this.shipmentService.getShipmentsByLocations(
+        fromLocationId,
+        toLocationId,
         includeArray,
       );
-    } else if (missionId && status) {
-      return this.shipmentService.getShipmentsByMissionAndStatus(
-        missionId,
+    } else if (fromLocationId && status) {
+      return this.shipmentService.getShipmentsByFromLocationAndStatus(
+        fromLocationId,
         status,
         includeArray,
       );
-    } else if (journeyId && status) {
-      return this.shipmentService.getShipmentsByJourneyAndStatus(
-        journeyId,
+    } else if (toLocationId && status) {
+      return this.shipmentService.getShipmentsByToLocationAndStatus(
+        toLocationId,
         status,
         includeArray,
       );
@@ -226,6 +197,16 @@ export class ShipmentController {
       return this.shipmentService.getShipmentsBySender(senderId, includeArray);
     } else if (parcelId) {
       return this.shipmentService.getShipmentsByParcel(parcelId, includeArray);
+    } else if (fromLocationId) {
+      return this.shipmentService.getShipmentsByFromLocation(
+        fromLocationId,
+        includeArray,
+      );
+    } else if (toLocationId) {
+      return this.shipmentService.getShipmentsByToLocation(
+        toLocationId,
+        includeArray,
+      );
     } else if (missionId) {
       return this.shipmentService.getShipmentsByMission(
         missionId,
@@ -258,6 +239,30 @@ export class ShipmentController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.shipmentService.getShipmentsByParcel(parcelId, includeArray);
+  }
+
+  @Get('from/:fromLocationId')
+  async getShipmentsByFromLocation(
+    @Param('fromLocationId') fromLocationId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsByFromLocation(
+      fromLocationId,
+      includeArray,
+    );
+  }
+
+  @Get('to/:toLocationId')
+  async getShipmentsByToLocation(
+    @Param('toLocationId') toLocationId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.shipmentService.getShipmentsByToLocation(
+      toLocationId,
+      includeArray,
+    );
   }
 
   @Get('mission/:missionId')

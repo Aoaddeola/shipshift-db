@@ -1,12 +1,10 @@
 import {
   IsString,
+  IsBoolean,
+  IsEnum,
   IsOptional,
   MinLength,
   MaxLength,
-  IsNumber,
-  Min,
-  IsBoolean,
-  IsEnum,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { AgentType, ConveyanceMeans } from './agent.types.js';
@@ -30,22 +28,19 @@ export class AgentUpdateDto {
   })
   operatorId?: string;
 
-  @IsNumber()
-  @Min(0.001)
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 75,
-    description: 'Updated maximum weight the agent can carry (in kg)',
-    minimum: 0.001,
+    example: 'user-789',
+    description: 'Updated owner ID',
   })
-  weightLimit?: number;
+  ownerId?: string;
 
   @IsBoolean()
   @IsOptional()
   @ApiPropertyOptional({
     example: false,
-    description:
-      'Whether the agent is open to destinations outside their listed scope',
+    description: 'Updated open to destinations out of scope',
   })
   openToDestinationsOutOfScope?: boolean;
 

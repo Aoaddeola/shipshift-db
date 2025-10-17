@@ -8,10 +8,12 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { OperatorBadgeService } from './operator-badge.service.js';
 import { OperatorBadgeCreateDto } from './operator-badge-create.dto.js';
 import { OperatorBadgeUpdateDto } from './operator-badge-update.dto.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
 @Controller('operator-badge')
 export class OperatorBadgeController {
@@ -27,6 +29,7 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.getOperatorBadge(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateOperatorBadge(
     @Param('id') id: string,
@@ -35,6 +38,7 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.updateOperatorBadge(id, operatorBadge);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async partialUpdateOperatorBadge(
     @Param('id') id: string,
@@ -63,6 +67,15 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.getOperatorBadges();
   }
 
+  @Get('wallet-address/:walletAddress')
+  async getOperatorBadgesByWalletAddress(
+    @Param('walletAddress') walletAddress: string,
+  ) {
+    return this.operatorBadgeService.getOperatorBadgesByWalletAddress(
+      walletAddress,
+    );
+  }
+
   @Get('step-address/:stepAddress')
   async getOperatorBadgesByStepAddress(
     @Param('stepAddress') stepAddress: string,
@@ -72,11 +85,13 @@ export class OperatorBadgeController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('policy/:policyId')
   async getOperatorBadgesByPolicy(@Param('policyId') policyId: string) {
     return this.operatorBadgeService.getOperatorBadgesByPolicy(policyId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteOperatorBadge(@Param('id') id: string) {
     return this.operatorBadgeService.deleteOperatorBadge(id);

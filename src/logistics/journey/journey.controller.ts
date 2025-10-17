@@ -8,12 +8,15 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JourneyService } from './journey.service.js';
 import { JourneyCreateDto } from './journey-create.dto.js';
 import { JourneyUpdateDto } from './journey-update.dto.js';
 import { JourneyStatus } from './journey.types.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('journey')
 export class JourneyController {
   constructor(private readonly journeyService: JourneyService) {}

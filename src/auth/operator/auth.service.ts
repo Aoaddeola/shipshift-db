@@ -2,7 +2,7 @@
 import { checkSignature, DataSignature, generateNonce } from '@meshsdk/core';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { OperatorService } from '../users/operator/operator.service.js';
+import { Operator } from '../../users/operator/operator.types.js';
 // import { checkSignature } from '@meshsdk/common';
 
 @Injectable()
@@ -10,10 +10,7 @@ export class AuthService {
   // In-memory storage for challenges (address -> challenge)
   private readonly challengeStore = new Map<string, string>();
 
-  constructor(
-    private readonly operatorService: OperatorService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   /**
    * Generates and stores a unique challenge for a wallet address
@@ -42,7 +39,9 @@ export class AuthService {
     try {
       // Verify using MeshJS [[meshjs.dev]]
       // eslint-disable-next-line prettier/prettier
-      const isValid = Promise.resolve(checkSignature(storedChallenge, signature, walletAddress))
+      const isValid = Promise.resolve(
+        checkSignature(storedChallenge, signature, walletAddress),
+      );
 
       if (await isValid) this.challengeStore.delete(walletAddress);
 
@@ -58,17 +57,12 @@ export class AuthService {
    * @param walletAddress - The wallet address to encode in the token
    * @returns Signed JWT token
    */
-  async generateToken(walletAddress: string) {
+  async generateToken(operator: Operator) {
     try {
-      const operator =
-        await this.operatorService.getOperatorByAddress(walletAddress);
-      console.log(
-        '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!OperatorAuth!!!!!!!!!!!!!!!',
-        operator,
-      );
       return this.jwtService.signAsync({
         sub: operator?.id,
-        address: operator?.onchain.opAddr,
+        walletAddress: operator?.onchain.opAddr,
+        userType: 'operator',
       });
     } catch (error) {
       console.error('User does not exist', error);

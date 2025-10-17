@@ -5,7 +5,8 @@ import { Database } from '../../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
-import { OperatorService } from '../operator/operator.service.js';
+import { UserService } from '../../users/user/user.service.js';
+import { OperatorService } from '../../users/operator/operator.service.js';
 
 @Injectable()
 export class AgentService {
@@ -15,10 +16,12 @@ export class AgentService {
     @InjectDatabase('agent') private database: Database<Agent>,
     @Inject(OperatorService)
     private operatorService: OperatorService,
+    @Inject(UserService)
+    private userService: UserService,
   ) {}
 
   async createAgent(
-    agent: Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'operator'>,
+    agent: Omit<Agent, 'id' | 'createdAt' | 'updatedAt' | 'owner' | 'operator'>,
   ): Promise<Agent> {
     const id = randomUUID();
     const now = new Date().toISOString();
@@ -26,12 +29,13 @@ export class AgentService {
     this.logger.log(`Creating agent: ${id}`);
     const newAgent: Agent = {
       id,
+      ...agent,
       createdAt: now,
       updatedAt: now,
-      ...agent,
     };
 
     await this.database.put(newAgent);
+    await this.userService.update(agent.ownerId, { userType: 'agent' });
     return newAgent;
   }
 
@@ -63,6 +67,18 @@ export class AgentService {
     );
   }
 
+  async getAgentsByOwner(
+    ownerId: string,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter((agent) => agent.ownerId === ownerId);
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
   async getAgentsByType(type: AgentType, include?: string[]): Promise<Agent[]> {
     const all = await this.database.all();
     const agents = all.filter((agent) => agent.type === type);
@@ -79,6 +95,21 @@ export class AgentService {
     const all = await this.database.all();
     const agents = all.filter(
       (agent) => agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperatorAndOwner(
+    operatorId: string,
+    ownerId: string,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) => agent.operatorId === operatorId && agent.ownerId === ownerId,
     );
 
     return Promise.all(
@@ -118,6 +149,37 @@ export class AgentService {
     );
   }
 
+  async getAgentsByOwnerAndType(
+    ownerId: string,
+    type: AgentType,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) => agent.ownerId === ownerId && agent.type === type,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOwnerAndConveyance(
+    ownerId: string,
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.ownerId === ownerId && agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
   async getAgentsByTypeAndConveyance(
     type: AgentType,
     conveyance: ConveyanceMeans,
@@ -126,6 +188,44 @@ export class AgentService {
     const all = await this.database.all();
     const agents = all.filter(
       (agent) => agent.type === type && agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperatorOwnerAndType(
+    operatorId: string,
+    ownerId: string,
+    type: AgentType,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.operatorId === operatorId &&
+        agent.ownerId === ownerId &&
+        agent.type === type,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOperatorOwnerAndConveyance(
+    operatorId: string,
+    ownerId: string,
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.operatorId === operatorId &&
+        agent.ownerId === ownerId &&
+        agent.meansOfConveyance === conveyance,
     );
 
     return Promise.all(
@@ -143,6 +243,46 @@ export class AgentService {
     const agents = all.filter(
       (agent) =>
         agent.operatorId === operatorId &&
+        agent.type === type &&
+        agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByOwnerTypeAndConveyance(
+    ownerId: string,
+    type: AgentType,
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.ownerId === ownerId &&
+        agent.type === type &&
+        agent.meansOfConveyance === conveyance,
+    );
+
+    return Promise.all(
+      agents.map((agent) => this.populateRelations(agent, include)),
+    );
+  }
+
+  async getAgentsByAllFilters(
+    operatorId: string,
+    ownerId: string,
+    type: AgentType,
+    conveyance: ConveyanceMeans,
+    include?: string[],
+  ): Promise<Agent[]> {
+    const all = await this.database.all();
+    const agents = all.filter(
+      (agent) =>
+        agent.operatorId === operatorId &&
+        agent.ownerId === ownerId &&
         agent.type === type &&
         agent.meansOfConveyance === conveyance,
     );
@@ -173,6 +313,18 @@ export class AgentService {
           `Could not fetch operator for ${agent.operatorId}`,
           error,
         );
+      }
+    }
+
+    // Handle owner population
+    if (include?.includes('owner')) {
+      try {
+        const owner = await this.userService.findById(agent.ownerId);
+        if (owner) {
+          populatedAgent.owner = owner;
+        }
+      } catch (error) {
+        this.logger.warn(`Could not fetch owner for ${agent.ownerId}`, error);
       }
     }
 
@@ -218,7 +370,7 @@ export class AgentService {
     const agent = await this.getAgent(id);
     await this.database.del(id);
     return {
-      message: `Agent "${agent.name}" with operator ID ${agent.operatorId} deleted successfully`,
+      message: `Agent "${agent.name}" with operator ID ${agent.operatorId} and owner ID ${agent.ownerId} deleted successfully`,
     };
   }
 }

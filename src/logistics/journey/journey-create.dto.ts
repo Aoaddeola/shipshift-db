@@ -13,11 +13,7 @@ import { Journey, JourneyStatus } from './journey.types.js';
 import { ParcelHandlingInfoDto } from '../parcel/parcel-create.dto.js';
 
 export class JourneyCreateDto
-  implements
-    Omit<
-      Journey,
-      'id' | 'createdAt' | 'updatedAt' | 'agent' | 'fromLocation' | 'toLocation'
-    >
+  implements Omit<Journey, 'id' | 'createdAt' | 'updatedAt'>
 {
   @IsString()
   @IsNotEmpty()
@@ -54,9 +50,8 @@ export class JourneyCreateDto
 
   @IsNumber()
   @Min(0)
-  @IsOptional()
   @ApiPropertyOptional({ example: 50, description: 'Optional agent fee' })
-  price?: number;
+  price: number;
 
   @IsEnum(JourneyStatus)
   @IsOptional()

@@ -5,12 +5,14 @@ import { MultiSigWitnessController } from './pending-multisig-tx-witness.control
 import { MultiSigWitnessService } from './pending-multisig-tx-witness.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
 import { OrbitDBModule } from '../../orbitdb/orbitdb.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     OrbitDBModule.forDatabase('pending-multisig-tx-witness', {
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
+    JwtModule,
   ],
   controllers: [MultiSigWitnessController],
   providers: [MultiSigWitnessService],

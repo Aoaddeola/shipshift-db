@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { ParcelCreateDto } from './parcel-create.dto.js';
 import { ParcelUpdateDto } from './parcel-update.dto.js';
 import { CurrencyService } from '../../common/currency/currency.service.js';
+import { UserService } from '../../users/user/user.service.js';
 
 @Injectable()
 export class ParcelService {
@@ -15,6 +16,8 @@ export class ParcelService {
     @InjectDatabase('parcel') private database: Database<Parcel>,
     @Inject(CurrencyService)
     private currencyService: CurrencyService,
+    @Inject(UserService)
+    private userService: UserService,
   ) {}
 
   async createParcel(
@@ -49,6 +52,12 @@ export class ParcelService {
 
     let filteredParcels = all;
 
+    if (filters.ownerId) {
+      filteredParcels = filteredParcels.filter(
+        (parcel) => parcel.ownerId === filters.ownerId,
+      );
+    }
+
     if (filters.currencyId) {
       filteredParcels = filteredParcels.filter(
         (parcel) => parcel.value[0] === filters.currencyId,
@@ -69,6 +78,18 @@ export class ParcelService {
 
     return Promise.all(
       filteredParcels.map((parcel) => this.populateRelations(parcel, include)),
+    );
+  }
+
+  async getParcelsByOwner(
+    ownerId: string,
+    include?: string[],
+  ): Promise<Parcel[]> {
+    const all = await this.database.all();
+    const parcels = all.filter((parcel) => parcel.ownerId === ownerId);
+
+    return Promise.all(
+      parcels.map((parcel) => this.populateRelations(parcel, include)),
     );
   }
 
@@ -126,6 +147,18 @@ export class ParcelService {
       }
     }
 
+    // Handle owner population
+    if (include?.includes('owner')) {
+      try {
+        const owner = await this.userService.findById(parcel.ownerId);
+        if (owner) {
+          populatedParcel.owner = owner;
+        }
+      } catch (error) {
+        this.logger.warn(`Could not fetch owner for ${parcel.ownerId}`, error);
+      }
+    }
+
     return populatedParcel;
   }
 
@@ -139,8 +172,8 @@ export class ParcelService {
     const updatedParcel: Parcel = {
       id,
       createdAt: now,
-      updatedAt: now,
       ...parcel,
+      updatedAt: now,
     };
 
     this.logger.log(`Updating parcel: ${id}`);
@@ -181,7 +214,7 @@ export class ParcelService {
     const parcel = await this.getParcel(id);
     await this.database.del(id);
     return {
-      message: `Parcel "${parcel.name}" with value ${parcel.value[1]} ${parcel.value[0]} deleted successfully`,
+      message: `Parcel "${parcel.name}" owned by ${parcel.ownerId} with value ${parcel.value[1]} ${parcel.value[0]} deleted successfully`,
     };
   }
 }

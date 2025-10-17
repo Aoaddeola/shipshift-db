@@ -1,72 +1,95 @@
 import {
   IsString,
   IsNotEmpty,
-  IsDate,
   IsEnum,
-  ValidateNested,
+  IsDateString,
   IsOptional,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { ShipmentStatus } from './shipment.types.js';
-import { LocationCreateDto } from '../../common/location/location-create.dto.js';
+import { Shipment, ShipmentStatus } from './shipment.types.js';
 
-export class ShipmentCreateDto {
+export class ShipmentCreateDto
+  implements
+    Omit<
+      Shipment,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'fromLocation'
+      | 'toLocation'
+      | 'mission'
+      | 'parcel'
+      | 'journey'
+      | 'sender'
+    >
+{
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'customer-123' })
+  @ApiProperty({
+    example: 'customer-123',
+    description: 'ID of the sender (customer)',
+  })
   senderId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'parcel-456' })
+  @ApiProperty({
+    example: 'parcel-456',
+    description: 'ID of the parcel being shipped',
+  })
   parcelId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: '1', description: 'Quantity as string' })
+  @ApiProperty({
+    example: '1',
+    description: 'Quantity of items being shipped (as string)',
+  })
   quantity: string;
 
-  @IsDate()
+  @IsDateString()
   @ApiProperty({
     example: '2025-04-01T09:00:00Z',
-    description: 'ISO 8601 date string',
+    description: 'Planned pickup date and time (ISO 8601)',
   })
   pickupDate: string;
 
-  @IsDate()
+  @IsDateString()
   @ApiProperty({
     example: '2025-04-05T17:00:00Z',
-    description: 'ISO 8601 date string',
+    description: 'Estimated time of arrival (ISO 8601)',
   })
   etaDate: string;
 
-  @ValidateNested()
-  @Type(() => LocationCreateDto)
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({
-    type: LocationCreateDto,
-    description: 'From location details',
+    example: 'location-789',
+    description: 'ID of the pickup location',
   })
-  fromLocation: LocationCreateDto;
+  fromLocationId: string;
 
-  @ValidateNested()
-  @Type(() => LocationCreateDto)
-  @ApiProperty({ type: LocationCreateDto, description: 'To location details' })
-  toLocation: LocationCreateDto;
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'location-012',
+    description: 'ID of the delivery location',
+  })
+  toLocationId: string;
 
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'mission-789',
-    description: 'Optional mission ID',
+    example: 'mission-345',
+    description: 'ID of the mission (optional)',
   })
   missionId?: string;
 
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'journey-012',
-    description: 'Optional journey ID',
+    example: 'journey-678',
+    description: 'ID of the journey (optional)',
   })
   journeyId?: string;
 

@@ -1,12 +1,18 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
 import { Operator } from './operator.types.js';
 import { Database } from '../../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
-import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
 import { ColonyNodeService } from '../../onchain/colony-node/colony-node.service.js';
+import { OperatorBadgeService } from '../../onchain/operator-badge/operator-badge.service.js';
 
 @Injectable()
 export class OperatorService {
@@ -14,10 +20,10 @@ export class OperatorService {
 
   constructor(
     @InjectDatabase('operator') private database: Database<Operator>,
-    @Inject(ContactDetailsService)
-    private contactDetailsDatabase: ContactDetailsService,
     @Inject(ColonyNodeService)
     private colonyNodeService: ColonyNodeService,
+    @Inject(OperatorBadgeService)
+    private operatorBadgeService: OperatorBadgeService,
   ) {}
 
   async createOperator(
@@ -41,7 +47,7 @@ export class OperatorService {
   async getOperator(id: string, include?: string[]): Promise<Operator> {
     const entry = await this.database.get(id);
     if (!entry) {
-      throw new NotFoundException('Operator not found');
+      throw new UnprocessableEntityException('Operator not found');
     }
 
     return this.populateRelations(entry, include);
@@ -76,8 +82,22 @@ export class OperatorService {
 
   async getOperators(include?: string[]): Promise<Operator[]> {
     const all = await this.database.all();
+
+    const filteredOperators = await Promise.all(
+      all.map(async (operator) => {
+        const opBadge =
+          await this.operatorBadgeService.getOperatorBadgesByOpWalletAddress(
+            operator.onchain.opAddr,
+          );
+        return opBadge.length !== 0 ? operator : null;
+      }),
+    );
+
+    // Filter out null values and populate relations
     return Promise.all(
-      all.map((operator) => this.populateRelations(operator, include)),
+      filteredOperators
+        .filter((operator): operator is Operator => operator !== null)
+        .map((operator) => this.populateRelations(operator, include)),
     );
   }
 
@@ -101,6 +121,27 @@ export class OperatorService {
             populatedOperator.offchain = {
               ...operator.offchain,
               colonyNode: colonyNode,
+            };
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Could not fetch colony node for ${operator.offchain.colonyNodeId}`,
+            error,
+          );
+        }
+      }
+      // Handle colonyNode population
+      if (include?.includes('badge')) {
+        try {
+          const badge =
+            await this.operatorBadgeService.getOperatorBadgesByOpWalletAddress(
+              operator.onchain.opAddr,
+            );
+          if (badge.length > 0) {
+            // Create a copy of offchain with badge
+            populatedOperator.offchain = {
+              ...operator.offchain,
+              badge: badge[0],
             };
           }
         } catch (error) {

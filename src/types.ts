@@ -11,6 +11,6 @@ export * from './logistics/shipment/shipment.types.js';
 export * from './onchain/colony-node/colony-node.types.js';
 export * from './onchain/operator-badge/operator-badge.types.js';
 export * from './onchain/step/step.types.js';
-export * from './users/agent/agent.types.js';
-export * from './users/customer/customer.types.js';
+export * from './profiles/agent/agent.types.js';
+export * from './profiles/customer/customer.types.js';
 export * from './users/operator/operator.types.js';

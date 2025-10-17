@@ -77,10 +77,10 @@ services:
     platform: linux/amd64
     entrypoint: node dist/main
     ports:
-      - 3001:3001
+      - 3003:3003
     environment:
       RUN_MODE: node
-      PORT: 3001
+      PORT: 3003
       DEBUG: "*"
       SWARM_KEY: L2tleS9zd2FybS9wc2svMS4wLjAvCi9iYXNlMTYvCjdkYmQ3YjM2OTFjMmNiOGU3MDUwODUwYjRmMzMwZmRhNjFjMTdhM2I3ODI5NTY4ZGQxZjU1MGY5NzgwMGUyMjA=
       BOOTSTRAP_NODES: /dns4/bootstrap/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN
@@ -93,10 +93,10 @@ services:
     platform: linux/amd64
     entrypoint: node dist/main
     ports:
-      - 3002:3002
+      - 3004:3004
     environment:
       RUN_MODE: node
-      PORT: 3002
+      PORT: 3004
       DEBUG: "*"
       SWARM_KEY: L2tleS9zd2FybS9wc2svMS4wLjAvCi9iYXNlMTYvCjdkYmQ3YjM2OTFjMmNiOGU3MDUwODUwYjRmMzMwZmRhNjFjMTdhM2I3ODI5NTY4ZGQxZjU1MGY5NzgwMGUyMjA=
       BOOTSTRAP_NODES: /dns4/bootstrap/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN
@@ -109,10 +109,10 @@ services:
     platform: linux/amd64
     entrypoint: node dist/main
     ports:
-      - 3003:3003
+      - 3005:3005
     environment:
       RUN_MODE: node
-      PORT: 3003
+      PORT: 3005
       DEBUG: "*"
       SWARM_KEY: L2tleS9zd2FybS9wc2svMS4wLjAvCi9iYXNlMTYvCjdkYmQ3YjM2OTFjMmNiOGU3MDUwODUwYjRmMzMwZmRhNjFjMTdhM2I3ODI5NTY4ZGQxZjU1MGY5NzgwMGUyMjA=
       BOOTSTRAP_NODES: /dns4/bootstrap/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN

@@ -32,17 +32,53 @@ export class AgentController {
   @Get()
   async getAgents(
     @Query('operatorId') operatorId?: string,
+    @Query('ownerId') ownerId?: string,
     @Query('type') type?: AgentType,
     @Query('conveyance') conveyance?: ConveyanceMeans,
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
 
-    if (operatorId && type && conveyance) {
+    if (operatorId && ownerId && type && conveyance) {
+      return this.agentService.getAgentsByAllFilters(
+        operatorId,
+        ownerId,
+        type,
+        conveyance,
+        includeArray,
+      );
+    } else if (operatorId && ownerId && type) {
+      return this.agentService.getAgentsByOperatorOwnerAndType(
+        operatorId,
+        ownerId,
+        type,
+        includeArray,
+      );
+    } else if (operatorId && ownerId && conveyance) {
+      return this.agentService.getAgentsByOperatorOwnerAndConveyance(
+        operatorId,
+        ownerId,
+        conveyance,
+        includeArray,
+      );
+    } else if (operatorId && type && conveyance) {
       return this.agentService.getAgentsByOperatorTypeAndConveyance(
         operatorId,
         type,
         conveyance,
+        includeArray,
+      );
+    } else if (ownerId && type && conveyance) {
+      return this.agentService.getAgentsByOwnerTypeAndConveyance(
+        ownerId,
+        type,
+        conveyance,
+        includeArray,
+      );
+    } else if (operatorId && ownerId) {
+      return this.agentService.getAgentsByOperatorAndOwner(
+        operatorId,
+        ownerId,
         includeArray,
       );
     } else if (operatorId && type) {
@@ -57,6 +93,18 @@ export class AgentController {
         conveyance,
         includeArray,
       );
+    } else if (ownerId && type) {
+      return this.agentService.getAgentsByOwnerAndType(
+        ownerId,
+        type,
+        includeArray,
+      );
+    } else if (ownerId && conveyance) {
+      return this.agentService.getAgentsByOwnerAndConveyance(
+        ownerId,
+        conveyance,
+        includeArray,
+      );
     } else if (type && conveyance) {
       return this.agentService.getAgentsByTypeAndConveyance(
         type,
@@ -65,6 +113,8 @@ export class AgentController {
       );
     } else if (operatorId) {
       return this.agentService.getAgentsByOperator(operatorId, includeArray);
+    } else if (ownerId) {
+      return this.agentService.getAgentsByOwner(ownerId, includeArray);
     } else if (type) {
       return this.agentService.getAgentsByType(type, includeArray);
     } else if (conveyance) {
@@ -80,6 +130,15 @@ export class AgentController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.agentService.getAgentsByOperator(operatorId, includeArray);
+  }
+
+  @Get('owner/:ownerId')
+  async getAgentsByOwner(
+    @Param('ownerId') ownerId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.agentService.getAgentsByOwner(ownerId, includeArray);
   }
 
   @Get('type/:type')

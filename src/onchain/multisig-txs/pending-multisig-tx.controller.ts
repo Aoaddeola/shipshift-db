@@ -11,9 +11,9 @@ import {
 } from '@nestjs/common';
 import { MultiSigTxService } from './pending-multisig-tx.service.js';
 import { MultiSigTxCreateDto } from './pending-multisig-tx-create.dto.js';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('multi-sig-tx')
 export class MultiSigTxController {
   constructor(private readonly multiSigTxService: MultiSigTxService) {}

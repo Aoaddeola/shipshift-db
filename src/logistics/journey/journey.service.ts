@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { JourneyCreateDto } from './journey-create.dto.js';
 import { JourneyUpdateDto } from './journey-update.dto.js';
 import { LocationService } from '../../common/location/location.service.js';
-import { AgentService } from '../../users/agent/agent.service.js';
+import { AgentService } from '../../profiles/agent/agent.service.js';
 
 @Injectable()
 export class JourneyService {
@@ -740,8 +740,8 @@ export class JourneyService {
     let updatedParcelHandlingInfo = existingJourney.parcelHandlingInfo;
     if (update.parcelHandlingInfo) {
       updatedParcelHandlingInfo = {
-        ...existingJourney.parcelHandlingInfo,
         ...update.parcelHandlingInfo,
+        ...existingJourney.parcelHandlingInfo,
       };
     }
 

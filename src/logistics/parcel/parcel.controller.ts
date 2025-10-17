@@ -8,11 +8,14 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ParcelService } from './parcel.service.js';
 import { ParcelCreateDto } from './parcel-create.dto.js';
 import { ParcelUpdateDto } from './parcel-update.dto.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('parcel')
 export class ParcelController {
   constructor(private readonly parcelService: ParcelService) {}
@@ -30,6 +33,7 @@ export class ParcelController {
 
   @Get()
   async getParcels(
+    @Query('ownerId') ownerId?: string,
     @Query('currencyId') currencyId?: string,
     @Query('fragile') fragile?: string,
     @Query('perishable') perishable?: string,
@@ -38,6 +42,7 @@ export class ParcelController {
     const includeArray = include ? include.split(',') : [];
     const filters: any = {};
 
+    if (ownerId) filters.ownerId = ownerId;
     if (currencyId) filters.currencyId = currencyId;
     if (fragile === 'true') filters.fragile = true;
     if (fragile === 'false') filters.fragile = false;
@@ -45,6 +50,15 @@ export class ParcelController {
     if (perishable === 'false') filters.perishable = false;
 
     return this.parcelService.getParcels(filters, includeArray);
+  }
+
+  @Get('owner/:ownerId')
+  async getParcelsByOwner(
+    @Param('ownerId') ownerId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.parcelService.getParcelsByOwner(ownerId, includeArray);
   }
 
   @Get('currency/:currencyId')

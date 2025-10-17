@@ -5,11 +5,11 @@ import { Database } from '../../orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { ShipmentCreateDto } from './shipment-create.dto.js';
 import { ShipmentUpdateDto } from './shipment-update.dto.js';
+import { CustomerService } from '../../profiles/customer/customer.service.js';
 import { ParcelService } from '../parcel/parcel.service.js';
+import { LocationService } from '../../common/location/location.service.js';
 import { MissionService } from '../mission/mission.service.js';
 import { JourneyService } from '../journey/journey.service.js';
-import { LocationService } from '../../common/location/location.service.js';
-import { CustomerService } from '../../users/customer/customer.service.js';
 
 @Injectable()
 export class ShipmentService {
@@ -17,55 +17,36 @@ export class ShipmentService {
 
   constructor(
     @InjectDatabase('shipment') private database: Database<Shipment>,
-    @Inject(CustomerService)
-    private customerService: CustomerService,
-    @Inject(ParcelService)
-    private parcelService: ParcelService,
-    @Inject(MissionService)
-    private missionService: MissionService,
-    @Inject(JourneyService)
-    private journeyService: JourneyService,
-    @Inject(LocationService)
-    private locationService: LocationService,
+    @Inject(CustomerService) private customerService: CustomerService,
+    @Inject(ParcelService) private parcelService: ParcelService,
+    @Inject(LocationService) private locationService: LocationService,
+    @Inject(MissionService) private missionService: MissionService,
+    @Inject(JourneyService) private journeyService: JourneyService,
   ) {}
 
-  async createShipment(shipment: ShipmentCreateDto): Promise<Shipment> {
+  async createShipment(
+    shipment: Omit<
+      Shipment,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'fromLocation'
+      | 'toLocation'
+      | 'mission'
+      | 'parcel'
+      | 'journey'
+      | 'sender'
+    >,
+  ): Promise<Shipment> {
     const id = randomUUID();
     const now = new Date().toISOString();
 
     this.logger.log(`Creating shipment: ${id}`);
-
-    // // Create location IDs
-    // const fromLocationId = randomUUID();
-    // const toLocationId = randomUUID();
-
-    // // Create locations first
-    // const fromLocation = await this.locationService.createLocation({
-    //   // id: fromLocationId,
-    //   ...shipment.fromLocation,
-    // });
-
-    // const toLocation = await this.locationService.createLocation({
-    //   // id: toLocationId,
-    //   ...shipment.toLocation,
-    // });
-
-    // Create the shipment with the location IDs
     const newShipment: Shipment = {
       id,
-      ...shipment,
       createdAt: now,
       updatedAt: now,
-      // fromLocation,
-      // toLocation,
-      senderId: shipment.senderId,
-      parcelId: shipment.parcelId,
-      quantity: shipment.quantity,
-      pickupDate: shipment.pickupDate,
-      etaDate: shipment.etaDate,
-      missionId: shipment.missionId,
-      journeyId: shipment.journeyId,
-      status: shipment.status,
+      ...shipment,
     };
 
     await this.database.put(newShipment);
@@ -106,6 +87,34 @@ export class ShipmentService {
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter((shipment) => shipment.parcelId === parcelId);
+
+    return Promise.all(
+      shipments.map((shipment) => this.populateRelations(shipment, include)),
+    );
+  }
+
+  async getShipmentsByFromLocation(
+    fromLocationId: string,
+    include?: string[],
+  ): Promise<Shipment[]> {
+    const all = await this.database.all();
+    const shipments = all.filter(
+      (shipment) => shipment.fromLocationId === fromLocationId,
+    );
+
+    return Promise.all(
+      shipments.map((shipment) => this.populateRelations(shipment, include)),
+    );
+  }
+
+  async getShipmentsByToLocation(
+    toLocationId: string,
+    include?: string[],
+  ): Promise<Shipment[]> {
+    const all = await this.database.all();
+    const shipments = all.filter(
+      (shipment) => shipment.toLocationId === toLocationId,
+    );
 
     return Promise.all(
       shipments.map((shipment) => this.populateRelations(shipment, include)),
@@ -168,15 +177,16 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderAndMission(
+  async getShipmentsBySenderAndFromLocation(
     senderId: string,
-    missionId: string,
+    fromLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.senderId === senderId && shipment.missionId === missionId,
+        shipment.senderId === senderId &&
+        shipment.fromLocationId === fromLocationId,
     );
 
     return Promise.all(
@@ -184,15 +194,16 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderAndJourney(
+  async getShipmentsBySenderAndToLocation(
     senderId: string,
-    journeyId: string,
+    toLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.senderId === senderId && shipment.journeyId === journeyId,
+        shipment.senderId === senderId &&
+        shipment.toLocationId === toLocationId,
     );
 
     return Promise.all(
@@ -216,15 +227,16 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsByParcelAndMission(
+  async getShipmentsByParcelAndFromLocation(
     parcelId: string,
-    missionId: string,
+    fromLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.parcelId === parcelId && shipment.missionId === missionId,
+        shipment.parcelId === parcelId &&
+        shipment.fromLocationId === fromLocationId,
     );
 
     return Promise.all(
@@ -232,15 +244,16 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsByParcelAndJourney(
+  async getShipmentsByParcelAndToLocation(
     parcelId: string,
-    journeyId: string,
+    toLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.parcelId === parcelId && shipment.journeyId === journeyId,
+        shipment.parcelId === parcelId &&
+        shipment.toLocationId === toLocationId,
     );
 
     return Promise.all(
@@ -264,15 +277,16 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsByMissionAndJourney(
-    missionId: string,
-    journeyId: string,
+  async getShipmentsByLocations(
+    fromLocationId: string,
+    toLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.missionId === missionId && shipment.journeyId === journeyId,
+        shipment.fromLocationId === fromLocationId &&
+        shipment.toLocationId === toLocationId,
     );
 
     return Promise.all(
@@ -280,15 +294,16 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsByMissionAndStatus(
-    missionId: string,
+  async getShipmentsByFromLocationAndStatus(
+    fromLocationId: string,
     status: ShipmentStatus,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.missionId === missionId && shipment.status === status,
+        shipment.fromLocationId === fromLocationId &&
+        shipment.status === status,
     );
 
     return Promise.all(
@@ -296,15 +311,15 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsByJourneyAndStatus(
-    journeyId: string,
+  async getShipmentsByToLocationAndStatus(
+    toLocationId: string,
     status: ShipmentStatus,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
-        shipment.journeyId === journeyId && shipment.status === status,
+        shipment.toLocationId === toLocationId && shipment.status === status,
     );
 
     return Promise.all(
@@ -312,10 +327,10 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderParcelAndMission(
+  async getShipmentsBySenderParcelAndFromLocation(
     senderId: string,
     parcelId: string,
-    missionId: string,
+    fromLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
@@ -323,7 +338,7 @@ export class ShipmentService {
       (shipment) =>
         shipment.senderId === senderId &&
         shipment.parcelId === parcelId &&
-        shipment.missionId === missionId,
+        shipment.fromLocationId === fromLocationId,
     );
 
     return Promise.all(
@@ -331,10 +346,10 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderParcelAndJourney(
+  async getShipmentsBySenderParcelAndToLocation(
     senderId: string,
     parcelId: string,
-    journeyId: string,
+    toLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
@@ -342,7 +357,7 @@ export class ShipmentService {
       (shipment) =>
         shipment.senderId === senderId &&
         shipment.parcelId === parcelId &&
-        shipment.journeyId === journeyId,
+        shipment.toLocationId === toLocationId,
     );
 
     return Promise.all(
@@ -369,18 +384,18 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderMissionAndJourney(
+  async getShipmentsBySenderAndLocations(
     senderId: string,
-    missionId: string,
-    journeyId: string,
+    fromLocationId: string,
+    toLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
     const shipments = all.filter(
       (shipment) =>
         shipment.senderId === senderId &&
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId,
+        shipment.fromLocationId === fromLocationId &&
+        shipment.toLocationId === toLocationId,
     );
 
     return Promise.all(
@@ -388,28 +403,9 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderMissionAndStatus(
+  async getShipmentsBySenderFromLocationAndStatus(
     senderId: string,
-    missionId: string,
-    status: ShipmentStatus,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.senderId === senderId &&
-        shipment.missionId === missionId &&
-        shipment.status === status,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsBySenderJourneyAndStatus(
-    senderId: string,
-    journeyId: string,
+    fromLocationId: string,
     status: ShipmentStatus,
     include?: string[],
   ): Promise<Shipment[]> {
@@ -417,7 +413,7 @@ export class ShipmentService {
     const shipments = all.filter(
       (shipment) =>
         shipment.senderId === senderId &&
-        shipment.journeyId === journeyId &&
+        shipment.fromLocationId === fromLocationId &&
         shipment.status === status,
     );
 
@@ -426,107 +422,9 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsByParcelMissionAndJourney(
-    parcelId: string,
-    missionId: string,
-    journeyId: string,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.parcelId === parcelId &&
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsByParcelMissionAndStatus(
-    parcelId: string,
-    missionId: string,
-    status: ShipmentStatus,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.parcelId === parcelId &&
-        shipment.missionId === missionId &&
-        shipment.status === status,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsByParcelJourneyAndStatus(
-    parcelId: string,
-    journeyId: string,
-    status: ShipmentStatus,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.parcelId === parcelId &&
-        shipment.journeyId === journeyId &&
-        shipment.status === status,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsByMissionJourneyAndStatus(
-    missionId: string,
-    journeyId: string,
-    status: ShipmentStatus,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId &&
-        shipment.status === status,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsBySenderParcelMissionAndJourney(
+  async getShipmentsBySenderToLocationAndStatus(
     senderId: string,
-    parcelId: string,
-    missionId: string,
-    journeyId: string,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.senderId === senderId &&
-        shipment.parcelId === parcelId &&
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsBySenderParcelMissionAndStatus(
-    senderId: string,
-    parcelId: string,
-    missionId: string,
+    toLocationId: string,
     status: ShipmentStatus,
     include?: string[],
   ): Promise<Shipment[]> {
@@ -534,8 +432,7 @@ export class ShipmentService {
     const shipments = all.filter(
       (shipment) =>
         shipment.senderId === senderId &&
-        shipment.parcelId === parcelId &&
-        shipment.missionId === missionId &&
+        shipment.toLocationId === toLocationId &&
         shipment.status === status,
     );
 
@@ -544,11 +441,87 @@ export class ShipmentService {
     );
   }
 
-  async getShipmentsBySenderParcelJourneyAndStatus(
+  async getShipmentsByParcelAndLocations(
+    parcelId: string,
+    fromLocationId: string,
+    toLocationId: string,
+    include?: string[],
+  ): Promise<Shipment[]> {
+    const all = await this.database.all();
+    const shipments = all.filter(
+      (shipment) =>
+        shipment.parcelId === parcelId &&
+        shipment.fromLocationId === fromLocationId &&
+        shipment.toLocationId === toLocationId,
+    );
+
+    return Promise.all(
+      shipments.map((shipment) => this.populateRelations(shipment, include)),
+    );
+  }
+
+  async getShipmentsByParcelFromLocationAndStatus(
+    parcelId: string,
+    fromLocationId: string,
+    status: ShipmentStatus,
+    include?: string[],
+  ): Promise<Shipment[]> {
+    const all = await this.database.all();
+    const shipments = all.filter(
+      (shipment) =>
+        shipment.parcelId === parcelId &&
+        shipment.fromLocationId === fromLocationId &&
+        shipment.status === status,
+    );
+
+    return Promise.all(
+      shipments.map((shipment) => this.populateRelations(shipment, include)),
+    );
+  }
+
+  async getShipmentsByParcelToLocationAndStatus(
+    parcelId: string,
+    toLocationId: string,
+    status: ShipmentStatus,
+    include?: string[],
+  ): Promise<Shipment[]> {
+    const all = await this.database.all();
+    const shipments = all.filter(
+      (shipment) =>
+        shipment.parcelId === parcelId &&
+        shipment.toLocationId === toLocationId &&
+        shipment.status === status,
+    );
+
+    return Promise.all(
+      shipments.map((shipment) => this.populateRelations(shipment, include)),
+    );
+  }
+
+  async getShipmentsByLocationsAndStatus(
+    fromLocationId: string,
+    toLocationId: string,
+    status: ShipmentStatus,
+    include?: string[],
+  ): Promise<Shipment[]> {
+    const all = await this.database.all();
+    const shipments = all.filter(
+      (shipment) =>
+        shipment.fromLocationId === fromLocationId &&
+        shipment.toLocationId === toLocationId &&
+        shipment.status === status,
+    );
+
+    return Promise.all(
+      shipments.map((shipment) => this.populateRelations(shipment, include)),
+    );
+  }
+
+  async getShipmentsBySenderParcelAndLocations(
     senderId: string,
     parcelId: string,
-    journeyId: string,
-    status: ShipmentStatus,
+    fromLocationId: string,
+    toLocationId: string,
     include?: string[],
   ): Promise<Shipment[]> {
     const all = await this.database.all();
@@ -556,50 +529,8 @@ export class ShipmentService {
       (shipment) =>
         shipment.senderId === senderId &&
         shipment.parcelId === parcelId &&
-        shipment.journeyId === journeyId &&
-        shipment.status === status,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsBySenderMissionJourneyAndStatus(
-    senderId: string,
-    missionId: string,
-    journeyId: string,
-    status: ShipmentStatus,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.senderId === senderId &&
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId &&
-        shipment.status === status,
-    );
-
-    return Promise.all(
-      shipments.map((shipment) => this.populateRelations(shipment, include)),
-    );
-  }
-
-  async getShipmentsByParcelMissionJourneyAndStatus(
-    parcelId: string,
-    missionId: string,
-    journeyId: string,
-    status: ShipmentStatus,
-    include?: string[],
-  ): Promise<Shipment[]> {
-    const all = await this.database.all();
-    const shipments = all.filter(
-      (shipment) =>
-        shipment.parcelId === parcelId &&
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId &&
-        shipment.status === status,
+        shipment.fromLocationId === fromLocationId &&
+        shipment.toLocationId === toLocationId,
     );
 
     return Promise.all(
@@ -610,8 +541,8 @@ export class ShipmentService {
   async getShipmentsByAllFilters(
     senderId: string,
     parcelId: string,
-    missionId: string,
-    journeyId: string,
+    fromLocationId: string,
+    toLocationId: string,
     status: ShipmentStatus,
     include?: string[],
   ): Promise<Shipment[]> {
@@ -620,8 +551,8 @@ export class ShipmentService {
       (shipment) =>
         shipment.senderId === senderId &&
         shipment.parcelId === parcelId &&
-        shipment.missionId === missionId &&
-        shipment.journeyId === journeyId &&
+        shipment.fromLocationId === fromLocationId &&
+        shipment.toLocationId === toLocationId &&
         shipment.status === status,
     );
 
@@ -664,6 +595,40 @@ export class ShipmentService {
       } catch (error) {
         this.logger.warn(
           `Could not fetch parcel for ${shipment.parcelId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle fromLocation population
+    if (include?.includes('fromLocation')) {
+      try {
+        const fromLocation = await this.locationService.getLocation(
+          shipment.fromLocationId,
+        );
+        if (fromLocation) {
+          populatedShipment.fromLocation = fromLocation;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch from location for ${shipment.fromLocationId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle toLocation population
+    if (include?.includes('toLocation')) {
+      try {
+        const toLocation = await this.locationService.getLocation(
+          shipment.toLocationId,
+        );
+        if (toLocation) {
+          populatedShipment.toLocation = toLocation;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch to location for ${shipment.toLocationId}`,
           error,
         );
       }
@@ -718,9 +683,9 @@ export class ShipmentService {
     // Create updated shipment with ID preserved
     const updatedShipment: Shipment = {
       id,
+      ...shipment,
       createdAt: now,
       updatedAt: now,
-      ...shipment,
     };
 
     this.logger.log(`Updating shipment: ${id}`);
@@ -735,30 +700,10 @@ export class ShipmentService {
     const existingShipment = await this.getShipment(id);
     const now = new Date().toISOString();
 
-    // Handle nested fromLocation update
-    let updatedFromLocation = existingShipment.fromLocation;
-    if (update.fromLocation) {
-      updatedFromLocation = {
-        ...existingShipment.fromLocation,
-        ...update.fromLocation,
-      };
-    }
-
-    // Handle nested toLocation update
-    let updatedToLocation = existingShipment.toLocation;
-    if (update.toLocation) {
-      updatedToLocation = {
-        ...existingShipment.toLocation,
-        ...update.toLocation,
-      };
-    }
-
     // Create updated shipment by merging existing with update
     const updatedShipment = {
       ...existingShipment,
       ...update,
-      fromLocation: updatedFromLocation,
-      toLocation: updatedToLocation,
       updatedAt: now,
     };
 
@@ -769,18 +714,9 @@ export class ShipmentService {
 
   async deleteShipment(id: string): Promise<{ message: string }> {
     const shipment = await this.getShipment(id);
-
-    // // Delete associated locations
-    // try {
-    //   await this.locationService.deleteLocation(shipment.fromLocation.id);
-    //   await this.locationService.deleteLocation(shipment.toLocation.id);
-    // } catch (error) {
-    //   this.logger.warn(`Could not delete locations for shipment ${id}`, error);
-    // }
-
     await this.database.del(id);
     return {
-      message: `Shipment "${id}" from ${shipment.fromLocation.street} to ${shipment.toLocation.street} deleted successfully`,
+      message: `Shipment from ${shipment.fromLocationId} to ${shipment.toLocationId} deleted successfully`,
     };
   }
 }

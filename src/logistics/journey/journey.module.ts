@@ -4,7 +4,8 @@ import { JourneyController } from './journey.controller.js';
 import { JourneyService } from './journey.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
 import { LocationModule } from '../../common/location/location.module.js';
-import { AgentModule } from '../../users/agent/agent.module.js';
+import { AgentModule } from '../../profiles/agent/agent.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AgentModule } from '../../users/agent/agent.module.js';
     }),
     AgentModule,
     LocationModule,
+    JwtModule,
   ],
   controllers: [JourneyController],
   providers: [JourneyService],
