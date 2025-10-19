@@ -30,6 +30,7 @@ import { CustomerModule } from './profiles/customer/customer.module.js';
 import { AgentModule } from './profiles/agent/agent.module.js';
 import { PlanningModule } from './planning/planning.module.js';
 import { CacheModule } from './cache/cache.module.js';
+import { ForwardModule } from './forward/forward.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,6 +81,7 @@ const __dirname = path.dirname(__filename);
 
     // Algorithm
     PlanningModule,
+    ForwardModule,
   ],
   providers: [],
 })
