@@ -11,32 +11,39 @@ import axios from 'axios';
 
 @Controller('tx')
 export class ForwardController {
-  private readonly targetBaseUrl = 'http://localhost:8224'; // destination base URL
+  private readonly targetBaseUrl = 'http://localhost:8223'; // ensure correct protocol!
 
   @All('*')
   async forward(@Req() req: Request, @Res() res: Response) {
     try {
-      // Remove "/tx" from the incoming path
       const targetUrl = `${this.targetBaseUrl}${req.originalUrl.replace(/^\/tx/, '')}`;
 
-      // Forward the request
+      const { host, 'content-length': _cl, connection, ...headers } = req.headers;
+
       const response = await axios.request({
         method: req.method,
         url: targetUrl,
-        headers: { ...req.headers, host: undefined }, // remove 'host' header
-        data: req.body,
+        headers,
+        data: req.body ?? undefined,
         params: req.query,
-        validateStatus: () => true, // forward even error responses
+        timeout: 15000, // 15s timeout for safety
+        validateStatus: () => true,
       });
 
-      // Return the response as-is
       res.status(response.status).set(response.headers).send(response.data);
     } catch (error) {
       console.error('Error forwarding request:', error.message);
-      throw new HttpException(
-        'Error forwarding request',
-        HttpStatus.BAD_GATEWAY,
-      );
+
+      if (error.code === 'ECONNREFUSED') {
+        throw new HttpException('Target server refused the connection', HttpStatus.BAD_GATEWAY);
+      } else if (error.code === 'ECONNRESET') {
+        throw new HttpException('Connection reset by target server', HttpStatus.BAD_GATEWAY);
+      } else {
+        throw new HttpException(
+          'Error forwarding request',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
     }
   }
 }
