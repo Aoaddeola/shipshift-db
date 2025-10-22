@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { OrbitDBModule } from '../../orbitdb/orbitdb.module.js';
+import { OrbitDBModule } from '../../db/orbitdb/orbitdb.module.js';
 import { ColonyNodeController } from './colony-node.controller.js';
 import { ColonyNodeService } from './colony-node.service.js';
 import { IPFSAccessController } from '@orbitdb/core';

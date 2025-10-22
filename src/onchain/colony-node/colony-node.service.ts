@@ -4,9 +4,9 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { ColonyNode } from './colony-node.types.js';
-import { Database } from '../../orbitdb/database.js';
+import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { ColonyNodeCreateDto } from './colony-node-create.dto.js';
 import { ColonyNodeUpdateDto } from './colony-node-update.dto.js';

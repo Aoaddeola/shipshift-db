@@ -1,12 +1,13 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
-import { Database } from '../../orbitdb/database.js';
+import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
 import { UserService } from '../../users/user/user.service.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
+import { UserType } from '../../users/user/user.types.js';
 
 @Injectable()
 export class AgentService {
@@ -35,7 +36,7 @@ export class AgentService {
     };
 
     await this.database.put(newAgent);
-    await this.userService.update(agent.ownerId, { userType: 'agent' });
+    await this.userService.update(agent.ownerId, { userType: UserType.AGENT });
     return newAgent;
   }
 

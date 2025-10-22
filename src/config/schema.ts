@@ -1,4 +1,3 @@
-// src/config/schema.ts
 import { z } from 'zod';
 
 // Схема для IPFS конфигурации
@@ -11,17 +10,7 @@ export const ipfsSchema = z.object({
 // Схема для баз данных OrbitDB
 export const databasesSchema = z
   .object({
-    steps: z.string().default('steps'),
-    step_transactions: z.string().default('step_transactions'),
-    shipments: z.string().default('shipments'),
-    operators: z.string().default('operators'),
-    availabilities: z.string().default('availabilities'),
-    currencies: z.string().default('currencies'),
-    journeys: z.string().default('journeys'),
-    pending_multisig_txs: z.string().default('pending_multisig_txs'),
-    pending_multisig_tx_witnesses: z
-      .string()
-      .default('pending_multisig_tx_witnesses'),
+    offers: z.string().default('offers'),
   })
   .catchall(z.string());
 
@@ -31,12 +20,6 @@ export const orbitdbSchema = z.object({
   directory: z.string().default('./data/orbitdb'),
   swarmKey: z.string().optional(),
   databases: databasesSchema.default({ offers: 'offers' }),
-});
-
-// Database Configuration Schema
-export const databaseSchema = z.object({
-  path: z.string().default('./database.sqlite'),
-  logging: z.boolean().default(false),
 });
 
 // JWT Configuration Schema
@@ -69,7 +52,7 @@ export const urlsSchema = z.object({
 
 // CORS Configuration Schema
 export const corsSchema = z.object({
-  origins: z.string().default('http://localhost:3033'),
+  origins: z.string().default('http://localhost:3003'),
 });
 
 // Security Configuration Schema
@@ -110,13 +93,12 @@ export const appConfigSchema = z.object({
   appName: z.string().default('ShipShift'),
   baseUrl: z.string().default('http://localhost:3001'),
   nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
-  port: z.number().int().positive().default(3003),
+  port: z.number().int().positive().default(3000),
   runMode: z.enum(['node', 'bootstrap']).default('node'),
   ipfs: ipfsSchema.default({}),
   orbitdb: orbitdbSchema.default({}),
   debug: z.string().default(''),
   // New authentication and database configurations
-  database: databaseSchema.default({}),
   jwt: jwtSchema.default({}),
   oauth: oauthSchema.default({}),
   urls: urlsSchema.default({}),
@@ -126,23 +108,25 @@ export const appConfigSchema = z.object({
   features: featuresSchema.default({}),
 });
 
-// Схема для общей конфигурации
-export const configSchema = z.object({
-  solution: appConfigSchema,
-  data: z.array(z.any()).default([]),
-});
-
 // Схема для минимальной конфигурации bootstrap ноды с учетом всех полей
 export const bootstrapConfigSchema = appConfigSchema.extend({
   runMode: z.literal('bootstrap'),
   // Остальные поля наследуются от appConfigSchema со значениями по умолчанию
 });
 
+// Схема для общей конфигурации
+export const configSchema = z.object({
+  solution: appConfigSchema,
+  data: z.array(z.any()).default([]),
+});
+
 // Типы на основе схем
 export type IpfsConfig = z.infer<typeof ipfsSchema>;
 export type OrbitdbConfig = z.infer<typeof orbitdbSchema>;
 export type DatabasesConfig = z.infer<typeof databasesSchema>;
-export type DatabaseConfig = z.infer<typeof databaseSchema>;
+export type AppConfig = z.infer<typeof appConfigSchema>;
+export type Config = z.infer<typeof configSchema>;
+export type BootstrapConfig = z.infer<typeof bootstrapConfigSchema>;
 export type JwtConfig = z.infer<typeof jwtSchema>;
 export type OAuthConfig = z.infer<typeof oauthSchema>;
 export type OAuthProviderConfig = z.infer<typeof oauthProviderSchema>;
@@ -151,6 +135,3 @@ export type CorsConfig = z.infer<typeof corsSchema>;
 export type SecurityConfig = z.infer<typeof securitySchema>;
 export type EmailConfig = z.infer<typeof emailSchema>;
 export type FeaturesConfig = z.infer<typeof featuresSchema>;
-export type AppConfig = z.infer<typeof appConfigSchema>;
-export type Config = z.infer<typeof configSchema>;
-export type BootstrapConfig = z.infer<typeof bootstrapConfigSchema>;

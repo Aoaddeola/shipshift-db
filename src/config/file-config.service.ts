@@ -10,7 +10,7 @@ export class FileConfigService {
 
   constructor() {
     this.configPath =
-      process.env.CONFIG_PATH || './sp/configurations/configuration.json';
+      process.env.CONFIG_PATH || '/sp/configurations/configuration.json';
   }
 
   async injectConfig(): Promise<AppConfig> {

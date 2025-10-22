@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { OrbitDBModule } from '../../orbitdb/orbitdb.module.js';
+import { OrbitDBModule } from '../../db/orbitdb/orbitdb.module.js';
 import { OperatorBadgeController } from './operator-badge.controller.js';
 import { OperatorBadgeService } from './operator-badge.service.js';
 import { IPFSAccessController } from '@orbitdb/core';

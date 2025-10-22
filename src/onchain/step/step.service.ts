@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { Step, StepState } from './step.types.js';
-import { Database } from '../../orbitdb/database.js';
+import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { StepCreateDto } from './step-create.dto.js';
 import { StepUpdateDto } from './step-update.dto.js';

@@ -5,9 +5,9 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { Operator } from './operator.types.js';
-import { Database } from '../../orbitdb/database.js';
+import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';

@@ -3,8 +3,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { MultiSigWitness } from './types.js';
 import { randomUUID } from 'node:crypto';
-import { Database } from '../../orbitdb/database.js';
-import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { Database } from '../../db/orbitdb/database.js';
+import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 
 @Injectable()
 export class MultiSigWitnessService {

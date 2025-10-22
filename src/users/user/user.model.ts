@@ -45,8 +45,9 @@ export class User extends Model {
   isVerified: boolean;
 
   @Column({
-    type: DataType.ENUM('customer', 'agent'),
-    defaultValue: 'customer',
+    type: DataType.ENUM(...Object.values(UserType)),
+    defaultValue: UserType.USER,
+    allowNull: false,
   })
   userType: UserType;
 
