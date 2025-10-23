@@ -9,7 +9,7 @@ services:
     container_name: bootstrap
     ports:
       - 4500:4000
-      - 4001:4001
+      - 4011:4001
     environment:
       RUN_MODE: bootstrap
       WS_PORT: 4000
@@ -68,6 +68,9 @@ services:
         AwIz5ZnSr7BbhNwBmnT7hyIzSTXbm7J/o5XUcJdNluPagKus8gjuRxWcVd/rDvf3
         PTZZispqY2EYo5AnF+cCtvI=
         -----END PRIVATE KEY-----
+    networks:
+      mariadb_network:
+        ipv4_address: 172.16.237.28
 
 
   node-1:
@@ -83,7 +86,11 @@ services:
       PORT: 3003
       DEBUG: "*"
       SWARM_KEY: L2tleS9zd2FybS9wc2svMS4wLjAvCi9iYXNlMTYvCjdkYmQ3YjM2OTFjMmNiOGU3MDUwODUwYjRmMzMwZmRhNjFjMTdhM2I3ODI5NTY4ZGQxZjU1MGY5NzgwMGUyMjA=
-      BOOTSTRAP_NODES: /dns4/bootstrap/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN
+      BOOTSTRAP_NODES: /ip4/172.16.237.28/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN
+      DB_HOST: 172.16.237.58
+    networks:
+      mariadb_network:
+        ipv4_address: 172.16.237.18
 
   
   node-2:
@@ -100,6 +107,10 @@ services:
       DEBUG: "*"
       SWARM_KEY: L2tleS9zd2FybS9wc2svMS4wLjAvCi9iYXNlMTYvCjdkYmQ3YjM2OTFjMmNiOGU3MDUwODUwYjRmMzMwZmRhNjFjMTdhM2I3ODI5NTY4ZGQxZjU1MGY5NzgwMGUyMjA=
       BOOTSTRAP_NODES: /dns4/bootstrap/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN
+      DB_HOST: 172.16.237.58
+    networks:
+      mariadb_network:
+        ipv4_address: 172.16.237.17
 
   
   node-3:
@@ -116,3 +127,24 @@ services:
       DEBUG: "*"
       SWARM_KEY: L2tleS9zd2FybS9wc2svMS4wLjAvCi9iYXNlMTYvCjdkYmQ3YjM2OTFjMmNiOGU3MDUwODUwYjRmMzMwZmRhNjFjMTdhM2I3ODI5NTY4ZGQxZjU1MGY5NzgwMGUyMjA=
       BOOTSTRAP_NODES: /dns4/bootstrap/tcp/4000/tls/ws/p2p/12D3KooWRJ4R193SNe7ZVv52Dhh4tHr9LfEFrv6QQK222J9jtPFN
+
+  mariadb:
+    image: mariadb:10.4
+    container_name: mariadb-compose
+    environment:
+      MYSQL_ROOT_PASSWORD: my-secret-pw
+      MYSQL_DATABASE: shsh
+    ports:
+      - "3306:3306"
+    networks:
+      mariadb_network:
+        ipv4_address: 172.16.237.58
+
+networks:
+  mariadb_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.237.0/24
+          gateway: 172.16.237.1

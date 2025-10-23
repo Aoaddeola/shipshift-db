@@ -1,7 +1,11 @@
 /**
  * User Type Enum
  */
-export type UserType = 'customer' | 'agent' | 'user';
+export enum UserType {
+  OPERATOR = 'operator',
+  AGENT = 'agent',
+  USER = 'user',
+}
 
 /**
  * User Interface

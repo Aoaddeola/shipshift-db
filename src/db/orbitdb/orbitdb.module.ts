@@ -1,11 +1,10 @@
-import { DynamicModule, Module, Global, ModuleMetadata } from '@nestjs/common';
+import { DynamicModule, Global, Module, ModuleMetadata } from '@nestjs/common';
 import { OrbitDBService } from './orbitdb.service.js';
 import { ORBITDB_DATABASE_TOKEN } from './inject-database.decorator.js';
 import { OpenDatabaseOptions } from '@orbitdb/core';
 import { Database } from './database.js';
-import { AppConfigService } from '../config/config.service.js';
-import { CacheService } from '../cache/cache.service.js';
-import { CacheModule } from '../cache/cache.module.js';
+// import { AppConfigModule } from '../../config/config.module.js';
+import { AppConfigService } from '../../config/config.service.js';
 
 export interface OrbitDBModuleOptions {
   name: string;
@@ -26,7 +25,7 @@ export interface OrbitDBModuleAsyncOptions
   providers: [OrbitDBService],
   exports: [OrbitDBService],
 })
-export class OrbitDBRootModule {} // Renamed root module
+export class OrbitDBRootModule {} // Fix for orbitdb service being instantiated multiple times
 
 @Module({})
 export class OrbitDBModule {
@@ -36,23 +35,20 @@ export class OrbitDBModule {
   ): DynamicModule {
     return {
       module: OrbitDBModule,
-      imports: [CacheModule],
       providers: [
         {
           provide: `${ORBITDB_DATABASE_TOKEN}_${name}`,
           useFactory: async (
             orbitdbService: OrbitDBService,
             configService: AppConfigService,
-            cacheService: CacheService,
           ) => {
             return new Database(
               orbitdbService,
-              cacheService,
               configService.databases[name] || name,
               options,
             );
           },
-          inject: [OrbitDBService, AppConfigService, CacheService],
+          inject: [OrbitDBService, AppConfigService],
         },
       ],
       exports: [`${ORBITDB_DATABASE_TOKEN}_${name}`],

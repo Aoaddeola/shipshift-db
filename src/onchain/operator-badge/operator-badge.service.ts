@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectDatabase } from '../../orbitdb/inject-database.decorator.js';
+import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { OperatorBadge } from './operator-badge.types.js';
-import { Database } from '../../orbitdb/database.js';
+import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { OperatorBadgeCreateDto } from './operator-badge-create.dto.js';
 import { OperatorBadgeUpdateDto } from './operator-badge-update.dto.js';

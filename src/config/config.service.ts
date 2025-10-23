@@ -1,16 +1,7 @@
 // src/config/app-config.service.ts
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  AppConfig,
-  DatabaseConfig,
-  JwtConfig,
-  OAuthConfig,
-  UrlsConfig,
-  SecurityConfig,
-  EmailConfig,
-  FeaturesConfig,
-} from './schema.js';
+import { AppConfig } from './schema.js';
 
 @Injectable()
 export class AppConfigService {
@@ -20,159 +11,147 @@ export class AppConfigService {
     @Inject(ConfigService) private readonly configService: ConfigService,
   ) {}
 
-  // Get the entire app configuration
-  private get appConfig(): AppConfig {
-    return this.configService.get<AppConfig>('solution')!;
-  }
-
-  // Get nested configurations
-  private get databaseConfig(): DatabaseConfig {
-    return this.appConfig.database;
-  }
-
-  private get jwtConfig(): JwtConfig {
-    return this.appConfig.jwt;
-  }
-
-  private get oauthConfig(): OAuthConfig {
-    return this.appConfig.oauth;
-  }
-
-  private get urlsConfig(): UrlsConfig {
-    return this.appConfig.urls;
-  }
-
-  private get securityConfig(): SecurityConfig {
-    return this.appConfig.security;
-  }
-
-  private get emailConfig(): EmailConfig {
-    return this.appConfig.email;
-  }
-
-  private get featuresConfig(): FeaturesConfig {
-    return this.appConfig.features;
-  }
-
-  // Existing IPFS/OrbitDB getters
   get nodeEnv(): string {
-    return this.appConfig.nodeEnv;
+    return this.configService.get<string>('nodeEnv') || 'development';
   }
 
   get port(): number {
-    return this.appConfig.port;
+    return this.configService.get<number>('port') || 3000;
   }
 
   get ipfsHost(): string {
-    return this.appConfig.ipfs.host;
+    return (
+      this.configService.get<AppConfig['ipfs']>('ipfs')?.host || '127.0.0.1'
+    );
   }
 
   get ipfsTcpPort(): number {
-    return this.appConfig.ipfs.tcpPort;
+    return this.configService.get<AppConfig['ipfs']>('ipfs')!.tcpPort;
   }
 
   get ipfsWsPort(): number {
-    return this.appConfig.ipfs.wsPort;
+    return this.configService.get<AppConfig['ipfs']>('ipfs')!.wsPort;
   }
 
   get orbitdbDirectory(): string {
-    return this.appConfig.orbitdb.directory;
+    return (
+      this.configService.get<AppConfig['orbitdb']>('orbitdb')?.directory ||
+      './orbitdb'
+    );
   }
 
   get swarmKey(): Uint8Array {
-    return Buffer.from(this.appConfig.orbitdb.swarmKey || '', 'base64');
+    return Buffer.from(
+      this.configService.get<AppConfig['orbitdb']>('orbitdb')!.swarmKey || '',
+      'base64',
+    );
   }
 
   get bootstrapNodes(): string[] | undefined {
-    return this.appConfig.orbitdb.bootstrapNodes?.split(',');
+    return this.configService
+      .get<AppConfig['orbitdb']>('orbitdb')
+      ?.bootstrapNodes?.split(',');
   }
 
   get databases(): Record<string, string> {
-    return this.appConfig.orbitdb.databases;
+    return (
+      this.configService.get<AppConfig['orbitdb']>('orbitdb')?.databases || {}
+    );
   }
 
+  // // Get the entire app configuration (if still needed internally)
+  // private get appConfig(): AppConfig {
+  //   const config = this.configService.get<AppConfig>('solution');
+  //   if (!config) {
+  //     throw new Error('Configuration key "solution" not found');
+  //   }
+  //   return config;
+  // }
+
   get runMode(): string {
-    return this.appConfig.runMode;
+    return this.configService.get<AppConfig['runMode']>('runMode')!;
   }
 
   get debug(): string {
-    return this.appConfig.debug;
-  }
-
-  // Database Configuration
-  get databasePath(): string {
-    return this.databaseConfig.path;
-  }
-
-  get databaseLogging(): boolean {
-    return this.databaseConfig.logging;
+    return this.configService.get<AppConfig['debug']>('debug')!;
   }
 
   // JWT Configuration
   get jwtAccessSecret(): string {
-    return this.jwtConfig.accessSecret;
+    return this.configService.get<AppConfig['jwt']>('jwt')!.accessSecret || '';
   }
 
   get jwtRefreshSecret(): string {
-    return this.jwtConfig.refreshSecret;
+    return this.configService.get<AppConfig['jwt']>('jwt')!.refreshSecret || '';
   }
 
   get jwtAccessExpiration(): string {
-    return this.jwtConfig.accessExpiration;
+    return (
+      this.configService.get<AppConfig['jwt']>('jwt')!.accessExpiration || ''
+    );
   }
 
   get jwtRefreshExpiration(): string {
-    return this.jwtConfig.refreshExpiration;
+    return (
+      this.configService.get<AppConfig['jwt']>('jwt')!.refreshExpiration || ''
+    );
   }
 
   // OAuth Configuration - Google
   get googleClientId(): string {
-    return this.oauthConfig.google.clientId;
+    return (
+      this.configService.get<AppConfig['oauth']>('oauth')!.google.clientId || ''
+    );
   }
 
-  // OAuth Configuration - Google
   get appName(): string {
-    return this.appConfig.appName;
+    return this.configService.get<AppConfig['appName']>('appName')!;
   }
 
   get googleClientSecret(): string {
-    return this.oauthConfig.google.clientSecret;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.google
+      .clientSecret;
   }
 
   // OAuth Configuration - GitHub
   get githubClientId(): string {
-    return this.oauthConfig.github.clientId;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.github.clientId;
   }
 
   get githubClientSecret(): string {
-    return this.oauthConfig.github.clientSecret;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.github
+      .clientSecret;
   }
 
   // OAuth Configuration - Facebook
   get facebookClientId(): string {
-    return this.oauthConfig.facebook.clientId;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.facebook
+      .clientId;
   }
 
   get facebookClientSecret(): string {
-    return this.oauthConfig.facebook.clientSecret;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.facebook
+      .clientSecret;
   }
 
   // OAuth Configuration - Twitter
   get twitterClientId(): string {
-    return this.oauthConfig.twitter.clientId;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.twitter
+      .clientId;
   }
 
   get twitterClientSecret(): string {
-    return this.oauthConfig.twitter.clientSecret;
+    return this.configService.get<AppConfig['oauth']>('oauth')!.twitter
+      .clientSecret;
   }
 
   // URLs Configuration
   get frontendUrl(): string {
-    return this.urlsConfig.frontend;
+    return this.configService.get<AppConfig['urls']>('urls')!.frontend;
   }
 
   get backendUrl(): string {
-    return this.urlsConfig.backend;
+    return this.configService.get<AppConfig['urls']>('urls')!.backend;
   }
 
   // OAuth Redirect URLs
@@ -188,66 +167,65 @@ export class AppConfigService {
     return `${this.backendUrl}/api/auth/oauth/facebook/callback`;
   }
 
-  // CORS Configuration
-  get corsOrigins(): string[] {
-    return this.appConfig.cors.origins
-      .split(',')
-      .map((origin) => origin.trim());
-  }
-
   // Security Configuration
   get bcryptRounds(): number {
-    return this.securityConfig.bcryptRounds;
+    return this.configService.get<AppConfig['security']>('security')!
+      .bcryptRounds;
   }
 
   get rateLimitMax(): number {
-    return this.securityConfig.rateLimit.max;
+    return this.configService.get<AppConfig['security']>('security')!.rateLimit
+      .max;
   }
 
   get rateLimitWindow(): number {
-    return this.securityConfig.rateLimit.windowMs;
+    return this.configService.get<AppConfig['security']>('security')!.rateLimit
+      .windowMs;
   }
 
   get sessionSecret(): string {
-    return this.securityConfig.session.secret;
+    return this.configService.get<AppConfig['security']>('security')!.session
+      .secret;
   }
 
   get sessionMaxAge(): number {
-    return this.securityConfig.session.maxAge;
+    return this.configService.get<AppConfig['security']>('security')!.session
+      .maxAge;
   }
 
   // Email Configuration
   get emailHost(): string {
-    return this.emailConfig.host;
+    return this.configService.get<AppConfig['email']>('email')!.host;
   }
 
   get emailPort(): number {
-    return this.emailConfig.port;
+    return this.configService.get<AppConfig['email']>('email')!.port;
   }
 
   get emailUser(): string {
-    return this.emailConfig.user;
+    return this.configService.get<AppConfig['email']>('email')!.user;
   }
 
   get emailPassword(): string {
-    return this.emailConfig.password;
+    return this.configService.get<AppConfig['email']>('email')!.password;
   }
 
   get emailFrom(): string {
-    return this.emailConfig.from;
+    return this.configService.get<AppConfig['email']>('email')!.from;
   }
 
   // Feature Flags
   get enableEmailVerification(): boolean {
-    return this.featuresConfig.emailVerification;
+    return this.configService.get<AppConfig['features']>('features')!
+      .emailVerification;
   }
 
   get enableOAuth(): boolean {
-    return this.featuresConfig.oauth;
+    return this.configService.get<AppConfig['features']>('features')!.oauth;
   }
 
   get enableLocalAuth(): boolean {
-    return this.featuresConfig.localAuth;
+    return this.configService.get<AppConfig['features']>('features')!.localAuth;
   }
 
   // Utility methods
@@ -270,4 +248,5 @@ export class AppConfigService {
   get isNodeMode(): boolean {
     return this.runMode === 'node';
   }
+  ƒ;
 }

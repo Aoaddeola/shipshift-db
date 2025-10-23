@@ -4,10 +4,8 @@ import { AppConfigModule } from './config/config.module.js';
 import { JourneyModule } from './logistics/journey/journey.module.js';
 import { StepModule } from './onchain/step/step.module.js';
 import { AuthModule } from './auth/operator/auth.module.js';
-import { OrbitDBRootModule } from './orbitdb/orbitdb.module.js';
 import { CurrencyModule } from './common/currency/currency.module.js';
 import { MultiSigWitnessModule } from './onchain/multisig-tx-witness/pending-multisig-tx-witness.module.js';
-import { MultiSigTxModule } from './onchain/multisig-txs/pending-multisig-tx.module.js';
 import { OperatorBadgeModule } from './onchain/operator-badge/operator-badge.module.js';
 import { StepTxModule } from './onchain/step_tx/step-tx.module.js';
 import { OperatorModule } from './users/operator/operator.module.js';
@@ -30,6 +28,10 @@ import { CustomerModule } from './profiles/customer/customer.module.js';
 import { AgentModule } from './profiles/agent/agent.module.js';
 import { PlanningModule } from './planning/planning.module.js';
 import { CacheModule } from './cache/cache.module.js';
+import { MultiSigTxModule } from './onchain/multi-sig-tx/multi-sig-tx.module.js';
+import { MariaDBModule } from './db/mariadb/mariadb.module.js';
+import { OrbitDBRootModule } from './db/orbitdb/orbitdb.module.js';
+// import { OrbitDBModule } from './db/orbitdb/orbitdb.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,6 +49,7 @@ const __dirname = path.dirname(__filename);
     ScheduleModule.forRoot(),
     OrbitDBRootModule,
     CacheModule,
+    MariaDBModule,
 
     // Auth
     AuthModule,

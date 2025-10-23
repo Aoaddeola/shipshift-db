@@ -2,10 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { getOrGenerateSwarmKey } from './common/swarm-key.util.js';
-import { FileConfigService } from './config/file-config.service.js';
 import { bootstrap as bootstrapNode } from './bootstrap-node.js';
-import { AppConfig, bootstrapConfigSchema } from './config/schema.js';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { FileConfigService } from './config/file-config.service.js';
+import { AppConfig, bootstrapConfigSchema } from './config/schema.js';
 
 export class AppBootstrap {
   private readonly configService: FileConfigService;
@@ -49,6 +49,7 @@ export class AppBootstrap {
     process.env.TCP_PORT = bootstrapConfig.ipfs.tcpPort.toString();
     process.env.WS_PORT =
       process.env.HTTPS_PORT || bootstrapConfig.ipfs.wsPort.toString();
+    console.log('process.env', process.env);
     await bootstrapNode();
   }
 
@@ -56,22 +57,23 @@ export class AppBootstrap {
     console.log('Starting in node mode...');
 
     process.env.PORT = process.env.HTTPS_PORT || appConfig.port.toString();
+    console.log('process.env', process.env);
 
     const app = await NestFactory.create(AppModule);
-    
+
     // Updated CORS configuration with more headers
     app.enableCors({
-        origin: process.env.BASE_URL || appConfig.baseUrl.toString(),
-        methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
-        allowedHeaders: [
-            'Content-Type', 
-            'Accept', 
-            'Authorization',
-            'Cache-Control',  // Add this
-            'Pragma',         // Add common cache headers
-            'If-Modified-Since'
-        ],
-        credentials: true
+      origin: process.env.BASE_URL || appConfig.baseUrl.toString(),
+      methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: [
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'Cache-Control', // Add this
+        'Pragma', // Add common cache headers
+        'If-Modified-Since',
+      ],
+      credentials: true,
     });
 
     // Enable validation
@@ -86,7 +88,7 @@ export class AppBootstrap {
     this.setupSwagger(app);
     await app.listen(process.env.PORT);
     console.log(`✅ Application started on port ${process.env.PORT}`);
-}
+  }
 
   private setupSwagger(app: INestApplication): void {
     const swaggerConfig = new DocumentBuilder()
@@ -106,4 +108,3 @@ export class AppBootstrap {
     return validatedConfig;
   }
 }
-
