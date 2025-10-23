@@ -25,7 +25,7 @@ export interface OrbitDBModuleAsyncOptions
   providers: [OrbitDBService],
   exports: [OrbitDBService],
 })
-export class OrbitDBRootModule {} // Renamed root module
+export class OrbitDBRootModule {} // Fix for orbitdb service being instantiated multiple times
 
 @Module({})
 export class OrbitDBModule {

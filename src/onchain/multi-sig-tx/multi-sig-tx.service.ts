@@ -49,15 +49,17 @@ export class MultiSigTxService {
   async getMultiSigTxByTxId(
     txId: string,
     include?: string[],
-  ): Promise<MultiSigTx[]> {
+  ): Promise<MultiSigTx> {
     const all = await this.database.all();
     const multiSigTxs = all.filter((multiSigTx) => multiSigTx.txId === txId);
 
-    return Promise.all(
-      multiSigTxs.map((multiSigTx) =>
-        this.populateRelations(multiSigTx, include),
-      ),
-    );
+    return (
+      await Promise.all(
+        multiSigTxs.map((multiSigTx) =>
+          this.populateRelations(multiSigTx, include),
+        ),
+      )
+    )[0];
   }
 
   async getMultiSigTxs(

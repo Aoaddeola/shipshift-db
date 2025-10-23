@@ -37,7 +37,7 @@ export class MultiSigTxController {
     @Query('include') include?: string,
   ) {
     const includeArray = include ? include.split(',') : [];
-    return this.multiSigTxService.getMultiSigTx(txId, includeArray);
+    return this.multiSigTxService.getMultiSigTxByTxId(txId, includeArray);
   }
 
   @Get()
