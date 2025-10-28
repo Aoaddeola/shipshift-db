@@ -4,7 +4,9 @@
 export enum UserType {
   OPERATOR = 'operator',
   AGENT = 'agent',
+  ADMIN = 'admin',
   USER = 'user',
+  TESTNET = 'testnet',
 }
 
 /**

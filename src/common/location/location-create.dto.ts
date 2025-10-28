@@ -12,7 +12,7 @@ import { Type } from 'class-transformer';
 import { Location } from './location.types.js';
 
 // Nested DTO for Coordinates
-class CoordinatesDto {
+export class CoordinatesDto {
   @IsLongitude()
   @ApiProperty({
     example: '-74.0060',

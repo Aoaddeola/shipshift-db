@@ -31,7 +31,9 @@ import { CacheModule } from './cache/cache.module.js';
 import { MultiSigTxModule } from './onchain/multi-sig-tx/multi-sig-tx.module.js';
 import { MariaDBModule } from './db/mariadb/mariadb.module.js';
 import { OrbitDBRootModule } from './db/orbitdb/orbitdb.module.js';
-// import { OrbitDBModule } from './db/orbitdb/orbitdb.module.js';
+import { AssignmentModule } from './testnet/assignment/assignment.module.js';
+import { TaskModule } from './testnet/task/task.module.js';
+import { TaskValidationModule } from './testnet/task-validation/task-validation.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +85,11 @@ const __dirname = path.dirname(__filename);
 
     // Algorithm
     PlanningModule,
+
+    // Testnet
+    TaskModule,
+    AssignmentModule,
+    TaskValidationModule,
   ],
   providers: [],
 })

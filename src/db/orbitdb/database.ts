@@ -72,6 +72,19 @@ export class Database<T extends { id: string }> implements OnModuleInit {
     return null;
   }
 
+  // async query(
+  //   findFn: (doc: { [key: string]: string }) => boolean,
+  // ): Promise<T | null> {
+  //   await this.initPromise;
+  //   const result = this.database.query(findFn);
+
+  //   if (result) {
+  //     return result.value as unknown as T;
+  //   }
+
+  //   return null;
+  // }
+
   async all(): Promise<T[]> {
     await this.initPromise;
 

@@ -3,6 +3,7 @@ import { checkSignature, DataSignature, generateNonce } from '@meshsdk/core';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Operator } from '../../users/operator/operator.types.js';
+import { ColonyNode } from 'src/types.js';
 // import { checkSignature } from '@meshsdk/common';
 
 @Injectable()
@@ -63,6 +64,27 @@ export class AuthService {
         sub: operator?.id,
         walletAddress: operator?.onchain.opAddr,
         userType: 'operator',
+      });
+    } catch (error) {
+      console.error('User does not exist', error);
+      return '';
+    }
+  }
+
+  /**
+   * Generates a JWT token for an authenticated node operator wallet
+   * @param walletAddress - The wallet address to encode in the token
+   * @returns Signed JWT token
+   */
+  async generateNodeOperatorToken(
+    walletAddress: string,
+    colonyNode: ColonyNode,
+  ) {
+    try {
+      return this.jwtService.signAsync({
+        sub: colonyNode?.id,
+        walletAddress: walletAddress,
+        userType: 'nodeOperator',
       });
     } catch (error) {
       console.error('User does not exist', error);

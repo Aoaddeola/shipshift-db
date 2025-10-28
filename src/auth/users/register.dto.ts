@@ -27,7 +27,7 @@ export class RegisterDto {
   @MinLength(6)
   confirmPassword: string;
 
-  @IsEnum(['customer', 'agent', 'user'])
+  @IsEnum(Object.values(UserType))
   @IsNotEmpty()
   userType: UserType;
 }
