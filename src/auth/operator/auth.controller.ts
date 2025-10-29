@@ -12,8 +12,8 @@ import { DataSignature } from '@meshsdk/common';
 import { OperatorService } from '../../users/operator/operator.service.js';
 import 'bech32';
 import { bech32 } from 'bech32';
-import { UserType } from 'src/users/user/user.types.js';
-import { ColonyNodeService } from 'src/onchain/colony-node/colony-node.service.js';
+import { UserType } from '../../users/user/user.types.js';
+import { ColonyNodeService } from '../../onchain/colony-node/colony-node.service.js';
 
 @Controller('web3/auth')
 export class AuthController {
@@ -68,7 +68,11 @@ export class AuthController {
         address,
         _colonyNode!,
       ),
-      user: { ...colonyNode, userType: UserType.OPERATOR.toString() },
+      user: {
+        id: _colonyNode?.id,
+        userType: UserType.NODE_OPERATOR,
+        walletAddress: address,
+      },
     };
   }
 }

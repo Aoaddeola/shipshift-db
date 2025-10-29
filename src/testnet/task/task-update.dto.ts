@@ -1,7 +1,20 @@
-import { IsString, IsNumber, Min, IsOptional, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  Min,
+  IsOptional,
+  IsObject,
+  IsDateString,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TaskUpdateDto {
+  @IsDateString()
+  @IsNotEmpty()
+  @ApiProperty({ example: '2025-04-01T09:00:00Z' })
+  expiryDate?: Date;
+
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({

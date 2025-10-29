@@ -37,6 +37,12 @@ export class Task extends Model<Task> {
 
   @Column({
     type: DataType.DATE,
+    field: 'expiryDate',
+  })
+  declare expiryDate: Date;
+
+  @Column({
+    type: DataType.DATE,
     field: 'createdAt',
   })
   declare createdAt?: Date;

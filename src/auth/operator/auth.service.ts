@@ -3,7 +3,7 @@ import { checkSignature, DataSignature, generateNonce } from '@meshsdk/core';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Operator } from '../../users/operator/operator.types.js';
-import { ColonyNode } from 'src/types.js';
+import { ColonyNode } from '../../onchain/colony-node/colony-node.types.js';
 // import { checkSignature } from '@meshsdk/common';
 
 @Injectable()

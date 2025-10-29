@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  GoneException,
   Injectable,
   Logger,
   NotFoundException,
@@ -45,6 +46,12 @@ export class AssignmentService {
     }
 
     try {
+      const task = await this.taskModel.findOne({
+        where: { id: assignment.taskId },
+      });
+      if (new Date() >= task!.expiryDate) {
+        throw new GoneException('Task has expired');
+      }
       const assignmentModel = await this.assignmentModel.create(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         assignment as any,

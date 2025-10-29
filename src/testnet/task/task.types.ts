@@ -9,6 +9,7 @@ export interface Task {
   goal: string;
   reward: number;
   validation: TaskValidation;
+  expiryDate: Date; // Date is ISO8281 string
   createdAt?: Date;
   updatedAt?: Date;
 }

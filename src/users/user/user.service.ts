@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 // src/users/user.service.ts
 import {
   Injectable,
@@ -28,6 +29,14 @@ export class UserService {
   ) {}
 
   /**
+   * Remove sensitive data from user object
+   */
+  private sanitizeUser(user: User): any {
+    user.password = '';
+    return user;
+  }
+
+  /**
    * Find user by email with OAuth providers
    */
   async findByEmail(email: string): Promise<User | null> {
@@ -43,7 +52,6 @@ export class UserService {
         });
         (user as any).oauthProviders = oauthProviders;
       }
-
       return user;
     } catch (error) {
       this.logger.error(`Error finding user by email ${email}:`, error);
@@ -79,7 +87,7 @@ export class UserService {
         (user as any).oauthProviders = oauthProviders;
       }
 
-      return user;
+      return user!;
     } catch (error) {
       this.logger.error(`Error finding user by provider ${provider}:`, error);
       throw error;
@@ -102,7 +110,7 @@ export class UserService {
         (user as any).oauthProviders = oauthProviders;
       }
 
-      return user;
+      return user!;
     } catch (error) {
       this.logger.error(`Error finding user by ID ${id}:`, error);
       throw error;
@@ -470,23 +478,18 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+    return this.sanitizeUser(user);
   }
 
   async update(id: string, user: Partial<User>): Promise<User> {
-    console.log('0000000000000000000', user);
     const [affectedCount, updatedUser] = await this.userModel.update(user, {
       where: { id },
       returning: true,
     });
-    console.log('44444444444444444444444444444', affectedCount, updatedUser);
-
     if (affectedCount === 0) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    console.log('1111111111111111111111111', user);
-
-    return updatedUser[0] ?? '';
+    return this.sanitizeUser(updatedUser[0]) ?? '';
   }
 
   async remove(id: string): Promise<void> {

@@ -5,6 +5,7 @@ import {
   Min,
   IsOptional,
   IsObject,
+  IsDateString,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Task } from './task.types.js';
@@ -12,6 +13,11 @@ import { Task } from './task.types.js';
 export class TaskCreateDto
   implements Omit<Task, 'id' | 'createdAt' | 'updatedAt'>
 {
+  @IsDateString()
+  @IsNotEmpty()
+  @ApiProperty({ example: '2025-04-01T09:00:00Z' })
+  expiryDate: Date;
+
   @IsString()
   @IsNotEmpty()
   @ApiProperty({

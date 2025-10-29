@@ -9,10 +9,14 @@ import {
   Body,
   NotFoundException,
   UseGuards,
+  Patch,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service.js';
 import { User } from './user.model.js';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
+import { UserType } from './user.types.js';
+import { JwtNodeOpAuthGuard } from 'src/guards/jwt-nodeOp-auth.guard.js';
 
 @Controller('users')
 export class UserController {
@@ -23,7 +27,7 @@ export class UserController {
     return this.userService.create(user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtNodeOpAuthGuard)
   @Get()
   async findAll() {
     return this.userService.findAll();
@@ -45,6 +49,18 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(@Param('id') id: string, @Body() user: Partial<User>) {
+    if (
+      user.userType === UserType.ADMIN ||
+      user.userType === UserType.NODE_OPERATOR
+    ) {
+      throw new ForbiddenException('Cannot update userType');
+    }
+    return this.userService.update(id, user);
+  }
+
+  @UseGuards(JwtNodeOpAuthGuard)
+  @Patch(':id')
+  async updateUserType(@Param('id') id: string, @Body() user: Partial<User>) {
     return this.userService.update(id, user);
   }
 
