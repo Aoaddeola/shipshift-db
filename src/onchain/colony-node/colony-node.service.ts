@@ -193,4 +193,8 @@ export class ColonyNodeService {
       message: `Colony node "${colonyNode.name}" with peer ID ${colonyNode.peerId} deleted successfully`,
     };
   }
+
+  async getNodePeerId() {
+    return this.database.getPeerId();
+  }
 }

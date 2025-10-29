@@ -10,7 +10,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 // Nested DTO for Coordinates update
-class CoordinatesUpdateDto {
+export class CoordinatesUpdateDto {
   @IsLongitude()
   @IsOptional()
   @ApiPropertyOptional({

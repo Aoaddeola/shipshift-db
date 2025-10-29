@@ -3,8 +3,11 @@
  */
 export enum UserType {
   OPERATOR = 'operator',
+  NODE_OPERATOR = 'nodeOperator',
   AGENT = 'agent',
+  ADMIN = 'admin',
   USER = 'user',
+  TESTNET = 'testnet',
 }
 
 /**

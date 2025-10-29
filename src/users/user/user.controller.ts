@@ -9,10 +9,14 @@ import {
   Body,
   NotFoundException,
   UseGuards,
+  Patch,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service.js';
 import { User } from './user.model.js';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
+import { UserType } from './user.types.js';
+import { JwtNodeOpAuthGuard } from '../../guards/jwt-nodeOp-auth.guard.js';
 
 @Controller('users')
 export class UserController {
@@ -20,10 +24,15 @@ export class UserController {
 
   @Post()
   async create(@Body() user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) {
-    return this.userService.create(user);
+    return this.userService.createWithEmail(
+      user.email,
+      user.password,
+      user.name,
+      user.userType,
+    );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtNodeOpAuthGuard)
   @Get()
   async findAll() {
     return this.userService.findAll();
@@ -45,7 +54,21 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(@Param('id') id: string, @Body() user: Partial<User>) {
+    if (
+      user.userType === UserType.ADMIN ||
+      user.userType === UserType.NODE_OPERATOR
+    ) {
+      throw new ForbiddenException('Cannot update userType');
+    }
     return this.userService.update(id, user);
+  }
+
+  @UseGuards(JwtNodeOpAuthGuard)
+  @Patch(':id')
+  async updateUserType(@Param('id') id: string, @Body() user: Partial<User>) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ..._user } = user;
+    return this.userService.update(id, _user);
   }
 
   @UseGuards(JwtAuthGuard)
