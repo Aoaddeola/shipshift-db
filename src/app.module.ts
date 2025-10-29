@@ -14,15 +14,9 @@ import { MissionModule } from './logistics/mission/mission.module.js';
 import { ParcelModule } from './logistics/parcel/parcel.module.js';
 import { ShipmentModule } from './logistics/shipment/shipment.module.js';
 import { LocationModule } from './common/location/location.module.js';
-import { SequelizeModule } from '@nestjs/sequelize';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { ContactDetailsModel } from './common/contact-details/contact-details.model.js';
 import { ContactDetailsModule } from './common/contact-details/contact-details.module.js';
 import { OAuthModule } from './auth/oauth/oauth.module.js';
 import { UserModule } from './users/user/user.module.js';
-import { OAuthProvider } from './auth/oauth/oauth-provider.entity.js';
-import { User } from './users/user/user.model.js';
 import { UserAuthModule } from './auth/users/auth.module.js';
 import { CustomerModule } from './profiles/customer/customer.module.js';
 import { AgentModule } from './profiles/agent/agent.module.js';
@@ -35,19 +29,9 @@ import { AssignmentModule } from './testnet/assignment/assignment.module.js';
 import { TaskModule } from './testnet/task/task.module.js';
 import { TaskValidationModule } from './testnet/task-validation/task-validation.module.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 @Module({
   imports: [
     AppConfigModule,
-    SequelizeModule.forRoot({
-      dialect: 'sqlite',
-      storage: path.join(__dirname, 'database', 'shpshft.db'),
-      autoLoadModels: true,
-      synchronize: true,
-      models: [ContactDetailsModel, OAuthProvider, User],
-    }),
     ScheduleModule.forRoot(),
     OrbitDBRootModule,
     CacheModule,

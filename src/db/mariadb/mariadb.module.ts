@@ -12,7 +12,7 @@ import { ContactDetailsModel } from '../../common/contact-details/contact-detail
   imports: [
     SequelizeModule.forRoot({
       ...databaseConfig,
-      models: [User, OAuthProvider, Task, Assignment], //, ContactDetailsModel],
+      models: [User, OAuthProvider, Task, Assignment, ContactDetailsModel],
     }),
     SequelizeModule.forFeature([
       User,
