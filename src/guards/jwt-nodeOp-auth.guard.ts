@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 // src/guards/jwt-auth.guard.ts
 import {
   Injectable,
@@ -32,13 +33,17 @@ export class JwtNodeOpAuthGuard implements CanActivate {
         secret: this.configService.jwtAccessSecret,
       });
       request.user = payload;
-      if (
-        (await this.colonyNodeService.getColonyNodesByOperatorAddress(
+      const colonyNodes =
+        await this.colonyNodeService.getColonyNodesByOperatorAddress(
           payload.walletAddress,
-        )) === null ||
-        payload.userType !== UserType.NODE_OPERATOR
+        );
+      const peerId = (await this.colonyNodeService.getNodePeerId()).toString();
+      if (
+        colonyNodes.length === 0 ||
+        payload.userType !== UserType.NODE_OPERATOR ||
+        colonyNodes.every((node) => node.peerId === peerId)
       ) {
-        throw new Error();
+        throw new UnauthorizedException('Wallet not authorized');
       }
     } catch {
       throw new UnauthorizedException('Invalid token');

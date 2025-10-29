@@ -33,10 +33,10 @@ export class JwtAdminAuthGuard implements CanActivate {
       });
       request.user = payload;
       if (
-        (await this.userService.findById(payload.id)) === null ||
+        (await this.userService.findById(payload.sub)) === null ||
         payload.userType !== UserType.ADMIN
       ) {
-        throw new Error();
+        throw new UnauthorizedException('User does not exist');
       }
     } catch {
       throw new UnauthorizedException('Invalid token');

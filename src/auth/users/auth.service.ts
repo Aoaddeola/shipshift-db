@@ -105,7 +105,7 @@ export class UserAuthService {
       sub: user.id,
       email: user.email,
       name: user.name,
-      userType: user.type,
+      userType: user.userType,
     };
 
     const accessToken = await this.jwtService.signAsync(payload);

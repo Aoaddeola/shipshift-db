@@ -32,7 +32,7 @@ export class UserService {
    * Remove sensitive data from user object
    */
   private sanitizeUser(user: User): any {
-    user.password = '';
+    if (user) user.password = '';
     return user;
   }
 
@@ -482,6 +482,17 @@ export class UserService {
   }
 
   async update(id: string, user: Partial<User>): Promise<User> {
+    const [affectedCount, updatedUser] = await this.userModel.update(user, {
+      where: { id },
+      returning: true,
+    });
+    if (affectedCount === 0) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return this.sanitizeUser(updatedUser[0]) ?? '';
+  }
+
+  async updateUserType(id: string, user: Partial<User>): Promise<User> {
     const [affectedCount, updatedUser] = await this.userModel.update(user, {
       where: { id },
       returning: true,

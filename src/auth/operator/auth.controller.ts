@@ -6,6 +6,7 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { DataSignature } from '@meshsdk/common';
@@ -57,19 +58,24 @@ export class AuthController {
       throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
     }
     const colonyNode =
-      await this.colonyNodeService.getColonyNodesByOperatorAddress(
-        convertAddrToRaw(address),
-      );
+      await this.colonyNodeService.getColonyNodesByOperatorAddress(address);
     const _colonyNode = colonyNode.find((v) =>
       v.nodeOperatorAddresses.includes(address),
     );
+
+    if (!_colonyNode) {
+      throw new UnauthorizedException(
+        'No node is associated with the wallet address',
+      );
+    }
+
     return {
       accessToken: await this.authService.generateNodeOperatorToken(
         address,
-        _colonyNode!,
+        _colonyNode,
       ),
       user: {
-        id: _colonyNode?.id,
+        id: _colonyNode.id,
         userType: UserType.NODE_OPERATOR,
         walletAddress: address,
       },

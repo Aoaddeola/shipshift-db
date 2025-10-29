@@ -99,4 +99,8 @@ export class Database<T extends { id: string }> implements OnModuleInit {
     await this.initPromise;
     await this.database.del(key);
   }
+
+  async getPeerId() {
+    return this.orbitdbService.getPeerId();
+  }
 }
