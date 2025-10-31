@@ -663,9 +663,9 @@ export class JourneyService {
     // Handle agent population
     if (include?.includes('agent')) {
       try {
-        const agent = await this.agentService.getAgent(journey.agentId);
-        if (agent) {
-          populatedJourney.agent = agent;
+        const agent = await this.agentService.getAgentsByOwner(journey.agentId);
+        if (agent.length > 0) {
+          populatedJourney.agent = agent[0];
         }
       } catch (error) {
         this.logger.warn(`Could not fetch agent for ${journey.agentId}`, error);

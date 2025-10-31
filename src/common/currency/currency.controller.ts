@@ -8,15 +8,18 @@ import {
   Put,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CurrencyService } from './currency.service.js';
 import { CurrencyCreateDto } from './currency-create.dto.js';
 import { CurrencyUpdateDto } from './currency-update.dto.js';
+import { JwtNodeOpAuthGuard } from 'src/guards/jwt-nodeOp-auth.guard.js';
 
 @Controller('currency')
 export class CurrencyController {
   constructor(private readonly currencyService: CurrencyService) {}
 
+  @UseGuards(JwtNodeOpAuthGuard)
   @Post()
   async createCurrency(@Body() currency: CurrencyCreateDto) {
     return this.currencyService.createCurrency(currency);
@@ -62,6 +65,7 @@ export class CurrencyController {
     return this.currencyService.getCurrencyByAssetClass(assetClass);
   }
 
+  @UseGuards(JwtNodeOpAuthGuard)
   @Put(':id')
   async updateCurrency(
     @Param('id') id: string,
@@ -70,6 +74,7 @@ export class CurrencyController {
     return this.currencyService.updateCurrency(id, currency);
   }
 
+  @UseGuards(JwtNodeOpAuthGuard)
   @Patch(':id')
   async partialUpdateCurrency(
     @Param('id') id: string,
@@ -78,6 +83,7 @@ export class CurrencyController {
     return this.currencyService.partialUpdateCurrency(id, update);
   }
 
+  @UseGuards(JwtNodeOpAuthGuard)
   @Delete(':id')
   async deleteCurrency(@Param('id') id: string) {
     return this.currencyService.deleteCurrency(id);
