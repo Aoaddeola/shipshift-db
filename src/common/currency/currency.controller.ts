@@ -13,7 +13,7 @@ import {
 import { CurrencyService } from './currency.service.js';
 import { CurrencyCreateDto } from './currency-create.dto.js';
 import { CurrencyUpdateDto } from './currency-update.dto.js';
-import { JwtNodeOpAuthGuard } from 'src/guards/jwt-nodeOp-auth.guard.js';
+import { JwtNodeOpAuthGuard } from '../../guards/jwt-nodeOp-auth.guard.js';
 
 @Controller('currency')
 export class CurrencyController {
