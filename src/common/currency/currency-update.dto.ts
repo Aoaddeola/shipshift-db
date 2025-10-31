@@ -4,7 +4,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export class CurrencyUpdateDto {
   @IsString()
   @IsOptional()
-  @MaxLength(10)
+  @MaxLength(56)
   @ApiPropertyOptional({
     example: 'USDT',
     description: 'Updated currency symbol',

@@ -7,7 +7,7 @@ export class CurrencyCreateDto
 {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(10)
+  @MaxLength(56)
   @ApiProperty({
     example: 'USD',
     description: 'Currency symbol (e.g., USD, EUR, BTC)',
