@@ -84,6 +84,7 @@ export interface Step {
   sender?: User; // Assuming sender is a User, not Agent
   recipient?: User; // Optional embedded recipient
   holder?: User; // Optional embedded holder
+  rating?: number;
   createdAt?: string;
   updatedAt?: string;
 }
