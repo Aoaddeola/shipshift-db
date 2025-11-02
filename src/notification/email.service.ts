@@ -47,26 +47,25 @@ export class EmailService {
   private readonly baseUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.fromEmail =
-      process.env.EMAIL_FROM || 'noreply@yourapp.com';
+    this.fromEmail = process.env.EMAIL_FROM || 'noreply@yourapp.com';
     this.appName = process.env.APP_NAME || 'Your App';
-    this.baseUrl =
-      process.env.BASE_URL || 'http://localhost:3000';
+    this.baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
     this.initializeTransporter();
   }
 
   private initializeTransporter() {
-     const host = process.env.EMAIL_HOST || this.configService.get('EMAIL_HOST');
+    const host = process.env.EMAIL_HOST || this.configService.get('EMAIL_HOST');
     const port = parseInt(
-       process.env.EMAIL_PORT! || this.configService.get('EMAIL_PORT')!,
+      process.env.EMAIL_PORT! || this.configService.get('EMAIL_PORT')!,
     );
-    const secure = process.env.EMAIL_SECURE! || this.configService.get('EMAIL_SECURE');
+    const secure =
+      process.env.EMAIL_SECURE! || this.configService.get('EMAIL_SECURE');
     const user =
-       process.env.EMAIL_USER! || this.configService.get('EMAIL_USER');
+      process.env.EMAIL_USER! || this.configService.get('EMAIL_USER');
     const pass =
-       process.env.EMAIL_PASS! || this.configService.get('EMAIL_PASS');
-    
+      process.env.EMAIL_PASS! || this.configService.get('EMAIL_PASS');
+
     // For development without SMTP credentials
     if (!host || !user || !pass) {
       this.logger.warn(
@@ -79,7 +78,7 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host: host,
       port: port,
-      secure: false, // === 465, // true for 465, false for other ports
+      secure: secure,
       auth: {
         user: user,
         pass: pass,
@@ -238,8 +237,6 @@ export class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-
-      console.log("result", result)
 
       this.logger.log(`Email sent successfully to ${to}`);
       this.logger.debug(`Message ID: ${result.messageId}`);

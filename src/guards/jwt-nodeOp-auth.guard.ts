@@ -41,7 +41,7 @@ export class JwtNodeOpAuthGuard implements CanActivate {
       if (
         colonyNodes.length === 0 ||
         payload.userType !== UserType.NODE_OPERATOR ||
-        colonyNodes.every((node) => node.peerId === peerId)
+        colonyNodes.every((node) => node.peerId !== peerId)
       ) {
         throw new UnauthorizedException('Wallet not authorized');
       }

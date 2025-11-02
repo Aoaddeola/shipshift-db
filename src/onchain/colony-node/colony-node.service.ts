@@ -3,6 +3,7 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { ColonyNode } from './colony-node.types.js';
@@ -22,6 +23,14 @@ export class ColonyNodeService {
   async createColonyNode(
     colonyNode: Omit<ColonyNode, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ColonyNode> {
+    const existingColonyNode = await this.getColonyNodesByPeerId(
+      colonyNode.peerId,
+    );
+    if (existingColonyNode.length > 0) {
+      throw new ConflictException(
+        'Colony Node with the same peer id already exists',
+      );
+    }
     const id = randomUUID();
     const now = new Date().toISOString();
 

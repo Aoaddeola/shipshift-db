@@ -38,6 +38,7 @@ import { webSockets } from '@libp2p/websockets';
 import { kadDHT } from '@libp2p/kad-dht';
 import { webRTC } from '@libp2p/webrtc';
 import { AppConfigService } from '../../config/config.service.js';
+import { loadOrCreatePrivateKey } from '../../bootstrap-node.js';
 
 @Injectable()
 export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
@@ -87,6 +88,7 @@ export class OrbitDBService implements OnModuleInit, OnModuleDestroy {
           }),
         ],
         libp2p: {
+          privateKey: await loadOrCreatePrivateKey(),
           addresses: {
             listen: [
               `/ip4/${this.configService.ipfsHost}/tcp/${this.configService.ipfsTcpPort}`,
