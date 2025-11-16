@@ -2439,9 +2439,9 @@ export class StepService {
     // Handle agent population
     if (include?.includes('agent')) {
       try {
-        const agent = await this.agentService.getAgent(step.agentId);
-        if (agent) {
-          populatedStep.agent = agent;
+        const agent = await this.agentService.getAgentsByOwner(step.agentId);
+        if (agent.length > 0) {
+          populatedStep.agent = agent[0];
         }
       } catch (error) {
         this.logger.warn(`Could not fetch agent for ${step.agentId}`, error);

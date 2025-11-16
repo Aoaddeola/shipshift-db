@@ -8,7 +8,6 @@ export class CacheService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   async get<T>(key: string): Promise<T | undefined> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.cacheManager.get<T>(key);
   }
 
@@ -25,7 +24,6 @@ export class CacheService {
   }
 
   async wrap<T>(key: string, fn: () => Promise<T>, ttl?: number): Promise<T> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.cacheManager.wrap(key, fn, ttl);
   }
 }
