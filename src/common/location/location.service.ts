@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
-import { Location } from './location.types.js';
+import { Coordinates, Location } from './location.types.js';
 import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { LocationCreateDto } from './location-create.dto.js';
@@ -215,3 +215,35 @@ export class LocationService {
     };
   }
 }
+
+export function calculateDistanceBetweenCoordinates(
+  coord1: Coordinates,
+  coord2: Coordinates,
+): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = degreesToRadians(coord2.latitude - coord1.latitude);
+  const dLng = degreesToRadians(coord2.longitude - coord1.longitude);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(degreesToRadians(coord1.latitude)) *
+      Math.cos(degreesToRadians(coord2.latitude)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+
+  return distance;
+}
+
+function degreesToRadians(degrees: number): number {
+  return degrees * (Math.PI / 180);
+}
+
+// Example usage:
+// const newYork: Coordinates = { latitude: 40.7128, longitude: -74.006 };
+// const losAngeles: Coordinates = { latitude: 34.0522, longitude: -118.2437 };
+
+// const distance = calculateDistanceBetweenCoordinates(newYork, losAngeles);
+// console.log(`Distance: ${distance.toFixed(2)} km`); // Output: Distance: 3935.75 km
