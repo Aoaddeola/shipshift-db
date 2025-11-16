@@ -42,6 +42,14 @@ export class ShipmentCreateDto
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
+    example: 'senderWalletAddress-456',
+    description: 'Wallet address of sender',
+  })
+  senderWalletAddress: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
     example: '1',
     description: 'Quantity of items being shipped (as string)',
   })

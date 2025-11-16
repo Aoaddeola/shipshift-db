@@ -1,5 +1,11 @@
-import { IsString, IsEnum, IsOptional, IsDateString } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+  IsNotEmpty,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ShipmentStatus } from './shipment.types.js';
 
 export class ShipmentUpdateDto {
@@ -18,6 +24,14 @@ export class ShipmentUpdateDto {
     description: 'Updated parcel ID',
   })
   parcelId?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'senderWalletAddress-456',
+    description: 'Wallet address of sender',
+  })
+  senderWalletAddress?: string;
 
   @IsString()
   @IsOptional()

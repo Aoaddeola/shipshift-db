@@ -12,6 +12,7 @@ export enum ShipmentStatus {
   INITIALIZED = 'initialized',
   IN_TRANSIT = 'in-transit',
   DELIVERED = 'delivered',
+  ABORTED = 'aborted',
   FAILED = 'failed',
 }
 
@@ -30,6 +31,7 @@ export interface Shipment {
   missionId?: string;
   journeyId?: string;
   status: ShipmentStatus;
+  senderWalletAddress: string;
   fromLocation?: Location;
   toLocation?: Location;
   mission?: Mission; // Embedded mission
