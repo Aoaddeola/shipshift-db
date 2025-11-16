@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 // src/guards/jwt-auth.guard.ts
 import {
   Injectable,

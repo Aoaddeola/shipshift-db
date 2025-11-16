@@ -39,7 +39,7 @@ export class AuthService {
 
     try {
       // Verify using MeshJS [[meshjs.dev]]
-      // eslint-disable-next-line prettier/prettier
+
       const isValid = Promise.resolve(
         checkSignature(storedChallenge, signature, walletAddress),
       );
