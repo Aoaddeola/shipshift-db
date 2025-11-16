@@ -1,9 +1,14 @@
-// src/step-tx/step-tx-create.dto.ts
-
-import { IsString, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsDate,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { StepTxDbEntry } from './types.js';
 import { StepState } from '../step/step.types.js';
+import { Type } from 'class-transformer';
 
 export class StepTxCreateDto implements Omit<StepTxDbEntry, 'id'> {
   @IsString()
@@ -29,4 +34,24 @@ export class StepTxCreateDto implements Omit<StepTxDbEntry, 'id'> {
     example: StepState.PENDING,
   })
   state: StepState;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  @ApiProperty({
+    description: 'Creation timestamp',
+    example: '2023-01-01T00:00:00.000Z',
+    required: false,
+  })
+  createdAt?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  @ApiProperty({
+    description: 'Last update timestamp',
+    example: '2023-01-01T00:00:00.000Z',
+    required: false,
+  })
+  updatedAt?: Date;
 }
