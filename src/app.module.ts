@@ -28,7 +28,7 @@ import { OrbitDBRootModule } from './db/orbitdb/orbitdb.module.js';
 import { AssignmentModule } from './testnet/assignment/assignment.module.js';
 import { TaskModule } from './testnet/task/task.module.js';
 import { TaskValidationModule } from './testnet/task-validation/task-validation.module.js';
-import { MetricsModule } from './common/metrics/metrics.module.js';
+import { AgentMetricsModule } from './metrics/agent/agent-metrics.module.js';
 
 @Module({
   imports: [
@@ -70,7 +70,10 @@ import { MetricsModule } from './common/metrics/metrics.module.js';
 
     // Algorithm
     PlanningModule,
-    MetricsModule,
+
+    // Metrics
+    AgentMetricsModule,
+    // ShipmentMetricsModule,
 
     // Testnet
     TaskModule,
