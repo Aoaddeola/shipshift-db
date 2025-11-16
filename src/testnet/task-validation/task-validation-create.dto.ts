@@ -51,6 +51,30 @@ export class LocationConstraintsDto {
   })
   radius?: number;
 
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'city-123',
+    description: 'Required city',
+  })
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'state-456',
+    description: 'Required state',
+  })
+  state?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'country-456',
+    description: 'Required country',
+  })
+  country?: string;
+
   @IsNumber()
   @Min(0)
   @IsOptional()

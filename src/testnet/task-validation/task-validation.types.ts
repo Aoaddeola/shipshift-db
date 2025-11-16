@@ -18,6 +18,9 @@ export interface EntityConstraintDefinitions {
   };
   [Entity.Location]: {
     coordinates?: Coordinates;
+    city?: string;
+    state?: string;
+    country?: string;
     radius?: number; // meters
     minimum?: number;
   };

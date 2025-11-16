@@ -20,7 +20,7 @@ export class LocationValidationHandler
       return false;
     }
 
-    const { coordinates, radius, minimum } = constraints;
+    const { coordinates, radius, city, state, country, minimum } = constraints;
     const userLocations =
       await this.locationService.getLocationsByOwner(userId);
 
@@ -32,13 +32,63 @@ export class LocationValidationHandler
         meetsAllConstraints && userLocations.length >= minimum;
     }
 
-    // Check radius constraint if both coordinates and radius are provided
-    if (coordinates !== undefined && radius !== undefined) {
-      meetsAllConstraints =
-        meetsAllConstraints &&
-        userLocations.some((location) =>
-          areCoordinatesWithinRadius(location.coordinates, coordinates, radius),
-        );
+    // Check if we have any location-based constraints to validate against user locations
+    const hasLocationConstraints =
+      coordinates !== undefined ||
+      city !== undefined ||
+      state !== undefined ||
+      country !== undefined;
+
+    if (hasLocationConstraints && userLocations.length > 0) {
+      let hasMatchingLocation = false;
+
+      // Check each user location against the constraints
+      for (const location of userLocations) {
+        let matchesCurrentLocation = true;
+
+        // Check coordinate radius constraint if provided
+        if (coordinates !== undefined && radius !== undefined) {
+          matchesCurrentLocation =
+            matchesCurrentLocation &&
+            areCoordinatesWithinRadius(
+              location.coordinates,
+              coordinates,
+              radius,
+            );
+        }
+
+        // Check city constraint if provided
+        if (city !== undefined) {
+          matchesCurrentLocation =
+            matchesCurrentLocation &&
+            location.city?.toLowerCase() === city.toLowerCase();
+        }
+
+        // Check state constraint if provided
+        if (state !== undefined) {
+          matchesCurrentLocation =
+            matchesCurrentLocation &&
+            location.state?.toLowerCase() === state.toLowerCase();
+        }
+
+        // Check country constraint if provided
+        if (country !== undefined) {
+          matchesCurrentLocation =
+            matchesCurrentLocation &&
+            location.country?.toLowerCase() === country.toLowerCase();
+        }
+
+        // If this location matches all provided constraints, we're good
+        if (matchesCurrentLocation) {
+          hasMatchingLocation = true;
+          break;
+        }
+      }
+
+      meetsAllConstraints = meetsAllConstraints && hasMatchingLocation;
+    } else if (hasLocationConstraints && userLocations.length === 0) {
+      // If we have location constraints but no user locations, validation fails
+      meetsAllConstraints = false;
     }
 
     return meetsAllConstraints;
