@@ -20,7 +20,6 @@ import { UserModule } from './users/user/user.module.js';
 import { UserAuthModule } from './auth/users/auth.module.js';
 import { CustomerModule } from './profiles/customer/customer.module.js';
 import { AgentModule } from './profiles/agent/agent.module.js';
-import { PlanningModule } from './planning/planning.module.js';
 import { CacheModule } from './cache/cache.module.js';
 import { MultiSigTxModule } from './onchain/multi-sig-tx/multi-sig-tx.module.js';
 import { MariaDBModule } from './db/mariadb/mariadb.module.js';
@@ -29,6 +28,7 @@ import { AssignmentModule } from './testnet/assignment/assignment.module.js';
 import { TaskModule } from './testnet/task/task.module.js';
 import { TaskValidationModule } from './testnet/task-validation/task-validation.module.js';
 import { AgentMetricsModule } from './metrics/agent/agent-metrics.module.js';
+import { OperatorStatsModule } from './stats/stats.module.js';
 
 @Module({
   imports: [
@@ -68,11 +68,9 @@ import { AgentMetricsModule } from './metrics/agent/agent-metrics.module.js';
     OperatorModule,
     UserModule,
 
-    // Algorithm
-    PlanningModule,
-
     // Metrics
     AgentMetricsModule,
+    OperatorStatsModule,
     // ShipmentMetricsModule,
 
     // Testnet
