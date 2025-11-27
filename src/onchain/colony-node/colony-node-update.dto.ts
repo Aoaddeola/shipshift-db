@@ -6,8 +6,10 @@ import {
   Max,
   IsOptional,
   ArrayNotEmpty,
+  IsEnum,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { OperatorTypeParams } from '../../users/operator/operator.types.js';
 
 export class ColonyNodeUpdateDto {
   @IsString()
@@ -17,6 +19,14 @@ export class ColonyNodeUpdateDto {
     description: 'Updated name of the colony node',
   })
   name?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'ETH',
+    description: 'Updated platform asset class',
+  })
+  platformAssetClass?: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -29,6 +39,22 @@ export class ColonyNodeUpdateDto {
     description: 'Updated array of node operator addresses',
   })
   nodeOperatorAddresses?: string[];
+
+  @IsArray()
+  @IsOptional()
+  @ArrayNotEmpty({
+    message: 'operatorTypes cannot be empty when provided',
+  })
+  @IsEnum(['ReserveOperatorType', 'DispatchOperatorType', 'CuratorType'], {
+    each: true,
+  })
+  @ApiPropertyOptional({
+    example: ['CuratorType'],
+    description: 'Updated array of operator types',
+    enum: ['ReserveOperatorType', 'DispatchOperatorType', 'CuratorType'],
+    isArray: true,
+  })
+  operatorTypes?: OperatorTypeParams[];
 
   @IsNumber()
   @Min(1)
