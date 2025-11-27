@@ -147,6 +147,20 @@ export class StepService {
     );
   }
 
+  async getActiveSteps(include?: string[]): Promise<Step[]> {
+    const all = await this.database.all();
+    const steps = all.filter(
+      (step) =>
+        step.state === StepState.INITIALIZED ||
+        step.state === StepState.COMMITTED ||
+        step.state === StepState.COMMENCED,
+    );
+
+    return Promise.all(
+      steps.map((step) => this.populateRelations(step, include)),
+    );
+  }
+
   async getStepsByShipmentAndJourney(
     shipmentId: string,
     journeyId: string,
