@@ -34,6 +34,9 @@ export interface Agent {
   ownerId: string; // reference to User
   openToDestinationsOutOfScope: boolean; // Open to deliveries to locations that is not specificially listed by the agent
   meansOfConveyance: ConveyanceMeans;
+  onChainAddress: string;
+  verified?: boolean;
+  active?: boolean;
   type: AgentType;
   owner?: User;
   operator?: Operator; // Embedded operator
