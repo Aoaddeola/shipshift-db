@@ -23,16 +23,23 @@ export class ColonyNodeService {
   async createColonyNode(
     colonyNode: Omit<ColonyNode, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ColonyNode> {
-    const existingColonyNode = await this.getColonyNodesByPeerId(
-      colonyNode.peerId,
-    );
+    const existingColonyNode = (
+      await Promise.all(
+        colonyNode.nodeOperatorAddresses.map(
+          async (address) =>
+            await this.getColonyNodesByOperatorAddress(address),
+        ),
+      )
+    ).flat();
+
     if (existingColonyNode.length > 0) {
       throw new ConflictException(
-        'Colony Node with the same peer id already exists',
+        'Colony Node with the same operator(s) already exists',
       );
     }
     const id = randomUUID();
     const now = new Date().toISOString();
+    const peerId = (await this.database.getPeerId()).toString();
 
     this.logger.log(`Creating colony node: ${id}`);
     const newColonyNode: ColonyNode = {
@@ -40,6 +47,7 @@ export class ColonyNodeService {
       createdAt: now,
       updatedAt: now,
       ...colonyNode,
+      peerId,
     };
 
     await this.database.put(newColonyNode);
@@ -76,6 +84,7 @@ export class ColonyNodeService {
     return updatedColonyNode;
   }
 
+  // Add this validation in the partialUpdateColonyNode method:
   async partialUpdateColonyNode(
     id: string,
     update: ColonyNodeUpdateDto,
@@ -110,6 +119,11 @@ export class ColonyNodeService {
       throw new BadRequestException(
         'maximumActiveStepsCount must be at least 1',
       );
+    }
+
+    // Validate operatorTypes if provided
+    if (update.operatorTypes && update.operatorTypes.length === 0) {
+      throw new BadRequestException('operatorTypes cannot be empty');
     }
 
     this.logger.log(`Partially updating colony node: ${id}`);

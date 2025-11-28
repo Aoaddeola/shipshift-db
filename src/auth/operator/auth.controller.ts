@@ -39,9 +39,7 @@ export class AuthController {
     if (!isValid) {
       throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
     }
-    const operator = await this.operatorService.getOperatorByAddress(
-      convertAddrToRaw(address),
-    );
+    const operator = await this.operatorService.getOperatorByAddress(address);
     return {
       accessToken: await this.authService.generateToken(operator),
       user: { ...operator, userType: UserType.OPERATOR.toString() },
@@ -58,9 +56,11 @@ export class AuthController {
       throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
     }
     const colonyNode =
-      await this.colonyNodeService.getColonyNodesByOperatorAddress(address);
+      await this.colonyNodeService.getColonyNodesByOperatorAddress(
+        convertAddrToRaw(address),
+      );
     const _colonyNode = colonyNode.find((v) =>
-      v.nodeOperatorAddresses.includes(address),
+      v.nodeOperatorAddresses.includes(convertAddrToRaw(address)),
     );
 
     if (!_colonyNode) {

@@ -5,6 +5,7 @@ import { AgentService } from './agent.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
 import { UserModule } from '../../users/user/user.module.js';
 import { OperatorModule } from '../../users/operator/operator.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { OperatorModule } from '../../users/operator/operator.module.js';
     }),
     OperatorModule,
     UserModule,
+    JwtModule,
   ],
   controllers: [AgentController],
   providers: [AgentService],

@@ -8,15 +8,25 @@ import {
   Put,
   Patch,
   Query,
+  ForbiddenException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AgentService } from './agent.service.js';
 import { AgentCreateDto } from './agent-create.dto.js';
 import { AgentUpdateDto } from './agent-update.dto.js';
 import { AgentType, ConveyanceMeans } from './agent.types.js';
+import { JwtDeliveryOpAuthGuard } from '../../guards/jwt-deliveryOp-auth.guard.js';
+import { OperatorService } from '../../users/operator/operator.service.js';
+import { resolveEd25519KeyHash } from '@meshsdk/core-cst';
+import { Store, Trie } from '@aiken-lang/merkle-patricia-forestry';
 
 @Controller('agent')
 export class AgentController {
-  constructor(private readonly agentService: AgentService) {}
+  constructor(
+    private readonly agentService: AgentService,
+    private readonly operatorService: OperatorService,
+  ) {}
 
   @Post()
   async createAgent(@Body() agent: AgentCreateDto) {
@@ -162,6 +172,154 @@ export class AgentController {
   @Put(':id')
   async updateAgent(@Param('id') id: string, @Body() agent: AgentCreateDto) {
     return this.agentService.updateAgent(id, agent);
+  }
+
+  @UseGuards(JwtDeliveryOpAuthGuard)
+  @Patch('ban/:id')
+  async banAgent(@Param('id') id: string, @Req() req: any) {
+    const requesterId = req.user.sub;
+    console.log('Authenticated user ID:', requesterId);
+
+    const agent = await this.agentService.getAgent(id);
+
+    if (agent.operatorId !== requesterId) {
+      throw new ForbiddenException('Agent not under operator');
+    }
+
+    if (agent.verified) {
+      return this.agentService.partialUpdateAgent(id, {
+        ...agent,
+        verified: false,
+      });
+    }
+    throw new ForbiddenException('Agent is not yet verified');
+  }
+
+  @UseGuards(JwtDeliveryOpAuthGuard)
+  @Patch('approve/:id')
+  async approveAgent(@Param('id') id: string, @Req() req: any) {
+    const requesterId = req.user.sub;
+    console.log('Authenticated user ID:', requesterId);
+
+    const agent = await this.agentService.getAgent(id);
+
+    if (agent.operatorId !== requesterId) {
+      throw new ForbiddenException('Agent not under operator');
+    }
+
+    const operator = await this.operatorService.getOperator(agent.operatorId);
+
+    let trie: Trie;
+
+    try {
+      // const store = new Store(agent.operatorId);
+      // await store.ready();
+      // console.log('sdkfhsadfkjhasfkjhadskjfdas', store);
+      trie = await Trie.load(new Store(agent.operatorId));
+      // return new MPFService(trie as Trie);
+    } catch (error) {
+      console.log('sdkfhsadfkjhasfkjhadskjfdas', error);
+      trie = await Trie.fromList([], new Store(agent.operatorId));
+      console.log('trietrietrietrietrietrie', trie);
+      // return new MPFService(trie);
+    }
+
+    if (agent.verified) {
+      try {
+        // const trie = await MPFService.load(agent.operatorId);
+        await trie.insert(
+          resolveEd25519KeyHash(agent.onChainAddress),
+          resolveEd25519KeyHash(operator.onchain.opAddr),
+        );
+        const proof = await trie.prove(
+          resolveEd25519KeyHash(agent.onChainAddress),
+          false,
+        );
+        await this.agentService.partialUpdateAgent(id, {
+          ...agent,
+          active: true,
+        });
+        return {
+          rootHash: trie.hash,
+          proof: proof?.toCBOR().toString('hex'),
+        };
+      } catch (error) {
+        console.log('Ertefasdfdsaf', error);
+        throw new ForbiddenException(error.message);
+      }
+    }
+    throw new ForbiddenException('Agent is not yet verified');
+  }
+
+  @UseGuards(JwtDeliveryOpAuthGuard)
+  @Patch('disapprove/:id')
+  async disapproveAgent(@Param('id') id: string, @Req() req: any) {
+    const requesterId = req.user.sub;
+    console.log('Authenticated user ID:', requesterId);
+
+    const agent = await this.agentService.getAgent(id);
+
+    if (agent.operatorId !== requesterId) {
+      throw new ForbiddenException('Agent not under operator');
+    }
+
+    let trie: Trie;
+
+    try {
+      // const store = new Store(agent.operatorId);
+      // await store.ready();
+      // console.log('sdkfhsadfkjhasfkjhadskjfdas', store);
+      trie = await Trie.load(new Store(agent.operatorId));
+      // return new MPFService(trie as Trie);
+    } catch (error) {
+      console.log('sdkfhsadfkjhasfkjhadskjfdas', error);
+      trie = await Trie.fromList([], new Store(agent.operatorId));
+      console.log('trietrietrietrietrietrie', trie);
+      // return new MPFService(trie);
+    }
+
+    if (agent.verified) {
+      try {
+        // trie = await MPFService.load(agent.operatorId);
+        await trie.delete(resolveEd25519KeyHash(agent.onChainAddress));
+        const proof = await trie.prove(
+          resolveEd25519KeyHash(agent.onChainAddress),
+          true,
+        );
+        await this.agentService.partialUpdateAgent(id, {
+          ...agent,
+          active: false,
+        });
+        return {
+          rootHash: trie.hash,
+          proof: proof?.toCBOR().toString('hex'),
+        };
+      } catch (error) {
+        throw new ForbiddenException(error.message);
+      }
+    }
+    throw new ForbiddenException('Agent is not yet verified');
+  }
+
+  @UseGuards(JwtDeliveryOpAuthGuard)
+  @Patch('unban/:id')
+  async unbanAgent(@Param('id') id: string, @Req() req: any) {
+    const requesterId = req.user.sub;
+    const agent = await this.agentService.getAgent(id);
+
+    if (agent.operatorId !== requesterId) {
+      throw new ForbiddenException(
+        `Agent ${agent.id} not under operator ${requesterId}`,
+      );
+    }
+
+    if (agent.verified) {
+      return this.agentService.partialUpdateAgent(id, {
+        ...agent,
+        verified: true,
+      });
+    }
+    throw new ForbiddenException('Agent is not yet verified');
   }
 
   @Patch(':id')

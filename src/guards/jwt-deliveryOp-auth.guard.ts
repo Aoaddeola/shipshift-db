@@ -10,14 +10,11 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { AppConfigService } from '../config/config.service.js';
 import { UserType } from '../users/user/user.types.js';
-import { ColonyNodeService } from '../onchain/colony-node/colony-node.service.js';
-import { convertAddrToRaw } from '../auth/operator/auth.controller.js';
 
 @Injectable()
-export class JwtNodeOpAuthGuard implements CanActivate {
+export class JwtDeliveryOpAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    private colonyNodeService: ColonyNodeService,
     private configService: AppConfigService,
   ) {}
 
@@ -34,17 +31,8 @@ export class JwtNodeOpAuthGuard implements CanActivate {
         secret: this.configService.jwtAccessSecret,
       });
       request.user = payload;
-      const colonyNodes =
-        await this.colonyNodeService.getColonyNodesByOperatorAddress(
-          convertAddrToRaw(payload.walletAddress),
-        );
-      const peerId = (await this.colonyNodeService.getNodePeerId()).toString();
-      if (
-        colonyNodes.length === 0 ||
-        payload.userType !== UserType.NODE_OPERATOR ||
-        colonyNodes.every((node) => node.peerId !== peerId)
-      ) {
-        throw new UnauthorizedException('Wallet not authorized');
+      if (payload.userType !== UserType.OPERATOR) {
+        throw new UnauthorizedException('Not a delivery operator');
       }
     } catch {
       throw new UnauthorizedException('Invalid token');

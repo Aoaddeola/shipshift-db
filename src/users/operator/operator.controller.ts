@@ -14,6 +14,7 @@ import { OperatorService } from './operator.service.js';
 import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
+import { JwtNodeOpAuthGuard } from '../../guards/jwt-nodeOp-auth.guard.js';
 
 @Controller('operator')
 export class OperatorController {
@@ -92,7 +93,7 @@ export class OperatorController {
     return this.operatorService.partialUpdateOperator(id, update);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtNodeOpAuthGuard)
   @Delete(':id')
   async deleteOperator(@Param('id') id: string) {
     return this.operatorService.deleteOperator(id);

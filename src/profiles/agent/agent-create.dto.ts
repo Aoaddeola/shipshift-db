@@ -5,6 +5,7 @@ import {
   IsEnum,
   MinLength,
   MaxLength,
+  IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
@@ -56,6 +57,32 @@ export class AgentCreateDto
     description: 'Means of conveyance used by the agent',
   })
   meansOfConveyance: ConveyanceMeans;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: '0x742d35Cc6634C0532925a3b8D...',
+    description: 'Public key hash of the agent',
+  })
+  onChainAddress: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    example: false,
+    description: 'Whether the agent is verified',
+    default: false,
+  })
+  verified?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    example: true,
+    description: 'Whether the agent is active',
+    default: true,
+  })
+  active?: boolean;
 
   @IsEnum(AgentType)
   @ApiProperty({

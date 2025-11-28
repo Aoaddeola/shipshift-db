@@ -6,9 +6,11 @@ import {
   IsNumber,
   Min,
   Max,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ColonyNode } from './colony-node.types.js';
+import { OperatorTypeParams } from '../../users/operator/operator.types.js';
 
 export class ColonyNodeCreateDto
   implements Omit<ColonyNode, 'id' | 'createdAt' | 'updatedAt'>
@@ -23,6 +25,14 @@ export class ColonyNodeCreateDto
   })
   name: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'BTC',
+    description: 'Platform asset class',
+  })
+  platformAssetClass: string;
+
   @IsArray()
   @IsString({ each: true })
   @ArrayNotEmpty({ message: 'nodeOperatorAddresses cannot be empty' })
@@ -31,6 +41,19 @@ export class ColonyNodeCreateDto
     description: 'Array of node operator addresses',
   })
   nodeOperatorAddresses: string[];
+
+  @IsArray()
+  @ArrayNotEmpty({ message: 'operatorTypes cannot be empty' })
+  @IsEnum(['ReserveOperatorType', 'DispatchOperatorType', 'CuratorType'], {
+    each: true,
+  })
+  @ApiProperty({
+    example: ['ReserveOperatorType', 'DispatchOperatorType'],
+    description: 'Array of operator types',
+    enum: ['ReserveOperatorType', 'DispatchOperatorType', 'CuratorType'],
+    isArray: true,
+  })
+  operatorTypes: OperatorTypeParams[];
 
   @IsNumber()
   @Min(1)
@@ -44,6 +67,7 @@ export class ColonyNodeCreateDto
   @IsNumber()
   @Min(0)
   @Max(100)
+  @IsNotEmpty()
   @ApiProperty({
     example: 5,
     description: 'Commission percentage (0-100)',
@@ -54,6 +78,7 @@ export class ColonyNodeCreateDto
 
   @IsNumber()
   @Min(1)
+  @IsNotEmpty()
   @ApiProperty({
     example: 100,
     description: 'Maximum number of active steps',
@@ -62,7 +87,7 @@ export class ColonyNodeCreateDto
   maximumActiveStepsCount: number;
 
   @IsString()
-  @IsNotEmpty()
+  // @IsNotEmpty()
   @ApiProperty({
     example: 'QmX58D3k4m...',
     description: 'Peer ID for network communication',

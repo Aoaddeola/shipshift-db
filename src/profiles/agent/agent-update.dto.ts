@@ -53,6 +53,30 @@ export class AgentUpdateDto {
   })
   meansOfConveyance?: ConveyanceMeans;
 
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: '0x742d35Cc6634C0532925a3b8D...',
+    description: 'Updated public key hash of the agent',
+  })
+  onChainAddress?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Updated verification status',
+  })
+  verified?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Updated active status',
+  })
+  active?: boolean;
+
   @IsEnum(AgentType)
   @IsOptional()
   @ApiPropertyOptional({
