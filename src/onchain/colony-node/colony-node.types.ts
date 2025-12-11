@@ -5,7 +5,6 @@ export interface ColonyNode {
   name: string;
   platformAssetClass: string;
   nodeOperatorAddresses: string[];
-  operatorTypes: OperatorTypeParams[];
   minimumActiveSignatory: number;
   commissionPercent: number;
   maximumActiveStepsCount: number;

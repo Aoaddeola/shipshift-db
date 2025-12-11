@@ -93,25 +93,23 @@ export class OperatorBadgeService {
   }
 
   async getOperatorBadgesByWalletAddress(
-    opWalletAddress: string,
+    walletAddress: string,
   ): Promise<OperatorBadge[]> {
     const all = await this.database.all();
-    return all.filter((badge) => badge.opWalletAddress === opWalletAddress);
+    return all.filter((badge) => badge.walletAddress === walletAddress);
   }
 
   async getOperatorBadgesByOpWalletAddress(
     walletAddress: string,
   ): Promise<OperatorBadge[]> {
     const all = await this.database.all();
-    return all.filter((badge) => badge.opWalletAddress === walletAddress);
+    return all.filter((badge) => badge.walletAddress === walletAddress);
   }
 
   async getOperatorBadgesByPolicy(policyId: string): Promise<OperatorBadge[]> {
     const all = await this.database.all();
     return all.filter(
-      (badge) =>
-        badge.colonyMintingPolicy === policyId ||
-        badge.stepMintingPolicy === policyId,
+      (badge) => badge.policyId === policyId || badge.stepPolicyId === policyId,
     );
   }
 
@@ -123,8 +121,7 @@ export class OperatorBadgeService {
     return all.filter(
       (badge) =>
         badge.stepAddress === stepAddress &&
-        (badge.colonyMintingPolicy === policyId ||
-          badge.stepMintingPolicy === policyId),
+        (badge.policyId === policyId || badge.stepPolicyId === policyId),
     );
   }
 

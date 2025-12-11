@@ -29,6 +29,8 @@ import { TaskModule } from './testnet/task/task.module.js';
 import { TaskValidationModule } from './testnet/task-validation/task-validation.module.js';
 import { AgentMetricsModule } from './metrics/agent/agent-metrics.module.js';
 import { OperatorStatsModule } from './stats/stats.module.js';
+import { NotificationModule } from './notification/notification.module.js';
+import { AgentMPFProofModule } from './agent-mpf-proof/agent-mpf-proof.module.js';
 
 @Module({
   imports: [
@@ -77,6 +79,12 @@ import { OperatorStatsModule } from './stats/stats.module.js';
     TaskModule,
     AssignmentModule,
     TaskValidationModule,
+
+    // Notification
+    NotificationModule,
+
+    // Proof
+    AgentMPFProofModule
   ],
   providers: [],
 })

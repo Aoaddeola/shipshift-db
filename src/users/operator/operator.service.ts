@@ -222,7 +222,17 @@ export class OperatorService {
 
   async deleteOperator(id: string): Promise<{ message: string }> {
     const operator = await this.getOperator(id);
+    const badges =
+      await this.operatorBadgeService.getOperatorBadgesByOpWalletAddress(
+        operator.onchain.opAddr,
+      );
     await this.database.del(id);
+    await Promise.all(
+      badges.map(
+        async (badge) =>
+          await this.operatorBadgeService.deleteOperatorBadge(badge.id),
+      ),
+    );
     return {
       message: `Operator with address ${operator.onchain.opAddr} deleted successfully`,
     };

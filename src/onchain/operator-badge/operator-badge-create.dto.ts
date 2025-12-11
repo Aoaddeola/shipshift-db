@@ -41,7 +41,7 @@ export class OperatorBadgeCreateDto
     example: 'addr1q7defghij5678901234abcdef1234567890abcdef1234567890abcdef',
     description: 'Operator badge address',
   })
-  operatorBadgeAddress: string;
+  statusAddress: string;
 
   @IsString()
   @IsNotEmpty()
@@ -52,7 +52,7 @@ export class OperatorBadgeCreateDto
     example: 'addr1q7defghij5678901234abcdef1234567890abcdef1234567890abcdef',
     description: 'Operator wallet address',
   })
-  opWalletAddress: string;
+  walletAddress: string;
 
   @IsString()
   @IsNotEmpty()
@@ -63,7 +63,7 @@ export class OperatorBadgeCreateDto
     example: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234',
     description: 'Colony minting policy identifier',
   })
-  colonyMintingPolicy: string;
+  policyId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -74,5 +74,5 @@ export class OperatorBadgeCreateDto
     example: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
     description: 'Step minting policy identifier',
   })
-  stepMintingPolicy: string;
+  stepPolicyId: string;
 }

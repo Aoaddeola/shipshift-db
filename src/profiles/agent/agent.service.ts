@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { Agent, AgentType, ConveyanceMeans } from './agent.types.js';
 import { Database } from '../../db/orbitdb/database.js';
@@ -8,6 +14,10 @@ import { AgentUpdateDto } from './agent-update.dto.js';
 import { UserService } from '../../users/user/user.service.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
 import { UserType } from '../../users/user/user.types.js';
+import { AgentMPFProofService } from '../../agent-mpf-proof/agent-mpf-proof.service.js';
+import { Trie } from '@aiken-lang/merkle-patricia-forestry';
+import { AgentMPFProof } from 'src/agent-mpf-proof/agent-mpf-proof.types.js';
+import { resolvePaymentKeyHash } from '@meshsdk/core-cst';
 
 @Injectable()
 export class AgentService {
@@ -19,6 +29,8 @@ export class AgentService {
     private operatorService: OperatorService,
     @Inject(UserService)
     private userService: UserService,
+    @Inject(AgentMPFProofService)
+    private agentMPFService: AgentMPFProofService,
   ) {}
 
   async createAgent(
@@ -31,6 +43,7 @@ export class AgentService {
     const newAgent: Agent = {
       id,
       ...agent,
+      verified: true,
       createdAt: now,
       updatedAt: now,
     };
@@ -373,5 +386,145 @@ export class AgentService {
     return {
       message: `Agent "${agent.name}" with operator ID ${agent.operatorId} and owner ID ${agent.ownerId} deleted successfully`,
     };
+  }
+
+  async approveAgent(agent: Agent): Promise<AgentMPFProof> {
+    // First check if agent exists
+    const operator = await this.operatorService.getOperator(agent.operatorId);
+
+    if (!agent.verified) {
+      throw new ForbiddenException('Agent is not yet verified');
+    }
+
+    let trie: Trie;
+
+    const agentProofs = await this.agentMPFService.getAgentMPFProofsByOperator(
+      agent.operatorId,
+    );
+
+    try {
+      if (agentProofs.length === 0) {
+        trie = new Trie();
+        await trie.insert(
+          resolvePaymentKeyHash(agent.onChainAddress),
+          resolvePaymentKeyHash(operator.onchain.opAddr),
+        );
+        const proof = await trie.prove(
+          resolvePaymentKeyHash(agent.onChainAddress),
+          false,
+        );
+        console.log(
+          'Profoofofooofoof',
+          proof.toJSON(),
+          'Agent',
+          resolvePaymentKeyHash(agent.onChainAddress),
+          'Operator',
+          resolvePaymentKeyHash(operator.onchain.opAddr),
+        );
+        const mpf = this.agentMPFService.createAgentMPFProof({
+          operatorId: operator.id,
+          rootHash: trie.hash.toString('hex'),
+          proof: proof.toJSON(),
+        });
+        await this.partialUpdateAgent(agent.id, {
+          ...agent,
+          active: true,
+        });
+        return mpf;
+      } else {
+        const agents = await this.getAgentsByOperator(agent.operatorId);
+        trie = await Trie.fromList(
+          agents
+            .filter((a) => a.id !== agent.id && a.active)
+            .map((agent) => {
+              return {
+                key: resolvePaymentKeyHash(agent.onChainAddress),
+                value: resolvePaymentKeyHash(operator.onchain.opAddr),
+              };
+            }),
+        );
+        await trie.insert(
+          resolvePaymentKeyHash(agent.onChainAddress),
+          resolvePaymentKeyHash(operator.onchain.opAddr),
+        );
+
+        const proof = await trie.prove(
+          resolvePaymentKeyHash(agent.onChainAddress),
+          false,
+        );
+        const mpf = this.agentMPFService.updateAgentMPFProof(
+          agentProofs[0].id,
+          {
+            operatorId: operator.id,
+            rootHash: trie.hash.toString('hex'),
+            proof: proof.toJSON(),
+          },
+        );
+        await this.partialUpdateAgent(agent.id, {
+          ...agent,
+          active: true,
+        });
+        return mpf;
+      }
+    } catch (error) {
+      throw new ForbiddenException('Something went wrong: ' + error.message);
+    }
+  }
+
+  async disapproveAgent(agent: Agent): Promise<AgentMPFProof> {
+    // First check if agent exists
+    const operator = await this.operatorService.getOperator(agent.operatorId);
+
+    if (!agent.verified) {
+      throw new ForbiddenException('Agent is not yet verified');
+    }
+
+    const agentProofs = await this.agentMPFService.getAgentMPFProofsByOperator(
+      agent.operatorId,
+    );
+
+    let trie: Trie;
+
+    if (agentProofs.length > 0) {
+      const agents = await this.getAgentsByOperator(agent.operatorId);
+      try {
+        trie = await Trie.fromList(
+          agents
+            .filter((a) => a.active)
+            .map((agent) => {
+              return {
+                key: resolvePaymentKeyHash(agent.onChainAddress),
+                value: resolvePaymentKeyHash(operator.onchain.opAddr),
+              };
+            }),
+        );
+        // const trie = await Trie.load(new Store(agentProofs[0].operatorId));
+        await trie.delete(resolvePaymentKeyHash(agent.onChainAddress));
+        const proof = await trie.prove(
+          resolvePaymentKeyHash(agent.onChainAddress),
+          true,
+        );
+
+        const mpf = this.agentMPFService.updateAgentMPFProof(
+          agentProofs[0].id,
+          {
+            operatorId: operator.id,
+            rootHash: trie.hash ? trie.hash.toString('hex') : '',
+            proof: proof.toJSON(),
+          },
+        );
+        await this.partialUpdateAgent(agent.id, {
+          ...agent,
+          active: false,
+        });
+        return mpf;
+      } catch (error) {
+        throw new ForbiddenException('Something went wrong: ' + error.message);
+      }
+    } else {
+      throw new ForbiddenException(
+        'There is no Agents MPF related to operator',
+      );
+    }
   }
 }
