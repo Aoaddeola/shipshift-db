@@ -3,12 +3,12 @@
  */
 export interface OperatorBadge {
   id: string;
-  opWalletAddress: string;
+  walletAddress: string;
   stepAddress: string;
   treasuryAddress: string;
-  operatorBadgeAddress: string;
-  colonyMintingPolicy: string;
-  stepMintingPolicy: string;
+  statusAddress: string;
+  policyId: string;
+  stepPolicyId: string;
   createdAt?: string;
   updatedAt?: string;
 }

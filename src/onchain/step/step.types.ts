@@ -21,6 +21,8 @@ export enum StepState {
   REJECTED,
   ACCEPTED,
   REFUNDED,
+  PICKED_UP, // New types
+  DROPPED_OFF, // New types
   // HANDED_OVER, // New types
   // RECEIVED,     // New types
 }

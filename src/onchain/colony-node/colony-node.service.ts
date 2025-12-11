@@ -121,11 +121,6 @@ export class ColonyNodeService {
       );
     }
 
-    // Validate operatorTypes if provided
-    if (update.operatorTypes && update.operatorTypes.length === 0) {
-      throw new BadRequestException('operatorTypes cannot be empty');
-    }
-
     this.logger.log(`Partially updating colony node: ${id}`);
     await this.database.put(updatedColonyNode);
     return updatedColonyNode;

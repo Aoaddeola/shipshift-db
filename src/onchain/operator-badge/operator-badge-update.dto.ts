@@ -34,7 +34,7 @@ export class OperatorBadgeUpdateDto {
     example: 'addr1q7defghij5678901234abcdef1234567890abcdef1234567890abcdef',
     description: 'Updated operator badge address',
   })
-  operatorBadgeAddress?: string;
+  statusAddress?: string;
 
   @IsString()
   @IsOptional()
@@ -45,7 +45,7 @@ export class OperatorBadgeUpdateDto {
     example: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234',
     description: 'Updated colony minting policy identifier',
   })
-  colonyMintingPolicy?: string;
+  policyId?: string;
 
   @IsString()
   @IsOptional()
@@ -56,5 +56,5 @@ export class OperatorBadgeUpdateDto {
     example: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
     description: 'Updated step minting policy identifier',
   })
-  stepMintingPolicy?: string;
+  stepPolicyId?: string;
 }

@@ -40,22 +40,6 @@ export class ColonyNodeUpdateDto {
   })
   nodeOperatorAddresses?: string[];
 
-  @IsArray()
-  @IsOptional()
-  @ArrayNotEmpty({
-    message: 'operatorTypes cannot be empty when provided',
-  })
-  @IsEnum(['ReserveOperatorType', 'DispatchOperatorType', 'CuratorType'], {
-    each: true,
-  })
-  @ApiPropertyOptional({
-    example: ['CuratorType'],
-    description: 'Updated array of operator types',
-    enum: ['ReserveOperatorType', 'DispatchOperatorType', 'CuratorType'],
-    isArray: true,
-  })
-  operatorTypes?: OperatorTypeParams[];
-
   @IsNumber()
   @Min(1)
   @IsOptional()
