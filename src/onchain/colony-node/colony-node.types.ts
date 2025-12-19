@@ -1,5 +1,3 @@
-import { OperatorTypeParams } from '../../users/operator/operator.types.js';
-
 export interface ColonyNode {
   id: string;
   name: string;

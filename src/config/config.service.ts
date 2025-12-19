@@ -1,7 +1,7 @@
 // src/config/app-config.service.ts
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppConfig } from './schema.js';
+import { AppConfig, OpenProjectConfig, RabbitMQConfig } from './schema.js';
 
 @Injectable()
 export class AppConfigService {
@@ -226,6 +226,137 @@ export class AppConfigService {
 
   get enableLocalAuth(): boolean {
     return this.configService.get<AppConfig['features']>('features')!.localAuth;
+  }
+  // RabbitMQ Configuration Getters
+  get rabbitmqUri(): string {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!.uri;
+  }
+
+  get rabbitmqExchange(): string {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!.exchange;
+  }
+
+  get rabbitmqDirectExchange(): string {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!
+      .directExchange;
+  }
+
+  get rabbitmqPrefetchCount(): number {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!
+      .prefetchCount;
+  }
+
+  get rabbitmqReconnectDelay(): number {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!
+      .reconnectDelay;
+  }
+
+  get rabbitmqHeartbeat(): number {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!.heartbeat;
+  }
+
+  get rabbitmqTimeout(): number {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!.timeout;
+  }
+
+  // Get entire RabbitMQ config object
+  get rabbitmqConfig(): RabbitMQConfig {
+    return this.configService.get<AppConfig['rabbitmq']>('rabbitmq')!;
+  }
+
+  // OpenProject Configuration
+  get openProjectEnabled(): boolean {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .enabled;
+  }
+
+  get openProjectUrl(): string {
+    return this.configService.get<AppConfig['openProject']>('openProject')!.url;
+  }
+
+  get openProjectApiKey(): string {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .apiKey;
+  }
+
+  get openProjectProjectId(): string {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .projectId;
+  }
+
+  get openProjectTypeId(): string {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .typeId;
+  }
+
+  get openProjectStatusId(): string {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .statusId;
+  }
+
+  get openProjectSeverityFieldId(): string {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .severityFieldId;
+  }
+
+  get openProjectPriorityMapping(): Record<string, string> {
+    const mapping =
+      this.configService.get<AppConfig['openProject']>(
+        'openProject',
+      )!.priorityMapping;
+    return {
+      low: mapping.low || '3',
+      normal: mapping.normal || '4',
+      high: mapping.high || '5',
+      immediate: mapping.immediate || '6',
+    };
+  }
+
+  get openProjectMaxFileSize(): number {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .maxFileSize;
+  }
+
+  get openProjectMaxFiles(): number {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .maxFiles;
+  }
+
+  get openProjectUploadTimeout(): number {
+    return this.configService.get<AppConfig['openProject']>('openProject')!
+      .uploadTimeout;
+  }
+
+  // Get entire OpenProject config
+  get openProjectConfig(): OpenProjectConfig {
+    return this.configService.get<AppConfig['openProject']>('openProject')!;
+  }
+
+  // Validate OpenProject configuration
+  validateOpenProjectConfig(): { isValid: boolean; missingFields: string[] } {
+    const config = this.openProjectConfig;
+    const missingFields: string[] = [];
+
+    if (!config.enabled) {
+      return { isValid: false, missingFields: ['OpenProject is not enabled'] };
+    }
+
+    if (!config.url || config.url === 'https://your-openproject-instance.com') {
+      missingFields.push('OPENPROJECT_URL');
+    }
+
+    if (!config.apiKey) {
+      missingFields.push('OPENPROJECT_API_KEY');
+    }
+
+    if (!config.projectId) {
+      missingFields.push('OPENPROJECT_PROJECT_ID');
+    }
+
+    return {
+      isValid: missingFields.length === 0,
+      missingFields,
+    };
   }
 
   // Utility methods

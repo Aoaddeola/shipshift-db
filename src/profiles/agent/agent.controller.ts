@@ -175,7 +175,10 @@ export class AgentController {
 
   @UseGuards(JwtDeliveryOpAuthGuard)
   @Patch('approve/:id')
-  async approveAgent(@Param('id') id: string, @Req() req: any): Promise<AgentMPFProof> {
+  async approveAgent(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<AgentMPFProof> {
     const requesterId = req.user.sub;
     console.log('Authenticated user ID:', requesterId);
 
@@ -186,12 +189,15 @@ export class AgentController {
     }
 
     const approval = this.agentService.approveAgent(agent);
-    return approval
+    return approval;
   }
 
   @UseGuards(JwtDeliveryOpAuthGuard)
   @Patch('disapprove/:id')
-  async disapproveAgent(@Param('id') id: string, @Req() req: any): Promise<AgentMPFProof> {
+  async disapproveAgent(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<AgentMPFProof> {
     const requesterId = req.user.sub;
     console.log('Authenticated user ID:', requesterId);
 
