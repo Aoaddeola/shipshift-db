@@ -88,6 +88,39 @@ export const featuresSchema = z.object({
   localAuth: z.boolean().default(true),
 });
 
+// RabbitMQ Configuration Schema
+export const rabbitmqSchema = z.object({
+  uri: z.string().default('amqp://localhost:5672'),
+  exchange: z.string().default('app.events'),
+  directExchange: z.string().default('app.direct'),
+  prefetchCount: z.number().int().positive().default(10),
+  reconnectDelay: z.number().int().positive().default(5000),
+  heartbeat: z.number().int().positive().default(60),
+  timeout: z.number().int().positive().default(30000),
+});
+
+// Add to your existing schema.ts
+export const openProjectSchema = z.object({
+  enabled: z.boolean().default(false),
+  url: z.string().url().default('https://your-openproject-instance.com'),
+  apiKey: z.string().default(''),
+  projectId: z.string().default(''),
+  typeId: z.string().default('7'), // Bug type
+  statusId: z.string().default('1'), // New status
+  severityFieldId: z.string().default(''), // Custom field ID for severity
+  priorityMapping: z
+    .object({
+      low: z.string().default('3'),
+      normal: z.string().default('4'),
+      high: z.string().default('5'),
+      immediate: z.string().default('6'),
+    })
+    .default({}),
+  maxFileSize: z.number().int().positive().default(10485760), // 10MB
+  maxFiles: z.number().int().positive().default(10),
+  uploadTimeout: z.number().int().positive().default(30000), // 30 seconds
+});
+
 // Extended App Configuration Schema with Auth
 export const appConfigSchema = z.object({
   appName: z.string().default('ShipShift'),
@@ -98,6 +131,7 @@ export const appConfigSchema = z.object({
   ipfs: ipfsSchema.default({}),
   orbitdb: orbitdbSchema.default({}),
   debug: z.string().default(''),
+  rabbitmq: rabbitmqSchema.default({}),
   // New authentication and database configurations
   jwt: jwtSchema.default({}),
   oauth: oauthSchema.default({}),
@@ -106,6 +140,7 @@ export const appConfigSchema = z.object({
   security: securitySchema.default({}),
   email: emailSchema.default({}),
   features: featuresSchema.default({}),
+  openProject: openProjectSchema.default({}),
 });
 
 // Схема для минимальной конфигурации bootstrap ноды с учетом всех полей
@@ -119,7 +154,8 @@ export const configSchema = z.object({
   solution: appConfigSchema,
   data: z.array(z.any()).default([]),
 });
-
+// Add the type
+export type OpenProjectConfig = z.infer<typeof openProjectSchema>;
 // Типы на основе схем
 export type IpfsConfig = z.infer<typeof ipfsSchema>;
 export type OrbitdbConfig = z.infer<typeof orbitdbSchema>;
@@ -135,3 +171,4 @@ export type CorsConfig = z.infer<typeof corsSchema>;
 export type SecurityConfig = z.infer<typeof securitySchema>;
 export type EmailConfig = z.infer<typeof emailSchema>;
 export type FeaturesConfig = z.infer<typeof featuresSchema>;
+export type RabbitMQConfig = z.infer<typeof rabbitmqSchema>;
