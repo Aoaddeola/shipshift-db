@@ -63,7 +63,7 @@ export class AppBootstrap {
 
     // Updated CORS configuration with more headers
     app.enableCors({
-      origin: 'http://localhost:3001', //process.env.BASE_URL || appConfig.baseUrl.toString(),
+      origin: process.env.BASE_URL || appConfig.baseUrl.toString(),
       methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: [
         'Content-Type',
