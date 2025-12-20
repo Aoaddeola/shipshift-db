@@ -45,7 +45,6 @@ export class OperatorController {
     return this.operatorService.getOperatorByAddress(opAddr, includeArray);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('colony-node/:colonyNodeId')
   async getOperatorsByColonyNode(
     @Param('colonyNodeId') colonyNodeId: string,
