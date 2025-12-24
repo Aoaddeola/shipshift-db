@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { LocationCreateDto } from './location-create.dto.js';
 import { LocationUpdateDto } from './location-update.dto.js';
 import { UserService } from '../../users/user/user.service.js';
+import { LocationProducer } from './producers/location.producer.js';
 
 @Injectable()
 export class LocationService {
@@ -15,6 +16,8 @@ export class LocationService {
     @InjectDatabase('location') private database: Database<Location>,
     @Inject(UserService)
     private userService: UserService,
+    @Inject(LocationProducer) // Add this
+    private locationProducer: LocationProducer,
   ) {}
 
   async createLocation(
@@ -32,6 +35,10 @@ export class LocationService {
     };
 
     await this.database.put(newLocation);
+
+    // Publish creation event
+    await this.locationProducer.publishLocationCreated(newLocation);
+
     return newLocation;
   }
 
@@ -159,10 +166,10 @@ export class LocationService {
   async updateLocation(
     id: string,
     location: LocationCreateDto,
+    updatedBy?: string,
   ): Promise<Location> {
     // First check if location exists
-    await this.getLocation(id);
-
+    const existingLocation = await this.getLocation(id);
     const now = new Date().toISOString();
 
     // Create updated location with ID preserved
@@ -175,12 +182,22 @@ export class LocationService {
 
     this.logger.log(`Updating location: ${id}`);
     await this.database.put(updatedLocation);
+
+    // Publish update event
+    await this.locationProducer.publishLocationUpdated(
+      id,
+      existingLocation,
+      location,
+      updatedBy,
+    );
+
     return updatedLocation;
   }
 
   async partialUpdateLocation(
     id: string,
     update: LocationUpdateDto,
+    updatedBy?: string,
   ): Promise<Location> {
     const existingLocation = await this.getLocation(id);
     const now = new Date().toISOString();
@@ -204,15 +221,99 @@ export class LocationService {
 
     this.logger.log(`Partially updating location: ${id}`);
     await this.database.put(updatedLocation);
+
+    // Publish update event
+    await this.locationProducer.publishLocationUpdated(
+      id,
+      existingLocation,
+      update,
+      updatedBy,
+    );
+
     return updatedLocation;
   }
 
-  async deleteLocation(id: string): Promise<{ message: string }> {
+  async deleteLocation(
+    id: string,
+    deletedBy?: string,
+    reason?: string,
+  ): Promise<{ message: string }> {
     const location = await this.getLocation(id);
     await this.database.del(id);
+
+    // Publish deletion event
+    await this.locationProducer.publishLocationDeleted(
+      location,
+      deletedBy,
+      reason,
+    );
+
     return {
       message: `Location "${location.name}" at ${location.street}, ${location.city} deleted successfully`,
     };
+  }
+
+  // Add these helper methods
+  async calculateDistance(
+    locationId1: string,
+    locationId2: string,
+    unit: 'km' | 'miles' = 'km',
+  ): Promise<number> {
+    const location1 = await this.getLocation(locationId1);
+    const location2 = await this.getLocation(locationId2);
+
+    const distanceKm = calculateDistanceBetweenCoordinates(
+      location1.coordinates,
+      location2.coordinates,
+    );
+
+    return unit === 'miles' ? distanceKm * 0.621371 : distanceKm;
+  }
+
+  async findNearbyLocations(
+    coordinates: Coordinates,
+    radius: number,
+    filters?: {
+      ownerId?: string;
+      city?: string;
+      country?: string;
+    },
+    limit?: number,
+  ): Promise<
+    Array<{
+      location: Location;
+      distance: number;
+    }>
+  > {
+    const allLocations = await this.getLocations(filters || {});
+
+    const nearby = allLocations
+      .map((location) => ({
+        location,
+        distance: calculateDistanceBetweenCoordinates(
+          coordinates,
+          location.coordinates,
+        ),
+      }))
+      .filter((item) => item.distance <= radius)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, limit || 10);
+
+    return nearby;
+  }
+
+  // Optional: Add RPC wrapper methods
+  async rpcGetLocation(locationId: string, include?: string[]): Promise<any> {
+    return this.locationProducer.rpcGetLocation(locationId, include);
+  }
+
+  async rpcFindNearby(request: {
+    coordinates: Coordinates;
+    radius: number;
+    limit?: number;
+    filters?: any;
+  }): Promise<any> {
+    return this.locationProducer.rpcFindNearbyLocations(request);
   }
 }
 

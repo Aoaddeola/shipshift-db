@@ -68,7 +68,7 @@ class StepOnChainDto {
     example: ['addr1q5tuvxyz1122334455', 'policyid.assetname'],
     description: 'Requester wallet address and minting policy ID',
   })
-  spRequester: [string, string | undefined];
+  spRequester: [string, string | null];
 
   @IsDateString()
   @IsOptional()

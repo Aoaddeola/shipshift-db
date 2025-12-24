@@ -7,6 +7,7 @@ import { ParcelCreateDto } from './parcel-create.dto.js';
 import { ParcelUpdateDto } from './parcel-update.dto.js';
 import { CurrencyService } from '../../common/currency/currency.service.js';
 import { UserService } from '../../users/user/user.service.js';
+import { ParcelProducer } from './producers/parcel.producer.js';
 
 @Injectable()
 export class ParcelService {
@@ -18,10 +19,15 @@ export class ParcelService {
     private currencyService: CurrencyService,
     @Inject(UserService)
     private userService: UserService,
+    @Inject(ParcelProducer) // Add this
+    private parcelProducer: ParcelProducer,
   ) {}
 
   async createParcel(
-    parcel: Omit<Parcel, 'id' | 'createdAt' | 'updatedAt' | 'currency'>,
+    parcel: Omit<
+      Parcel,
+      'id' | 'createdAt' | 'updatedAt' | 'currency' | 'owner'
+    >,
   ): Promise<Parcel> {
     const id = randomUUID();
     const now = new Date().toISOString();
@@ -35,6 +41,10 @@ export class ParcelService {
     };
 
     await this.database.put(newParcel);
+
+    // Publish creation event
+    await this.parcelProducer.publishParcelCreated(newParcel);
+
     return newParcel;
   }
 
@@ -162,10 +172,13 @@ export class ParcelService {
     return populatedParcel;
   }
 
-  async updateParcel(id: string, parcel: ParcelCreateDto): Promise<Parcel> {
+  async updateParcel(
+    id: string,
+    parcel: ParcelCreateDto,
+    updatedBy?: string,
+  ): Promise<Parcel> {
     // First check if parcel exists
-    await this.getParcel(id);
-
+    const existingParcel = await this.getParcel(id);
     const now = new Date().toISOString();
 
     // Create updated parcel with ID preserved
@@ -178,12 +191,22 @@ export class ParcelService {
 
     this.logger.log(`Updating parcel: ${id}`);
     await this.database.put(updatedParcel);
+
+    // Publish update event
+    await this.parcelProducer.publishParcelUpdated(
+      id,
+      existingParcel,
+      parcel,
+      updatedBy,
+    );
+
     return updatedParcel;
   }
 
   async partialUpdateParcel(
     id: string,
     update: ParcelUpdateDto,
+    updatedBy?: string,
   ): Promise<Parcel> {
     const existingParcel = await this.getParcel(id);
     const now = new Date().toISOString();
@@ -207,14 +230,116 @@ export class ParcelService {
 
     this.logger.log(`Partially updating parcel: ${id}`);
     await this.database.put(updatedParcel);
+
+    // Publish update event
+    await this.parcelProducer.publishParcelUpdated(
+      id,
+      existingParcel,
+      update,
+      updatedBy,
+    );
+
     return updatedParcel;
   }
 
-  async deleteParcel(id: string): Promise<{ message: string }> {
+  async deleteParcel(
+    id: string,
+    deletedBy?: string,
+    reason?: string,
+  ): Promise<{ message: string }> {
     const parcel = await this.getParcel(id);
     await this.database.del(id);
+
+    // Publish deletion event
+    await this.parcelProducer.publishParcelDeleted(parcel, deletedBy, reason);
+
     return {
       message: `Parcel "${parcel.name}" owned by ${parcel.ownerId} with value ${parcel.value[1]} ${parcel.value[0]} deleted successfully`,
     };
+  }
+
+  // Add helper methods
+  async calculateTotalValue(
+    ownerId?: string,
+    currencyId?: CurrencyId,
+  ): Promise<number> {
+    const filters: any = {};
+    if (ownerId) filters.ownerId = ownerId;
+    if (currencyId) filters.currencyId = currencyId;
+
+    const parcels = await this.getParcels(filters);
+    return parcels.reduce(
+      (total, parcel) => total + parcel.value[1] * parcel.quantity,
+      0,
+    );
+  }
+
+  async transferOwnership(
+    parcelId: string,
+    newOwnerId: string,
+    transferredBy: string,
+  ): Promise<Parcel> {
+    await this.getParcel(parcelId);
+
+    // Update parcel owner
+    const updatedParcel = await this.partialUpdateParcel(
+      parcelId,
+      {
+        ownerId: newOwnerId,
+      },
+      transferredBy,
+    );
+
+    return updatedParcel;
+  }
+
+  async validateHandling(
+    parcelId: string,
+    handlingType: 'loading' | 'unloading' | 'transport' | 'storage',
+  ): Promise<{
+    valid: boolean;
+    restrictions: string[];
+    requirements: string[];
+    warnings: string[];
+  }> {
+    const parcel = await this.getParcel(parcelId);
+
+    return this.parcelProducer.validateHandlingRequirements(
+      parcel,
+      handlingType,
+    );
+  }
+
+  // Add RPC wrapper methods
+  async rpcGetParcel(parcelId: string, include?: string[]): Promise<any> {
+    return this.parcelProducer.rpcGetParcel(parcelId, include);
+  }
+
+  async rpcCalculateTotalValue(
+    parcelIds: string[],
+    targetCurrency?: CurrencyId,
+  ): Promise<any> {
+    return this.parcelProducer.rpcCalculateParcelsValue(
+      parcelIds,
+      targetCurrency,
+    );
+  }
+
+  async sendFragileAlert(
+    parcelId: string,
+    reason: string,
+    alertLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+    instructions?: string,
+  ): Promise<boolean> {
+    const parcel = await this.getParcel(parcelId);
+
+    return this.parcelProducer.publishFragileAlert(
+      parcelId,
+      parcel.name,
+      parcel.ownerId,
+      reason,
+      alertLevel,
+      instructions,
+    );
   }
 }

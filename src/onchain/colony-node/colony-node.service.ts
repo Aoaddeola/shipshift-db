@@ -2,7 +2,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  BadRequestException,
   ConflictException,
 } from '@nestjs/common';
 import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
@@ -10,7 +9,6 @@ import { ColonyNode } from './colony-node.types.js';
 import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { ColonyNodeCreateDto } from './colony-node-create.dto.js';
-import { ColonyNodeUpdateDto } from './colony-node-update.dto.js';
 
 @Injectable()
 export class ColonyNodeService {
@@ -80,48 +78,6 @@ export class ColonyNodeService {
     };
 
     this.logger.log(`Updating colony node: ${id}`);
-    await this.database.put(updatedColonyNode);
-    return updatedColonyNode;
-  }
-
-  // Add this validation in the partialUpdateColonyNode method:
-  async partialUpdateColonyNode(
-    id: string,
-    update: ColonyNodeUpdateDto,
-  ): Promise<ColonyNode> {
-    const existingColonyNode = await this.getColonyNode(id);
-    const now = new Date().toISOString();
-
-    // Create updated colony node by merging existing with update
-    const updatedColonyNode = {
-      ...existingColonyNode,
-      ...update,
-      updatedAt: now,
-    };
-
-    // Additional validation for numeric fields
-    if (updatedColonyNode.minimumActiveSignatory < 1) {
-      throw new BadRequestException(
-        'minimumActiveSignatory must be at least 1',
-      );
-    }
-
-    if (
-      updatedColonyNode.commissionPercent < 0 ||
-      updatedColonyNode.commissionPercent > 100
-    ) {
-      throw new BadRequestException(
-        'commissionPercent must be between 0 and 100',
-      );
-    }
-
-    if (updatedColonyNode.maximumActiveStepsCount < 1) {
-      throw new BadRequestException(
-        'maximumActiveStepsCount must be at least 1',
-      );
-    }
-
-    this.logger.log(`Partially updating colony node: ${id}`);
     await this.database.put(updatedColonyNode);
     return updatedColonyNode;
   }

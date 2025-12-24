@@ -1,4 +1,11 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { Step, StepState } from './step.types.js';
 import { Database } from '../../db/orbitdb/database.js';
@@ -11,6 +18,9 @@ import { OperatorService } from '../../users/operator/operator.service.js';
 import { ColonyNodeService } from '../colony-node/colony-node.service.js';
 import { UserService } from '../../users/user/user.service.js';
 import { AgentService } from '../../profiles/agent/agent.service.js';
+import { StepProducer } from './producers/step.producer.js';
+import { RabbitMQConfig } from '../../shared/rabbitmq/config/rabbitmq.config.js';
+import { MessageBusService } from '../../shared/rabbitmq/rabbitmq.service.js';
 
 @Injectable()
 export class StepService {
@@ -24,49 +34,677 @@ export class StepService {
     @Inject(ColonyNodeService) private colonyNodeService: ColonyNodeService,
     @Inject(AgentService) private agentService: AgentService,
     @Inject(UserService) private userService: UserService,
+    @Inject(MessageBusService) private messageBusService: MessageBusService,
+    @Inject(StepProducer) private stepProducer: StepProducer,
   ) {}
 
-  async createStep(
-    step: Omit<
-      Step,
-      | 'id'
-      | 'createdAt'
-      | 'updatedAt'
-      | 'shipment'
-      | 'journey'
-      | 'operator'
-      | 'colony'
-    >,
-  ): Promise<Step> {
+  // ==================== CORE CRUD OPERATIONS ====================
+
+  async createStep(stepData: StepCreateDto, createdBy?: string): Promise<Step> {
+    this.logger.log(`Creating step for shipment: ${stepData.shipmentId}`);
+
+    // Validate dependencies exist
+    await this.validateDependencies(stepData);
+
     const id = randomUUID();
     const now = new Date().toISOString();
 
-    this.logger.log(`Creating step: ${id}`);
     const newStep: Step = {
       id,
       createdAt: now,
       updatedAt: now,
-      ...step,
+      ...stepData,
     };
 
-    await this.database.put(newStep);
-    return newStep;
+    try {
+      // Save to database
+      await this.database.put(newStep);
+      this.logger.log(`Step created: ${id}`);
+
+      // Publish creation event
+      await this.stepProducer.publishStepCreated(newStep);
+
+      // If step is in a non-pending state, publish state change
+      if (newStep.state !== StepState.PENDING) {
+        await this.stepProducer.publishStepStateChanged(
+          id,
+          newStep.shipmentId,
+          newStep.journeyId,
+          StepState.PENDING, // Previous state (implicit)
+          newStep.state,
+          createdBy || 'system',
+        );
+      }
+
+      return newStep;
+    } catch (error) {
+      this.logger.error(`Failed to create step:`, error);
+      throw error;
+    }
   }
 
   async getStep(id: string, include?: string[]): Promise<Step> {
     const entry = await this.database.get(id);
     if (!entry) {
-      throw new NotFoundException('Step not found');
+      throw new NotFoundException(`Step ${id} not found`);
     }
 
     return this.populateRelations(entry, include);
   }
+
+  async updateStep(
+    id: string,
+    stepData: StepCreateDto,
+    updatedBy?: string,
+  ): Promise<Step> {
+    // First check if step exists
+    const existingStep = await this.getStep(id);
+    const now = new Date().toISOString();
+
+    // Validate dependencies exist
+    await this.validateDependencies(stepData);
+
+    // Create updated step with ID preserved
+    const updatedStep: Step = {
+      ...stepData,
+      ...existingStep,
+      id, // Preserve ID
+      updatedAt: now,
+    };
+
+    this.logger.log(`Updating step: ${id}`);
+    await this.database.put(updatedStep);
+
+    // Publish update event
+    await this.stepProducer.publishStepUpdated(
+      id,
+      existingStep.state,
+      stepData,
+      updatedBy || 'system',
+    );
+
+    return updatedStep;
+  }
+
+  async partialUpdateStep(
+    id: string,
+    update: StepUpdateDto,
+    updatedBy?: string,
+  ): Promise<Step> {
+    const existingStep = await this.getStep(id);
+    const now = new Date().toISOString();
+
+    // Track if state is changing
+    const isStateChanged =
+      update.state !== undefined && update.state !== existingStep.state;
+
+    // Handle nested stepParams update
+    let updatedStepParams = existingStep.stepParams;
+    if (update.stepParams) {
+      updatedStepParams = {
+        ...update.stepParams,
+        ...existingStep.stepParams,
+      };
+    }
+
+    // Create updated step by merging existing with update
+    const updatedStep = {
+      ...existingStep,
+      ...update,
+      stepParams: updatedStepParams,
+      updatedAt: now,
+    };
+
+    this.logger.log(`Partially updating step: ${id}`);
+    await this.database.put(updatedStep);
+
+    // Publish update event
+    await this.stepProducer.publishStepUpdated(
+      id,
+      existingStep.state,
+      update,
+      updatedBy || 'system',
+    );
+
+    // If state changed, publish specific state change event
+    if (isStateChanged && update.state !== undefined) {
+      await this.stepProducer.publishStepStateChanged(
+        id,
+        existingStep.shipmentId,
+        existingStep.journeyId,
+        existingStep.state,
+        update.state,
+        updatedBy || 'system',
+      );
+    }
+
+    return updatedStep;
+  }
+
+  async deleteStep(
+    id: string,
+    deletedBy?: string,
+  ): Promise<{ message: string }> {
+    const step = await this.getStep(id);
+    await this.database.del(id);
+
+    // Publish deletion event
+    await this.stepProducer.publishStepDeleted(
+      id,
+      step.index,
+      step.shipmentId,
+      step.journeyId,
+      deletedBy || 'system',
+    );
+
+    this.logger.log(`Step deleted: ${id}`);
+
+    return {
+      message: `Step ${step.index} for shipment ${step.shipmentId} deleted successfully`,
+    };
+  }
+
+  // ==================== STATE MANAGEMENT ====================
+
+  async changeStepState(
+    id: string,
+    newState: StepState,
+    changedBy: string,
+    reason?: string,
+    metadata?: {
+      transactionHash?: string;
+      performer?: string;
+      cost?: number;
+      location?: { lat: number; lng: number; address?: string };
+    },
+  ): Promise<Step> {
+    const existingStep = await this.getStep(id);
+
+    // Validate state transition
+    await this.validateStateTransition(existingStep.state, newState, changedBy);
+
+    // Update the step state
+    const updatedStep = await this.partialUpdateStep(
+      id,
+      { state: newState },
+      changedBy,
+    );
+
+    // Publish state change event with metadata
+    await this.stepProducer.publishStepStateChanged(
+      id,
+      existingStep.shipmentId,
+      existingStep.journeyId,
+      existingStep.state,
+      newState,
+      changedBy,
+      {
+        reason,
+        ...metadata,
+      },
+    );
+
+    // Publish milestone events for specific states
+    if (newState === StepState.PICKED_UP) {
+      await this.stepProducer.publishStepMilestone(
+        id,
+        'picked_up',
+        metadata?.location,
+        changedBy,
+      );
+    } else if (newState === StepState.DROPPED_OFF) {
+      await this.stepProducer.publishStepMilestone(
+        id,
+        'dropped_off',
+        metadata?.location,
+        changedBy,
+      );
+    }
+
+    return updatedStep;
+  }
+
+  async processStep(
+    id: string,
+    action: 'start' | 'complete' | 'cancel' | 'delegate',
+    performerId: string,
+    reason?: string,
+  ): Promise<{ success: boolean; message: string; step?: Step }> {
+    try {
+      // Send command via producer
+      await this.stepProducer.sendProcessStepCommand(
+        id,
+        action,
+        performerId,
+        reason,
+      );
+
+      return {
+        success: true,
+        message: `Step processing command sent for action: ${action}`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send process command for step ${id}:`,
+        error,
+      );
+      return {
+        success: false,
+        message: `Failed to send processing command: ${error.message}`,
+      };
+    }
+  }
+
+  // ==================== BATCH OPERATIONS ====================
+
+  async batchUpdateSteps(
+    filter: {
+      shipmentId?: string;
+      journeyId?: string;
+      operatorId?: string;
+      colonyId?: string;
+      agentId?: string;
+      senderId?: string;
+      state?: StepState;
+      minIndex?: number;
+      maxIndex?: number;
+    },
+    update: StepUpdateDto,
+    requestedBy: string,
+  ): Promise<{ updatedCount: number; steps: Step[] }> {
+    const allSteps = await this.database.all();
+
+    // Filter steps
+    const filteredSteps = allSteps.filter((step) => {
+      if (filter.shipmentId && step.shipmentId !== filter.shipmentId)
+        return false;
+      if (filter.journeyId && step.journeyId !== filter.journeyId) return false;
+      if (filter.operatorId && step.operatorId !== filter.operatorId)
+        return false;
+      if (filter.colonyId && step.colonyId !== filter.colonyId) return false;
+      if (filter.agentId && step.agentId !== filter.agentId) return false;
+      if (filter.senderId && step.senderId !== filter.senderId) return false;
+      if (filter.state !== undefined && step.state !== filter.state)
+        return false;
+      if (filter.minIndex !== undefined && step.index < filter.minIndex)
+        return false;
+      if (filter.maxIndex !== undefined && step.index > filter.maxIndex)
+        return false;
+      return true;
+    });
+
+    // Update each step
+    const updatedSteps: Step[] = [];
+    for (const step of filteredSteps) {
+      const updatedStep = await this.partialUpdateStep(
+        step.id,
+        update,
+        requestedBy,
+      );
+      updatedSteps.push(updatedStep);
+    }
+
+    // Publish batch update event
+    await this.stepProducer.publishStepsBatchUpdated(
+      updatedSteps.length,
+      filter,
+      update,
+      requestedBy,
+    );
+
+    return {
+      updatedCount: updatedSteps.length,
+      steps: updatedSteps,
+    };
+  }
+
+  // ==================== QUERY METHODS (with RabbitMQ integration) ====================
 
   async getSteps(include?: string[]): Promise<Step[]> {
     const all = await this.database.all();
     return Promise.all(
       all.map((step) => this.populateRelations(step, include)),
     );
+  }
+
+  async getStepsWithRPC(filters: any, include?: string[]): Promise<Step[]> {
+    // Use RPC to get steps from other services if needed
+    try {
+      const rpcResponse = await this.stepProducer.rpcGetSteps(filters);
+      if (rpcResponse.success) {
+        return rpcResponse.data;
+      }
+    } catch (error) {
+      this.logger.warn(`RPC call failed, falling back to local query:`, error);
+    }
+
+    // Fallback to local query
+    return this.getSteps(include);
+  }
+
+  // ==================== VALIDATION METHODS ====================
+
+  private async validateDependencies(stepData: StepCreateDto): Promise<void> {
+    const errors: string[] = [];
+
+    // Validate shipment exists
+    try {
+      await this.shipmentService.getShipment(stepData.shipmentId);
+    } catch {
+      errors.push(`Shipment ${stepData.shipmentId} not found`);
+    }
+
+    // Validate journey exists
+    try {
+      await this.journeyService.getJourney(stepData.journeyId);
+    } catch {
+      errors.push(`Journey ${stepData.journeyId} not found`);
+    }
+
+    // Validate operator exists
+    try {
+      await this.operatorService.getOperator(stepData.operatorId);
+    } catch {
+      errors.push(`Operator ${stepData.operatorId} not found`);
+    }
+
+    // Validate colony exists
+    try {
+      await this.colonyNodeService.getColonyNode(stepData.colonyId);
+    } catch {
+      errors.push(`Colony ${stepData.colonyId} not found`);
+    }
+
+    // Validate sender exists
+    try {
+      await this.userService.findById(stepData.senderId);
+    } catch {
+      errors.push(`Sender ${stepData.senderId} not found`);
+    }
+
+    // Validate recipient exists
+    try {
+      await this.userService.findById(stepData.recipientId);
+    } catch {
+      errors.push(`Recipient ${stepData.recipientId} not found`);
+    }
+
+    // Validate holder exists
+    try {
+      await this.userService.findById(stepData.holderId);
+    } catch {
+      errors.push(`Holder ${stepData.holderId} not found`);
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'Dependency validation failed',
+        errors,
+      });
+    }
+  }
+
+  private async validateStateTransition(
+    currentState: StepState,
+    targetState: StepState,
+    performerId: string,
+  ): Promise<void> {
+    // Use RPC to validate transition with business rules
+    try {
+      const validation = await this.stepProducer.rpcValidateStepTransition(
+        'virtual-step-id', // We don't have a specific step ID yet
+        targetState,
+        performerId,
+      );
+
+      if (!validation.valid) {
+        throw new BadRequestException(
+          validation.reason || 'Invalid state transition',
+        );
+      }
+    } catch {
+      // Fallback to basic validation
+      if (
+        currentState === StepState.COMPLETED &&
+        targetState !== StepState.COMPLETED
+      ) {
+        throw new BadRequestException('Cannot modify a completed step');
+      }
+
+      if (
+        currentState === StepState.CANCELLED &&
+        targetState !== StepState.CANCELLED
+      ) {
+        throw new BadRequestException('Cannot modify a cancelled step');
+      }
+    }
+  }
+
+  // ==================== HELPER METHODS ====================
+
+  private async populateRelations(
+    step: Step,
+    include?: string[],
+  ): Promise<Step> {
+    if (!include || include.length === 0) {
+      return step;
+    }
+
+    // Clone the step to avoid modifying the original
+    const populatedStep = { ...step };
+
+    // Handle shipment population
+    if (include.includes('shipment')) {
+      try {
+        const shipment = await this.shipmentService.getShipment(
+          step.shipmentId,
+        );
+        populatedStep.shipment = shipment;
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch shipment for ${step.shipmentId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle journey population
+    if (include.includes('journey')) {
+      try {
+        const journey = await this.journeyService.getJourney(step.journeyId);
+        populatedStep.journey = journey;
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch journey for ${step.journeyId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle operator population
+    if (include.includes('operator')) {
+      try {
+        const operator = await this.operatorService.getOperator(
+          step.operatorId,
+        );
+        populatedStep.operator = operator;
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch operator for ${step.operatorId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle colony population
+    if (include.includes('colony')) {
+      try {
+        const colony = await this.colonyNodeService.getColonyNode(
+          step.colonyId,
+        );
+        populatedStep.colony = colony;
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch colony node for ${step.colonyId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle agent population
+    if (include.includes('agent')) {
+      try {
+        const agent = await this.agentService.getAgentsByOwner(step.agentId);
+        if (agent.length > 0) {
+          populatedStep.agent = agent[0];
+        }
+      } catch (error) {
+        this.logger.warn(`Could not fetch agent for ${step.agentId}`, error);
+      }
+    }
+
+    // Handle sender population
+    if (include.includes('sender')) {
+      try {
+        const sender = await this.userService.findById(step.senderId);
+        populatedStep.sender = sender!;
+      } catch (error) {
+        this.logger.warn(`Could not fetch sender for ${step.senderId}`, error);
+      }
+    }
+
+    // Handle recipient population
+    if (include.includes('recipient')) {
+      try {
+        const recipient = await this.userService.findById(step.recipientId);
+        populatedStep.recipient = recipient!;
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch recipient for ${step.recipientId}`,
+          error,
+        );
+      }
+    }
+
+    // Handle holder population
+    if (include.includes('holder')) {
+      try {
+        const holder = await this.userService.findById(step.holderId);
+        populatedStep.holder = holder!;
+      } catch (error) {
+        this.logger.warn(`Could not fetch holder for ${step.holderId}`, error);
+      }
+    }
+
+    return populatedStep;
+  }
+
+  // ==================== BUSINESS LOGIC METHODS ====================
+
+  async assignAgent(
+    stepId: string,
+    agentId: string,
+    assignedBy: string,
+  ): Promise<Step> {
+    await this.getStep(stepId);
+
+    // Send command to assign operator
+    await this.stepProducer.sendAssignAgentCommand(stepId, agentId, assignedBy);
+
+    // Update step with new agent
+    return this.partialUpdateStep(stepId, { agentId }, assignedBy);
+  }
+
+  async notifyStakeholders(
+    stepId: string,
+    notificationType: 'status_update' | 'milestone' | 'payment' | 'issue',
+    message: string,
+    sentBy: string,
+  ): Promise<boolean> {
+    const step = await this.getStep(stepId);
+
+    // Collect stakeholder IDs
+    const stakeholders = [
+      step.senderId,
+      step.recipientId,
+      step.holderId,
+      step.agentId,
+      step.operatorId,
+    ].filter((id) => id);
+
+    // Send notification via RabbitMQ
+    try {
+      await this.messageBusService.sendCommand(
+        RabbitMQConfig.Utils.commandRoutingKey('notify', 'step'),
+        {
+          stepId,
+          stakeholders,
+          notificationType,
+          message,
+          sentBy,
+          timestamp: new Date().toISOString(),
+        },
+      );
+
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Failed to send notifications for step ${stepId}:`,
+        error,
+      );
+      return false;
+    }
+  }
+
+  async processPayment(
+    stepId: string,
+    amount: number,
+    currency: string,
+    transactionId: string,
+    payerId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Update step with payment info
+      await this.partialUpdateStep(stepId, {
+        stepParams: {
+          spCost: amount,
+        },
+      });
+
+      // Publish payment processed event
+      await this.stepProducer.publishStepPaymentProcessed(
+        stepId,
+        'step-shipment-id', // You might need to get this from step
+        amount,
+        currency,
+        transactionId,
+        payerId,
+        'completed',
+      );
+
+      return {
+        success: true,
+        message: 'Payment processed successfully',
+      };
+    } catch (error) {
+      this.logger.error(`Failed to process payment for step ${stepId}:`, error);
+
+      // Publish payment failed event
+      await this.stepProducer.publishStepPaymentProcessed(
+        stepId,
+        'step-shipment-id',
+        amount,
+        currency,
+        transactionId,
+        payerId,
+        'failed',
+      );
+
+      return {
+        success: false,
+        message: `Payment processing failed: ${error.message}`,
+      };
+    }
   }
 
   async getStepsByShipment(
@@ -153,6 +791,8 @@ export class StepService {
       (step) =>
         step.state === StepState.INITIALIZED ||
         step.state === StepState.COMMITTED ||
+        step.state === StepState.FULFILLED ||
+        step.state === StepState.DROPPED_OFF ||
         step.state === StepState.COMMENCED,
     );
 
@@ -2375,187 +3015,5 @@ export class StepService {
     return Promise.all(
       steps.map((step) => this.populateRelations(step, include)),
     );
-  }
-
-  private async populateRelations(
-    step: Step,
-    include?: string[],
-  ): Promise<Step> {
-    // Clone the step to avoid modifying the original
-    const populatedStep = { ...step };
-
-    // Handle shipment population
-    if (include?.includes('shipment')) {
-      try {
-        const shipment = await this.shipmentService.getShipment(
-          step.shipmentId,
-        );
-        if (shipment) {
-          populatedStep.shipment = shipment;
-        }
-      } catch (error) {
-        this.logger.warn(
-          `Could not fetch shipment for ${step.shipmentId}`,
-          error,
-        );
-      }
-    }
-
-    // Handle journey population
-    if (include?.includes('journey')) {
-      try {
-        const journey = await this.journeyService.getJourney(step.journeyId);
-        if (journey) {
-          populatedStep.journey = journey;
-        }
-      } catch (error) {
-        this.logger.warn(
-          `Could not fetch journey for ${step.journeyId}`,
-          error,
-        );
-      }
-    }
-
-    // Handle operator population
-    if (include?.includes('operator')) {
-      try {
-        const operator = await this.operatorService.getOperator(
-          step.operatorId,
-        );
-        if (operator) {
-          populatedStep.operator = operator;
-        }
-      } catch (error) {
-        this.logger.warn(
-          `Could not fetch operator for ${step.operatorId}`,
-          error,
-        );
-      }
-    }
-
-    // Handle colony population
-    if (include?.includes('colony')) {
-      try {
-        const colony = await this.colonyNodeService.getColonyNode(
-          step.colonyId,
-        );
-        if (colony) {
-          populatedStep.colony = colony;
-        }
-      } catch (error) {
-        this.logger.warn(
-          `Could not fetch colony node for ${step.colonyId}`,
-          error,
-        );
-      }
-    }
-
-    // Handle agent population
-    if (include?.includes('agent')) {
-      try {
-        const agent = await this.agentService.getAgentsByOwner(step.agentId);
-        if (agent.length > 0) {
-          populatedStep.agent = agent[0];
-        }
-      } catch (error) {
-        this.logger.warn(`Could not fetch agent for ${step.agentId}`, error);
-      }
-    }
-
-    // Handle sender population
-    if (include?.includes('sender')) {
-      try {
-        const sender = await this.userService.findById(step.senderId);
-        if (sender) {
-          populatedStep.sender = sender;
-        }
-      } catch (error) {
-        this.logger.warn(`Could not fetch sender for ${step.senderId}`, error);
-      }
-    }
-
-    if (include?.includes('sender')) {
-      try {
-        const sender = await this.userService.findById(step.senderId);
-        if (sender) populatedStep.sender = sender;
-      } catch (e) {
-        this.logger.warn(`Could not fetch sender for ${step.senderId}`, e);
-      }
-    }
-
-    if (include?.includes('recipient')) {
-      try {
-        const recipient = await this.userService.findById(step.recipientId);
-        if (recipient) populatedStep.recipient = recipient;
-      } catch (e) {
-        this.logger.warn(
-          `Could not fetch recipient for ${step.recipientId}`,
-          e,
-        );
-      }
-    }
-
-    if (include?.includes('holder')) {
-      try {
-        const holder = await this.userService.findById(step.holderId);
-        if (holder) populatedStep.holder = holder;
-      } catch (e) {
-        this.logger.warn(`Could not fetch holder for ${step.holderId}`, e);
-      }
-    }
-    return populatedStep;
-  }
-
-  async updateStep(id: string, step: StepCreateDto): Promise<Step> {
-    // First check if step exists
-    await this.getStep(id);
-
-    const now = new Date().toISOString();
-
-    // Create updated step with ID preserved
-    const updatedStep: Step = {
-      id,
-      createdAt: now,
-      updatedAt: now,
-      ...step,
-    };
-
-    this.logger.log(`Updating step: ${id}`);
-    await this.database.put(updatedStep);
-    return updatedStep;
-  }
-
-  async partialUpdateStep(id: string, update: StepUpdateDto): Promise<Step> {
-    const existingStep = await this.getStep(id);
-    const now = new Date().toISOString();
-
-    // Handle nested stepParams update
-    let updatedStepParams = existingStep.stepParams;
-    if (update.stepParams) {
-      updatedStepParams = {
-        ...update.stepParams,
-        ...existingStep.stepParams,
-      };
-    }
-
-    // Create updated step by merging existing with update
-    const updatedStep = {
-      ...existingStep,
-      ...update,
-      stepParams: updatedStepParams,
-      updatedAt: now,
-    };
-
-    this.logger.log(`Partially updating step: ${id}`);
-    await this.database.put(updatedStep);
-    return updatedStep;
-  }
-
-  async deleteStep(id: string): Promise<{ message: string }> {
-    const step = await this.getStep(id);
-    await this.database.del(id);
-    return {
-      message: `Step ${step.index} for shipment ${step.shipmentId} deleted successfully`,
-    };
   }
 }

@@ -8,6 +8,8 @@ import { ParcelModule } from '../parcel/parcel.module.js';
 import { LocationModule } from '../../common/location/location.module.js';
 import { MissionModule } from '../mission/mission.module.js';
 import { JourneyModule } from '../journey/journey.module.js';
+import { ShipmentProducer } from './providers/shipment.provider.js';
+import { ShipmentConsumer } from './consumers/shipment.consumer.js';
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { JourneyModule } from '../journey/journey.module.js';
     JourneyModule,
   ],
   controllers: [ShipmentController],
-  providers: [ShipmentService],
+  providers: [ShipmentService, ShipmentProducer, ShipmentConsumer],
   exports: [ShipmentService],
 })
 export class ShipmentModule {}

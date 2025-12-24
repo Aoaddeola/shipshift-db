@@ -6,12 +6,10 @@ import {
   Param,
   Post,
   Put,
-  Patch,
   Query,
 } from '@nestjs/common';
 import { ColonyNodeService } from './colony-node.service.js';
 import { ColonyNodeCreateDto } from './colony-node-create.dto.js';
-import { ColonyNodeUpdateDto } from './colony-node-update.dto.js';
 
 @Controller('colony-node')
 export class ColonyNodeController {
@@ -33,14 +31,6 @@ export class ColonyNodeController {
     @Body() colonyNode: ColonyNodeCreateDto,
   ) {
     return this.colonyNodeService.updateColonyNode(id, colonyNode);
-  }
-
-  @Patch(':id')
-  async partialUpdateColonyNode(
-    @Param('id') id: string,
-    @Body() update: ColonyNodeUpdateDto,
-  ) {
-    return this.colonyNodeService.partialUpdateColonyNode(id, update);
   }
 
   @Get()

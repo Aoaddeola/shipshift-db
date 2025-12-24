@@ -1,9 +1,8 @@
-// Update your rabbitmq.module.ts to use AppConfigService
-
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { AppConfigService } from '../../config/config.service.js';
 import { MessageBusService } from './rabbitmq.service.js';
+import { RabbitMQConfig } from './config/rabbitmq.config.js';
+import { AppConfigService } from '../../config/config.service.js';
 
 @Global()
 @Module({})
@@ -13,21 +12,45 @@ export class RabbitMQRootModule {
       module: RabbitMQRootModule,
       imports: [
         RabbitMQModule.forRootAsync({
-          imports: [], // AppConfigModule is already global
+          imports: [],
           inject: [AppConfigService],
           useFactory: (configService: AppConfigService) => ({
             exchanges: [
+              // Event exchange (topic)
               {
-                name: configService.rabbitmqExchange,
+                name: RabbitMQConfig.EXCHANGES.APP_EVENTS,
                 type: 'topic',
+                options: {
+                  durable: true,
+                  autoDelete: false,
+                },
               },
+              // Command exchange (direct)
               {
-                name: configService.rabbitmqDirectExchange,
+                name: RabbitMQConfig.EXCHANGES.APP_COMMANDS,
                 type: 'direct',
+                options: {
+                  durable: true,
+                  autoDelete: false,
+                },
               },
+              // RPC exchange (direct)
               {
-                name: 'app.dlx',
+                name: RabbitMQConfig.EXCHANGES.APP_RPC,
                 type: 'direct',
+                options: {
+                  durable: true,
+                  autoDelete: false,
+                },
+              },
+              // Dead letter exchange
+              {
+                name: RabbitMQConfig.EXCHANGES.APP_DLX,
+                type: 'direct',
+                options: {
+                  durable: true,
+                  autoDelete: false,
+                },
               },
             ],
             uri: configService.rabbitmqUri,
@@ -37,18 +60,23 @@ export class RabbitMQRootModule {
             },
             connectionManagerOptions: {
               heartbeatIntervalInSeconds: configService.rabbitmqHeartbeat,
-              reconnectTimeInSeconds:
-                configService.rabbitmqReconnectDelay / 1000,
+              reconnectTimeInSeconds: 5,
             },
             channels: {
               default: {
                 prefetchCount: configService.rabbitmqPrefetchCount,
               },
+              events: {
+                prefetchCount: 20, // Events can be processed in parallel
+              },
+              commands: {
+                prefetchCount: 5, // Commands might need sequential processing
+              },
               rpc: {
-                prefetchCount: 1,
+                prefetchCount: 1, // RPC should process one at a time
               },
             },
-            logger: configService.isDevelopment ? console : undefined,
+            logger: console,
           }),
         }),
       ],
@@ -58,7 +86,7 @@ export class RabbitMQRootModule {
           useFactory: (configService: AppConfigService) => ({
             defaultExchange: configService.rabbitmqExchange,
             maxRetries: 3,
-            retryDelay: 1000,
+            retryDelay: configService.rabbitmqReconnectDelay,
           }),
           inject: [AppConfigService],
         },

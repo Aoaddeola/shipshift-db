@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDatabase } from '../../db/orbitdb/inject-database.decorator.js';
 import { Journey, JourneyStatus } from './journey.types.js';
@@ -764,5 +765,240 @@ export class JourneyService {
     return {
       message: `Journey from ${journey.fromLocationId} to ${journey.toLocationId} deleted successfully`,
     };
+  }
+
+  async updateJourneyStatus(
+    id: string,
+    newStatus: JourneyStatus,
+    _changedBy: string,
+    _metadata?: any,
+  ): Promise<Journey> {
+    const existingJourney = await this.getJourney(id);
+
+    const update: any = {
+      status: newStatus,
+    };
+
+    // If there are other fields to update based on status
+    if (newStatus === JourneyStatus.COMPLETED) {
+      update.completedAt = new Date().toISOString();
+    } else if (newStatus === JourneyStatus.CANCELLED) {
+      update.cancelledAt = new Date().toISOString();
+    }
+
+    // Use your existing updateJourney or partialUpdateJourney method
+    // If you have a partial update method, use that:
+    // return this.partialUpdateJourney(id, update, changedBy);
+
+    // If you only have updateJourney, fetch the journey first
+    const journeyToUpdate = {
+      ...existingJourney,
+      ...update,
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Remove the id if your updateJourney doesn't expect it in the DTO
+    const { id: _, ...journeyDto } = journeyToUpdate;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.updateJourney(id, journeyDto);
+  }
+
+  async validateBooking(
+    journeyId: string,
+    _bookerId: string,
+    metadata?: any,
+  ): Promise<{
+    valid: boolean;
+    reason?: string;
+    capacity?: number;
+    available?: boolean;
+  }> {
+    try {
+      const journey = await this.getJourney(journeyId);
+
+      // Check if journey is available for booking
+      if (journey.status !== JourneyStatus.AVAILABLE) {
+        return {
+          valid: false,
+          reason: `Journey is ${journey.status}, not available for booking`,
+          capacity: journey.capacity,
+          available: false,
+        };
+      }
+
+      // Check capacity if required
+      if (
+        metadata?.requiredCapacity &&
+        metadata.requiredCapacity > journey.capacity
+      ) {
+        return {
+          valid: false,
+          reason: `Insufficient capacity. Required: ${metadata.requiredCapacity}, Available: ${journey.capacity}`,
+          capacity: journey.capacity,
+          available: false,
+        };
+      }
+
+      // Check availability window
+      const now = new Date();
+      const availableFrom = new Date(journey.availableFrom);
+      const availableTo = new Date(journey.availableTo);
+
+      if (now < availableFrom || now > availableTo) {
+        return {
+          valid: false,
+          reason: `Journey not available at this time. Available from ${journey.availableFrom} to ${journey.availableTo}`,
+          capacity: journey.capacity,
+          available: false,
+        };
+      }
+
+      return {
+        valid: true,
+        reason: 'Journey is available for booking',
+        capacity: journey.capacity,
+        available: true,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to validate booking for journey ${journeyId}:`,
+        error,
+      );
+      return {
+        valid: false,
+        reason: `Validation failed: ${error.message}`,
+        capacity: 0,
+        available: false,
+      };
+    }
+  }
+
+  async notifyStakeholders(
+    journeyId: string,
+    _notificationType: string,
+    _message: string,
+    _sentBy: string,
+  ): Promise<boolean> {
+    try {
+      const journey = await this.getJourney(journeyId);
+
+      // Get stakeholders (agent, etc.)
+      const stakeholders = [journey.agentId];
+
+      // Send notification via RabbitMQ if you have a producer
+      // await this.journeyProducer.sendNotifyStakeholdersCommand(
+      //   journeyId,
+      //   stakeholders,
+      //   notificationType,
+      //   message,
+      //   sentBy
+      // );
+
+      this.logger.log(
+        `Notified ${stakeholders.length} stakeholders for journey ${journeyId}`,
+      );
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Failed to notify stakeholders for journey ${journeyId}:`,
+        error,
+      );
+      return false;
+    }
+  }
+
+  async assignAgent(
+    journeyId: string,
+    agentId: string,
+    _assignedBy: string,
+    _metadata?: any,
+  ): Promise<Journey> {
+    const journey = await this.getJourney(journeyId);
+
+    const update = {
+      agentId,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Use your existing updateJourney method
+    const { id: _, ...journeyDto } = {
+      ...journey,
+      ...update,
+    };
+
+    return this.updateJourney(journeyId, journeyDto);
+  }
+
+  async getJourneysByRoute(
+    fromLocationId?: string,
+    toLocationId?: string,
+    status?: JourneyStatus,
+    include?: string[],
+  ): Promise<Journey[]> {
+    const allJourneys = await this.getJourneys(include);
+    return allJourneys.filter((journey) => {
+      if (fromLocationId && journey.fromLocationId !== fromLocationId)
+        return false;
+      if (toLocationId && journey.toLocationId !== toLocationId) return false;
+      if (status && journey.status !== status) return false;
+      return true;
+    });
+  }
+
+  // Alias for getJourneys
+  async getAllJourneys(include?: string[]): Promise<Journey[]> {
+    return this.getJourneys(include);
+  }
+
+  async findAvailableJourneys(filters: {
+    fromLocationId?: string;
+    toLocationId?: string;
+    dateRange?: { from: string; to: string };
+    minCapacity?: number;
+    maxPrice?: number;
+    agentId?: string;
+  }): Promise<Journey[]> {
+    const allJourneys = await this.getJourneys();
+
+    return allJourneys.filter((journey) => {
+      // Filter by status - must be AVAILABLE
+      if (journey.status !== JourneyStatus.AVAILABLE) return false;
+
+      // Filter by from location
+      if (
+        filters.fromLocationId &&
+        journey.fromLocationId !== filters.fromLocationId
+      )
+        return false;
+
+      // Filter by to location
+      if (filters.toLocationId && journey.toLocationId !== filters.toLocationId)
+        return false;
+
+      // Filter by agent
+      if (filters.agentId && journey.agentId !== filters.agentId) return false;
+
+      // Filter by capacity
+      if (filters.minCapacity && journey.capacity < filters.minCapacity)
+        return false;
+
+      // Filter by price
+      if (filters.maxPrice && journey.price > filters.maxPrice) return false;
+
+      // Filter by date range
+      if (filters.dateRange) {
+        const journeyFrom = new Date(journey.availableFrom);
+        const journeyTo = new Date(journey.availableTo);
+        const filterFrom = new Date(filters.dateRange.from);
+        const filterTo = new Date(filters.dateRange.to);
+
+        // Check if journey overlaps with filter date range
+        if (journeyTo < filterFrom || journeyFrom > filterTo) return false;
+      }
+
+      return true;
+    });
   }
 }

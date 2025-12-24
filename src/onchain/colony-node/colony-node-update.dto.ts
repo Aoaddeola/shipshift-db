@@ -6,10 +6,29 @@ import {
   Max,
   IsOptional,
   ArrayNotEmpty,
-  IsEnum,
+  ValidateNested,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { OperatorTypeParams } from '../../users/operator/operator.types.js';
+import { Type } from 'class-transformer';
+
+// Nested DTO for AssetClass update
+class AssetClassUpdateDto {
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234',
+    description: 'Updated policy ID for the asset',
+  })
+  policy_id?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: '74657374746f6b656e',
+    description: 'Updated asset name in hex format',
+  })
+  asset_name?: string;
+}
 
 export class ColonyNodeUpdateDto {
   @IsString()
@@ -20,13 +39,14 @@ export class ColonyNodeUpdateDto {
   })
   name?: string;
 
-  @IsString()
+  @ValidateNested()
+  @Type(() => AssetClassUpdateDto)
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'ETH',
-    description: 'Updated platform asset class',
+    type: AssetClassUpdateDto,
+    description: 'Updated platform asset class configuration',
   })
-  platformAssetClass?: string;
+  platformAssetClass?: AssetClassUpdateDto;
 
   @IsArray()
   @IsString({ each: true })
