@@ -9,6 +9,10 @@ import { OperatorModule } from '../../users/operator/operator.module.js';
 import { ColonyNodeModule } from '../colony-node/colony-node.module.js';
 import { UserModule } from '../../users/user/user.module.js';
 import { AgentModule } from '../../profiles/agent/agent.module.js';
+import { StepConsumer } from './consumers/step.consumer.js';
+import { StepProducer } from './producers/step.producer.js';
+import { StepFactory } from './step.factory.js';
+import { OperatorBadgeModule } from '../operator-badge/operator-badge.module.js';
 
 @Module({
   imports: [
@@ -18,12 +22,14 @@ import { AgentModule } from '../../profiles/agent/agent.module.js';
     ShipmentModule,
     JourneyModule,
     OperatorModule,
+    OperatorBadgeModule,
+    OperatorModule,
     ColonyNodeModule,
     AgentModule,
     UserModule,
   ],
   controllers: [StepController],
-  providers: [StepService],
+  providers: [StepService, StepConsumer, StepProducer, StepFactory],
   exports: [StepService],
 })
 export class StepModule {}

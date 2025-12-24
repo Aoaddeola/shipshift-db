@@ -6,14 +6,37 @@ import {
   IsNumber,
   Min,
   Max,
-  IsEnum,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { ColonyNode } from './colony-node.types.js';
-import { OperatorTypeParams } from '../../users/operator/operator.types.js';
+
+// Nested DTO for AssetClass
+class AssetClassDto {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234',
+    description: 'Policy ID for the asset',
+  })
+  policy_id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: '74657374746f6b656e',
+    description: 'Asset name in hex format',
+  })
+  asset_name: string;
+}
 
 export class ColonyNodeCreateDto
-  implements Omit<ColonyNode, 'id' | 'createdAt' | 'updatedAt'>
+  implements
+    Omit<
+      ColonyNode,
+      'id' | 'createdAt' | 'updatedAt' | 'platformAssetClassDetails'
+    >
 {
   @IsString()
   @IsNotEmpty()
@@ -25,13 +48,13 @@ export class ColonyNodeCreateDto
   })
   name: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => AssetClassDto)
   @ApiProperty({
-    example: 'BTC',
-    description: 'Platform asset class',
+    type: AssetClassDto,
+    description: 'Platform asset class configuration',
   })
-  platformAssetClass: string;
+  platformAssetClass: AssetClassDto;
 
   @IsArray()
   @IsString({ each: true })
@@ -54,7 +77,6 @@ export class ColonyNodeCreateDto
   @IsNumber()
   @Min(0)
   @Max(100)
-  @IsNotEmpty()
   @ApiProperty({
     example: 5,
     description: 'Commission percentage (0-100)',
@@ -65,7 +87,6 @@ export class ColonyNodeCreateDto
 
   @IsNumber()
   @Min(1)
-  @IsNotEmpty()
   @ApiProperty({
     example: 100,
     description: 'Maximum number of active steps',
@@ -74,7 +95,7 @@ export class ColonyNodeCreateDto
   maximumActiveStepsCount: number;
 
   @IsString()
-  // @IsNotEmpty()
+  @IsNotEmpty()
   @ApiProperty({
     example: 'QmX58D3k4m...',
     description: 'Peer ID for network communication',

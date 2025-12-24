@@ -10,6 +10,7 @@ import { ParcelService } from '../parcel/parcel.service.js';
 import { LocationService } from '../../common/location/location.service.js';
 import { MissionService } from '../mission/mission.service.js';
 import { JourneyService } from '../journey/journey.service.js';
+import { ShipmentProducer } from './providers/shipment.provider.js';
 
 @Injectable()
 export class ShipmentService {
@@ -22,6 +23,7 @@ export class ShipmentService {
     @Inject(LocationService) private locationService: LocationService,
     @Inject(MissionService) private missionService: MissionService,
     @Inject(JourneyService) private journeyService: JourneyService,
+    @Inject(ShipmentProducer) private shipmentProducer: ShipmentProducer,
   ) {}
 
   async createShipment(
@@ -50,6 +52,10 @@ export class ShipmentService {
     };
 
     await this.database.put(newShipment);
+
+    // Publish creation event
+    await this.shipmentProducer.publishShipmentCreated(newShipment);
+
     return newShipment;
   }
 
@@ -676,7 +682,7 @@ export class ShipmentService {
     shipment: ShipmentCreateDto,
   ): Promise<Shipment> {
     // First check if shipment exists
-    await this.getShipment(id);
+    const existingShipment = await this.getShipment(id);
 
     const now = new Date().toISOString();
 
@@ -690,6 +696,24 @@ export class ShipmentService {
 
     this.logger.log(`Updating shipment: ${id}`);
     await this.database.put(updatedShipment);
+    // Publish update event
+    await this.shipmentProducer.publishShipmentUpdated(
+      id,
+      existingShipment.status,
+      shipment,
+      'system',
+    );
+
+    // If status changed, publish status change event
+    if (shipment.status && shipment.status !== existingShipment.status) {
+      await this.shipmentProducer.publishShipmentStatusChanged(
+        id,
+        existingShipment.senderId,
+        existingShipment.status,
+        shipment.status,
+        'system',
+      );
+    }
     return updatedShipment;
   }
 
@@ -709,14 +733,118 @@ export class ShipmentService {
 
     this.logger.log(`Partially updating shipment: ${id}`);
     await this.database.put(updatedShipment);
+
+    // Publish update event
+    await this.shipmentProducer.publishShipmentUpdated(
+      id,
+      existingShipment.status,
+      update,
+      'system',
+    );
+
+    // If status changed, publish status change event
+    if (update.status && update.status !== existingShipment.status) {
+      await this.shipmentProducer.publishShipmentStatusChanged(
+        id,
+        existingShipment.senderId,
+        existingShipment.status,
+        update.status,
+        'system',
+      );
+    }
+
     return updatedShipment;
   }
 
   async deleteShipment(id: string): Promise<{ message: string }> {
     const shipment = await this.getShipment(id);
     await this.database.del(id);
+    // Publish deletion event
+    await this.shipmentProducer.publishShipmentDeleted(
+      id,
+      shipment.senderId,
+      shipment.fromLocationId,
+      shipment.toLocationId,
+      'system',
+    );
     return {
       message: `Shipment from ${shipment.fromLocationId} to ${shipment.toLocationId} deleted successfully`,
     };
+  }
+  // Add new method to change status with validation
+  async changeShipmentStatus(
+    id: string,
+    newStatus: ShipmentStatus,
+    changedBy: string,
+    reason?: string,
+    metadata?: {
+      locationId?: string;
+      operatorId?: string;
+      journeyId?: string;
+      stepId?: string;
+    },
+  ): Promise<Shipment> {
+    const shipment = await this.getShipment(id);
+
+    // Validate status transition (add your business logic here)
+    if (
+      shipment.status === ShipmentStatus.DELIVERED &&
+      newStatus !== ShipmentStatus.DELIVERED
+    ) {
+      throw new Error('Cannot change status of a delivered shipment');
+    }
+
+    if (
+      shipment.status === ShipmentStatus.ABORTED &&
+      newStatus !== ShipmentStatus.ABORTED
+    ) {
+      throw new Error('Cannot change status of a cancelled shipment');
+    }
+
+    // Update the shipment
+    const updatedShipment = await this.partialUpdateShipment(id, {
+      status: newStatus,
+    });
+
+    // Publish status change event
+    await this.shipmentProducer.publishShipmentStatusChanged(
+      id,
+      shipment.senderId,
+      shipment.status,
+      newStatus,
+      changedBy,
+      metadata,
+    );
+
+    return updatedShipment;
+  }
+
+  // Add method to assign journey
+  async assignJourney(
+    id: string,
+    journeyId: string,
+    assignedBy: string,
+  ): Promise<Shipment> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const shipment = await this.getShipment(id);
+
+    // Send command to assign journey
+    await this.shipmentProducer.sendAssignJourneyCommand(
+      id,
+      journeyId,
+      assignedBy,
+    );
+
+    // Update shipment with journey ID
+    const updatedShipment = await this.partialUpdateShipment(id, { journeyId });
+
+    // Also publish assignment event
+    await this.shipmentProducer.publishShipmentAssignedJourney(
+      id,
+      journeyId,
+      assignedBy,
+    );
+
+    return updatedShipment;
   }
 }

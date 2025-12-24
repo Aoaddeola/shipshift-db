@@ -40,7 +40,7 @@ export type MintingPolicyId = string;
 /**
  * Requester Type
  */
-export type Requester = [WalletAddress, MintingPolicyId | undefined];
+export type Requester = [WalletAddress, MintingPolicyId | null];
 
 /**
  * Performer Type

@@ -16,7 +16,7 @@ import { OperatorService } from '../../users/operator/operator.service.js';
 import { UserType } from '../../users/user/user.types.js';
 import { AgentMPFProofService } from '../../agent-mpf-proof/agent-mpf-proof.service.js';
 import { Trie } from '@aiken-lang/merkle-patricia-forestry';
-import { AgentMPFProof } from 'src/agent-mpf-proof/agent-mpf-proof.types.js';
+import { AgentMPFProof } from '../../agent-mpf-proof/agent-mpf-proof.types.js';
 import { resolvePaymentKeyHash } from '@meshsdk/core-cst';
 
 @Injectable()

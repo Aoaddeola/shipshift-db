@@ -7,6 +7,8 @@ import { JourneyModule } from '../journey/journey.module.js';
 import { LocationModule } from '../../common/location/location.module.js';
 import { OperatorModule } from '../../users/operator/operator.module.js';
 import { JwtModule } from '@nestjs/jwt';
+import { MissionProducer } from './producers/mission.producer.js';
+import { MissionConsumer } from './consumers/mission.consumer.js';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { JwtModule } from '@nestjs/jwt';
     LocationModule,
   ],
   controllers: [MissionController],
-  providers: [MissionService],
+  providers: [MissionService, MissionProducer, MissionConsumer],
   exports: [MissionService],
 })
 export class MissionModule {}

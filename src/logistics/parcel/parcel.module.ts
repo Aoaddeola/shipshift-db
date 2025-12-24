@@ -6,6 +6,9 @@ import { IPFSAccessController } from '@orbitdb/core';
 import { CurrencyModule } from '../../common/currency/currency.module.js';
 import { UserModule } from '../../users/user/user.module.js';
 import { JwtModule } from '@nestjs/jwt';
+import { ParcelConsumer } from './consumers/parcel.consumer.js';
+import { ParcelProducer } from './producers/parcel.producer.js';
+import { MessagingModule } from '../../shared/messaging/messaging.module.js';
 
 @Module({
   imports: [
@@ -15,9 +18,10 @@ import { JwtModule } from '@nestjs/jwt';
     CurrencyModule,
     UserModule,
     JwtModule,
+    MessagingModule,
   ],
   controllers: [ParcelController],
-  providers: [ParcelService],
-  exports: [ParcelService],
+  providers: [ParcelService, ParcelProducer, ParcelConsumer],
+  exports: [ParcelService, ParcelProducer],
 })
 export class ParcelModule {}
