@@ -15,8 +15,6 @@ import { OfferUpdateDto } from './offer-update.dto.js';
 import { Database } from '../db/orbitdb/database.js';
 import { InjectDatabase } from '../db/orbitdb/inject-database.decorator.js';
 import { OfferProducer } from './producers/offer.producer.js';
-import { StepService } from '../onchain/step/step.service.js';
-import { Step } from '../onchain/step/step.types.js';
 import { MissionService } from '../logistics/mission/mission.service.js';
 import { JourneyService } from '../logistics/journey/journey.service.js';
 import { ShipmentService } from '../logistics/shipment/shipment.service.js';
@@ -28,7 +26,6 @@ export class OfferService {
   constructor(
     @InjectDatabase('offer') private database: Database<Offer>,
     @Inject(OfferProducer) private offerProducer: OfferProducer,
-    @Inject(StepService) private stepService: StepService,
     @Inject(MissionService) private missionService: MissionService,
     @Inject(JourneyService) private journeyService: JourneyService,
     @Inject(ShipmentService) private shipmentService: ShipmentService,
@@ -70,38 +67,6 @@ export class OfferService {
     }
 
     return this.populateRelations(entry, include);
-  }
-
-  async getOfferSteps(id: string): Promise<Step[]> {
-    const entry = await this.database.get(id);
-    if (!entry) {
-      throw new NotFoundException('Offer not found');
-    }
-    const getSteps = async (shipmentId: string, journeyId: string) => {
-      return await this.stepService.getStepsByShipmentAndJourney(
-        shipmentId,
-        journeyId,
-        ['shipment', 'journey', 'operator', 'colony', 'agent'],
-      );
-    };
-    let steps: Step[] = [];
-    if (entry.bid.journeyId) {
-      steps = await getSteps(entry.shipmentId, entry.bid.journeyId);
-    }
-    if (entry.bid.missionId) {
-      const mission = await this.missionService.getMission(
-        entry.bid.missionId,
-        ['journeys'],
-      );
-      steps = (
-        await Promise.all(
-          mission.journeys!.map(async (journey) => {
-            return await getSteps(entry.shipmentId, journey.id);
-          }),
-        )
-      ).flat();
-    }
-    return steps;
   }
 
   async updateOffer(

@@ -32,14 +32,7 @@ export class LocationController {
   @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Create a new location' })
   async createLocation(@Body() location: LocationCreateDto) {
-    const result = await this.locationService.createLocation(location);
-
-    return {
-      success: true,
-      data: result,
-      message: 'Location created successfully',
-      timestamp: new Date().toISOString(),
-    };
+    return await this.locationService.createLocation(location);
   }
 
   @Get()

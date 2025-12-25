@@ -25,6 +25,10 @@ export interface StepStateChangedEvent {
   journeyId: string;
   previousState: StepState;
   newState: StepState;
+  shipmentSteps: {
+    index: number;
+    state: StepState;
+  }[];
   reason?: string;
   changedBy: string;
   timestamp: string;
@@ -202,6 +206,10 @@ export class StepProducer {
     stepId: string,
     shipmentId: string,
     journeyId: string,
+    shipmentSteps: {
+      index: number;
+      state: StepState;
+    }[],
     previousState: StepState,
     newState: StepState,
     changedBy: string,
@@ -218,6 +226,7 @@ export class StepProducer {
       shipmentId,
       journeyId,
       previousState,
+      shipmentSteps,
       newState,
       changedBy,
       timestamp: new Date().toISOString(),

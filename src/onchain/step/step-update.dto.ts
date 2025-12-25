@@ -141,6 +141,11 @@ export class StepUpdateDto {
 
   @IsString()
   @IsOptional()
+  @ApiPropertyOptional({ example: 'offer' })
+  offerId?: string;
+
+  @IsString()
+  @IsOptional()
   @ApiPropertyOptional({ example: 'user-holder-2' })
   holderId?: string;
 

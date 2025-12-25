@@ -3,6 +3,8 @@ import {
   IsNotEmpty,
   ValidateNested,
   IsOptional,
+  IsNumber,
+  Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -37,6 +39,15 @@ export class OfferCreateDto
     description: 'ID of the shipment',
   })
   shipmentId: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 50,
+    description: 'Number of steps associated with offer',
+  })
+  stepCount?: number;
 
   @ValidateNested()
   @Type(() => BidDto)

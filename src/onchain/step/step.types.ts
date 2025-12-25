@@ -4,6 +4,7 @@ import { Journey } from '../../logistics/journey/journey.types.js';
 import { Operator } from '../../users/operator/operator.types.js';
 import { User } from '../../users/user/user.types.js';
 import { Agent } from '../../profiles/agent/agent.types.js';
+import { Mission } from '../../logistics/mission/mission.types.js';
 
 /**
  * Step State Enum (numeric values)
@@ -71,6 +72,7 @@ export interface Step {
   stepParams: StepOnChain;
   shipmentId: string;
   journeyId: string;
+  offerId?: string;
   operatorId: string;
   colonyId: string;
   agentId: string;
@@ -80,6 +82,7 @@ export interface Step {
   state: StepState;
   shipment?: Shipment;
   journey?: Journey;
+  mission?: Mission;
   operator?: Operator;
   colony?: ColonyNode;
   agent?: Agent;

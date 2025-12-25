@@ -1,4 +1,10 @@
-import { IsString, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  ValidateNested,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -38,4 +44,13 @@ export class OfferUpdateDto {
     description: 'Updated bid details',
   })
   bid?: BidUpdateDto;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 50,
+    description: 'Number of steps associated with offer',
+  })
+  stepCount?: number;
 }
