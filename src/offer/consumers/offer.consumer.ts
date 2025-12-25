@@ -425,10 +425,15 @@ export class OfferConsumer {
         : shipment;
     const steps = await this.stepFactory.stepFactory(updatedShipment);
 
+    await this.offerService.partialUpdateOffer(offer.id, {
+      stepCount: steps.length,
+    });
+
     await Promise.all(
       steps.map(async (step) => {
         const _step = step;
         _step.state = StepState.ACCEPTED;
+        _step.offerId = event.data.offerId;
         await this.stepService.createStep(_step);
       }),
     );

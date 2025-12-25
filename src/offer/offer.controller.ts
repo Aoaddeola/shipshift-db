@@ -28,11 +28,6 @@ export class OfferController {
     return this.offerService.getOffer(id, includeArray);
   }
 
-  @Get(':offerId/steps')
-  async getOfferSteps(@Param('offerId') offerId: string) {
-    return this.offerService.getOfferSteps(offerId);
-  }
-
   @Get('shipment/:shipmentId')
   async getOffersByShipment(
     @Param('shipmentId') shipmentId: string,

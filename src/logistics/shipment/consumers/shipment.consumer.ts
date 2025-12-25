@@ -10,6 +10,7 @@ import { JourneyService } from '../../../logistics/journey/journey.service.js';
 import { MissionService } from '../../../logistics/mission/mission.service.js';
 import { ParcelService } from '../../../logistics/parcel/parcel.service.js';
 import { ShipmentProducer } from '../providers/shipment.provider.js';
+import { ShipmentManager } from '../shipment.manager.js';
 
 @Injectable()
 export class ShipmentConsumer {
@@ -142,30 +143,41 @@ export class ShipmentConsumer {
     ),
   })
   async handleStepStateChanged(event: any) {
-    this.logger.log(`Processing step.state.changed for step ${event.stepId}`);
+    this.logger.log(
+      `Processing step.state.changed for step ${event.data.stepId}`,
+    );
 
-    // Example: When a step is completed, update the related shipment status
-    // if (event.newState === 'COMPLETED' && event.shipmentId) {
-    //   const shipment = await this.shipmentService.getShipment(event.shipmentId);
-    //   if (shipment.status === ShipmentStatus.IN_TRANSIT) {
-    //     // Check if all steps are completed
-    //     const steps = await this.stepService.getStepsByShipment(event.shipmentId);
-    //     const allCompleted = steps.every(step => step.state === 'COMPLETED');
-    //     if (allCompleted) {
-    //       await this.shipmentService.partialUpdateShipment(event.shipmentId, {
-    //         status: ShipmentStatus.DELIVERED,
-    //       });
-    //       await this.shipmentProducer.publishShipmentStatusChanged(
-    //         event.shipmentId,
-    //         shipment.senderId,
-    //         shipment.status,
-    //         ShipmentStatus.DELIVERED,
-    //         'system',
-    //         { stepId: event.stepId }
-    //       );
-    //     }
-    //   }
-    // }
+    const shipment = await this.shipmentService.getShipment(
+      event.data.shipmentId,
+    );
+
+    // Create a 3-step shipment
+    const manager = new ShipmentManager(
+      event.data.shipmentSteps.length,
+      event.data.shipmentSteps,
+    );
+
+    const newShipmentStatus = manager.calculateOverallStatus();
+
+    if (shipment.status !== newShipmentStatus) {
+      await this.shipmentService.partialUpdateShipment(event.data.shipmentId, {
+        status: newShipmentStatus,
+      });
+      if (newShipmentStatus === ShipmentStatus.DELIVERED) {
+        await this.shipmentProducer.publishShipmentStatusChanged(
+          event.shipmentId,
+          shipment.senderId,
+          shipment.status,
+          ShipmentStatus.DELIVERED,
+          'system',
+          { stepId: event.data.stepId },
+        );
+      }
+    }
+
+    this.logger.log(
+      `Overall Shipment Status for ${shipment.id} - ${manager.calculateOverallStatus()}`,
+    );
   }
 
   // ==================== COMMAND HANDLERS ====================

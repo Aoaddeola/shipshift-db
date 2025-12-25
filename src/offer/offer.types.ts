@@ -12,6 +12,7 @@ export interface Offer {
     missionId?: string;
     journeyId?: string;
   };
+  stepCount?: number;
   shipment?: Shipment;
   journey?: Journey;
   mission?: Mission;

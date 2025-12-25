@@ -66,10 +66,12 @@ export class StepService {
 
       // If step is in a non-pending state, publish state change
       if (newStep.state !== StepState.PENDING) {
+        const shipmentSteps = await this.getStepsByShipment(id);
         await this.stepProducer.publishStepStateChanged(
           id,
           newStep.shipmentId,
           newStep.journeyId,
+          shipmentSteps,
           StepState.PENDING, // Previous state (implicit)
           newStep.state,
           createdBy || 'system',
@@ -166,12 +168,17 @@ export class StepService {
       updatedBy || 'system',
     );
 
+    const shipmentSteps = await this.getStepsByShipment(
+      existingStep.shipmentId,
+    );
+
     // If state changed, publish specific state change event
     if (isStateChanged && update.state !== undefined) {
       await this.stepProducer.publishStepStateChanged(
         id,
         existingStep.shipmentId,
         existingStep.journeyId,
+        shipmentSteps,
         existingStep.state,
         update.state,
         updatedBy || 'system',
@@ -230,11 +237,16 @@ export class StepService {
       changedBy,
     );
 
+    const shipmentSteps = await this.getStepsByShipment(
+      existingStep.shipmentId,
+    );
+
     // Publish state change event with metadata
     await this.stepProducer.publishStepStateChanged(
       id,
       existingStep.shipmentId,
       existingStep.journeyId,
+      shipmentSteps,
       existingStep.state,
       newState,
       changedBy,
@@ -810,6 +822,15 @@ export class StepService {
     const steps = all.filter(
       (step) => step.shipmentId === shipmentId && step.journeyId === journeyId,
     );
+
+    return Promise.all(
+      steps.map((step) => this.populateRelations(step, include)),
+    );
+  }
+
+  async getStepsByOffer(offerId: string, include?: string[]): Promise<Step[]> {
+    const all = await this.database.all();
+    const steps = all.filter((step) => step.offerId === offerId);
 
     return Promise.all(
       steps.map((step) => this.populateRelations(step, include)),

@@ -154,6 +154,11 @@ export class StepCreateDto
   recipientId: string;
 
   @IsString()
+  @IsOptional()
+  @ApiProperty({ example: 'offer' })
+  offerId?: string;
+
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: 'user-holder' })
   holderId: string;

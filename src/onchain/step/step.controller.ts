@@ -1095,6 +1095,15 @@ export class StepController {
     return this.stepService.getStepsByHolder(holderId, includeArray);
   }
 
+  @Get('offer/:offerId')
+  async getStepsByOffer(
+    @Param('offerId') offerId: string,
+    @Query('include') include?: string,
+  ) {
+    const includeArray = include ? include.split(',') : [];
+    return this.stepService.getStepsByOffer(offerId, includeArray);
+  }
+
   @Get('colony/:colonyId')
   async getStepsByColony(
     @Param('colonyId') colonyId: string,
