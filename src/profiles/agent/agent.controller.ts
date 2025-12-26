@@ -253,7 +253,7 @@ export class AgentController {
   }
 
   @UseGuards(JwtDeliveryOpAuthGuard)
-  @Patch('ban/:id')
+  @Patch('unban/:id')
   async unbanAgent(@Param('id') id: string, @Req() req: any) {
     const requesterId = req.user.sub;
     console.log('Authenticated user ID:', requesterId);
