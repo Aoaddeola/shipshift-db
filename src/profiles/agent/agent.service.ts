@@ -406,20 +406,12 @@ export class AgentService {
       if (agentProofs.length === 0) {
         trie = new Trie();
         await trie.insert(
-          resolvePaymentKeyHash(agent.onChainAddress),
-          resolvePaymentKeyHash(operator.onchain.opAddr),
+          Buffer.from(resolvePaymentKeyHash(agent.onChainAddress), 'hex'),
+          Buffer.from(resolvePaymentKeyHash(operator.onchain.opAddr), 'hex'),
         );
         const proof = await trie.prove(
-          resolvePaymentKeyHash(agent.onChainAddress),
+          Buffer.from(resolvePaymentKeyHash(agent.onChainAddress), 'hex'),
           false,
-        );
-        console.log(
-          'Profoofofooofoof',
-          proof.toJSON(),
-          'Agent',
-          resolvePaymentKeyHash(agent.onChainAddress),
-          'Operator',
-          resolvePaymentKeyHash(operator.onchain.opAddr),
         );
         const mpf = this.agentMPFService.createAgentMPFProof({
           operatorId: operator.id,
@@ -436,20 +428,26 @@ export class AgentService {
         trie = await Trie.fromList(
           agents
             .filter((a) => a.id !== agent.id && a.active)
-            .map((agent) => {
+            .map((_agent) => {
               return {
-                key: resolvePaymentKeyHash(agent.onChainAddress),
-                value: resolvePaymentKeyHash(operator.onchain.opAddr),
+                key: Buffer.from(
+                  resolvePaymentKeyHash(_agent.onChainAddress),
+                  'hex',
+                ),
+                value: Buffer.from(
+                  resolvePaymentKeyHash(operator.onchain.opAddr),
+                  'hex',
+                ),
               };
             }),
         );
         await trie.insert(
-          resolvePaymentKeyHash(agent.onChainAddress),
-          resolvePaymentKeyHash(operator.onchain.opAddr),
+          Buffer.from(resolvePaymentKeyHash(agent.onChainAddress), 'hex'),
+          Buffer.from(resolvePaymentKeyHash(operator.onchain.opAddr), 'hex'),
         );
 
         const proof = await trie.prove(
-          resolvePaymentKeyHash(agent.onChainAddress),
+          Buffer.from(resolvePaymentKeyHash(agent.onChainAddress), 'hex'),
           false,
         );
         const mpf = this.agentMPFService.updateAgentMPFProof(
@@ -493,15 +491,23 @@ export class AgentService {
             .filter((a) => a.active)
             .map((agent) => {
               return {
-                key: resolvePaymentKeyHash(agent.onChainAddress),
-                value: resolvePaymentKeyHash(operator.onchain.opAddr),
+                key: Buffer.from(
+                  resolvePaymentKeyHash(agent.onChainAddress),
+                  'hex',
+                ),
+                value: Buffer.from(
+                  resolvePaymentKeyHash(operator.onchain.opAddr),
+                  'hex',
+                ),
               };
             }),
         );
         // const trie = await Trie.load(new Store(agentProofs[0].operatorId));
-        await trie.delete(resolvePaymentKeyHash(agent.onChainAddress));
+        await trie.delete(
+          Buffer.from(resolvePaymentKeyHash(agent.onChainAddress), 'hex'),
+        );
         const proof = await trie.prove(
-          resolvePaymentKeyHash(agent.onChainAddress),
+          Buffer.from(resolvePaymentKeyHash(agent.onChainAddress), 'hex'),
           true,
         );
 
