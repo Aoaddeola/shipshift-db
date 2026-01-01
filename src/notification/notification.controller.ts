@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   // UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -16,7 +17,11 @@ import {
   SingleNotificationDto,
   BatchNotificationDto,
   NotificationResponseDto,
+  RenderedNotificationDto,
+  GetRenderedNotificationsDto,
+  NotificationType,
 } from './notification.dto.js';
+import { NotificationEntity } from './notification.types.js';
 // import { JwtNodeOpAuthGuard } from 'src/guards/jwt-nodeOp-auth.guard.js';
 
 @ApiTags('notifications')
@@ -72,6 +77,106 @@ export class NotificationOrbitDBController {
     };
   }
 
+  @Get('rendered/user/:userId')
+  @ApiOperation({
+    summary: 'Get notifications with rendered content for a user',
+  })
+  @ApiResponse({ status: 200, type: [RenderedNotificationDto] })
+  async getRenderedNotifications(
+    @Param('userId') userId: string,
+    @Query() query: GetRenderedNotificationsDto,
+    @Query('limit') limit: string = '50',
+    @Query('status') status?: string,
+  ) {
+    const notifications =
+      await this.notificationService.getNotificationsWithRenderedContent(
+        userId,
+        {
+          channels: query.channels,
+          includeHtml: query.includeHtml,
+          preferredLanguage: query.preferredLanguage,
+          limit: parseInt(limit),
+          status: status as NotificationEntity['status'],
+        },
+      );
+
+    return {
+      status: 'success',
+      data: notifications,
+      count: notifications.length,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('rendered/:notificationId')
+  @ApiOperation({ summary: 'Get a single notification with rendered content' })
+  @ApiResponse({ status: 200, type: RenderedNotificationDto })
+  async getRenderedNotification(
+    @Param('notificationId') notificationId: string,
+    @Query('channel') channel: NotificationType,
+    @Query('includeHtml') includeHtml: string = 'true',
+    @Query('language') language?: string,
+  ) {
+    const notification =
+      await this.notificationService.getNotificationWithRenderedContent(
+        notificationId,
+        channel,
+        includeHtml === 'true',
+        language,
+      );
+
+    if (!notification) {
+      throw new NotFoundException(
+        `Notification ${notificationId} not found or cannot be rendered`,
+      );
+    }
+
+    return {
+      status: 'success',
+      data: notification,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post('rendered/batch')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get multiple notifications with rendered content in batch',
+  })
+  @ApiBody({ type: GetRenderedNotificationsDto })
+  @ApiResponse({ status: 200, type: [RenderedNotificationDto] })
+  async getBatchRenderedNotifications(
+    @Body()
+    body: GetRenderedNotificationsDto & {
+      notificationIds: string[];
+    },
+  ) {
+    const results: RenderedNotificationDto[] = [];
+
+    for (const notificationId of body.notificationIds) {
+      for (const channel of body.channels) {
+        const notification =
+          await this.notificationService.getNotificationWithRenderedContent(
+            notificationId,
+            channel,
+            body.includeHtml || false,
+            body.preferredLanguage,
+          );
+
+        if (notification) {
+          results.push(notification);
+          break; // Use the first successful channel for each notification
+        }
+      }
+    }
+
+    return {
+      status: 'success',
+      data: results,
+      count: results.length,
+      timestamp: new Date().toISOString(),
+    };
+  }
   @Get('unread-count/:userId')
   @ApiOperation({ summary: 'Get unread notification count for a user' })
   async getUnreadCount(@Param('userId') userId: string) {

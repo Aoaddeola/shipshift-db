@@ -15,6 +15,8 @@ import {
   SingleNotificationDto,
   BatchNotificationDto,
   NotificationResponseDto,
+  RenderedNotificationDto,
+  RenderedContentDto,
 } from './notification.dto.js';
 import { RabbitMQConfig } from '../shared/rabbitmq/config/rabbitmq.config.js';
 
@@ -111,6 +113,13 @@ export class OrbitDBNotificationService implements OnModuleInit {
         createdAt: now,
         updatedAt: now,
         channelsToUse: channelsToUse,
+        variables: {
+          // Add this
+          // Store any template variables that might be needed for rendering
+          urgency: notificationDto.urgency,
+          isUserOnline: notificationDto.isUserOnline,
+          // You can add more variables from the DTO or context here
+        },
       };
 
       // Save notification to OrbitDB
@@ -360,6 +369,10 @@ export class OrbitDBNotificationService implements OnModuleInit {
 
   // ==================== TEMPLATE METHODS ====================
 
+  async mapEventToTemplate(): Promise<number> {
+    return 0;
+  }
+
   async getTemplateForEvent(
     event: string,
     locale: string = 'en',
@@ -427,6 +440,10 @@ export class OrbitDBNotificationService implements OnModuleInit {
 
     await this.templateDatabase.put(newTemplate);
     return newTemplate;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.templateDatabase.del(id);
   }
 
   async getTemplates(filters?: {
@@ -982,5 +999,219 @@ export class OrbitDBNotificationService implements OnModuleInit {
       this.logger.error('Cleanup failed:', error);
       return 0;
     }
+  }
+
+  // Add these methods to OrbitDBNotificationService class in notification.service.ts
+
+  /**
+   * Get rendered content for a notification
+   */
+  async getRenderedContent(
+    notificationId: string,
+    channel: NotificationType,
+    includeHtml: boolean = true,
+    preferredLanguage?: string,
+  ): Promise<RenderedContentDto | null> {
+    const notification = await this.getNotification(notificationId);
+    if (!notification) {
+      return null;
+    }
+
+    // Get template for the event
+    const template = await this.getTemplateForEvent(
+      notification.event,
+      preferredLanguage || notification.locale,
+    );
+
+    if (!template) {
+      this.logger.warn(
+        `No template found for event ${notification.event} and language ${preferredLanguage || notification.locale}`,
+      );
+      return null;
+    }
+
+    // Prepare template variables from notification
+    const templateVariables = this.prepareTemplateVariables(notification);
+
+    // Get channel-specific or default content
+    const { subject, body, isHtml } = this.getContentForChannel(
+      template,
+      channel,
+      templateVariables,
+      includeHtml,
+    );
+
+    return {
+      subject,
+      body,
+      isHtml,
+      channel,
+      metadata: {
+        templateId: template.templateId,
+        language: template.language,
+        variablesUsed: Object.keys(templateVariables),
+        renderedAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  /**
+   * Prepare template variables from notification
+   */
+  private prepareTemplateVariables(
+    notification: NotificationEntity,
+  ): Record<string, any> {
+    const baseVariables = {
+      userName: notification.userName,
+      userId: notification.userId,
+      event: notification.event,
+      locale: notification.locale,
+      urgency: notification.urgency,
+      isUserOnline: notification.isUserOnline,
+      date: new Date().toLocaleDateString(notification.locale),
+      time: new Date().toLocaleTimeString(notification.locale),
+      timestamp: new Date().toISOString(),
+    };
+
+    // Add any additional variables from notification
+    if (notification.variables) {
+      return { ...baseVariables, ...notification.variables };
+    }
+
+    return baseVariables;
+  }
+
+  /**
+   * Get content for specific channel
+   */
+  private getContentForChannel(
+    template: NotificationTemplateEntity,
+    channel: NotificationType,
+    variables: Record<string, any>,
+    includeHtml: boolean,
+  ): { subject?: string; body: string; isHtml: boolean } {
+    const channelContent = template.channelSpecificContent?.[channel];
+    let subject = template.defaultSubject;
+    let body = template.defaultBody;
+    let isHtml = false;
+
+    // Use channel-specific content if available
+    if (channelContent) {
+      // For email, use HTML if available and requested
+      if (
+        channel === NotificationType.Email &&
+        includeHtml &&
+        template.channelSpecificContent?.[channel]!.htmlBody
+      ) {
+        if (template.channelSpecificContent?.[channel].subject) {
+          subject = template.channelSpecificContent?.[channel].subject;
+        }
+        body = template.channelSpecificContent?.[channel].htmlBody;
+        isHtml = true;
+      }
+    }
+
+    // Replace template variables
+    const replaceVariables = (text: string): string => {
+      return text.replace(/\{\{(\w+)\}\}/g, (match, variableName) => {
+        return variables[variableName] !== undefined
+          ? String(variables[variableName])
+          : match;
+      });
+    };
+
+    return {
+      subject: subject ? replaceVariables(subject) : undefined,
+      body: replaceVariables(body),
+      isHtml,
+    };
+  }
+
+  /**
+   * Get multiple notifications with rendered content
+   */
+  async getNotificationsWithRenderedContent(
+    userId: string,
+    options: {
+      channels: NotificationType[];
+      includeHtml?: boolean;
+      preferredLanguage?: string;
+      limit?: number;
+      status?: NotificationEntity['status'];
+    },
+  ): Promise<RenderedNotificationDto[]> {
+    const notifications = await this.getNotificationsByUser(
+      userId,
+      options.limit || 50,
+      options.status,
+    );
+
+    const result: RenderedNotificationDto[] = [];
+
+    for (const notification of notifications) {
+      // Get rendered content for each requested channel
+      // We'll use the first successful channel or the user's preferred channel
+      for (const channel of options.channels) {
+        const renderedContent = await this.getRenderedContent(
+          notification.id,
+          channel,
+          options.includeHtml || false,
+          options.preferredLanguage || notification.locale,
+        );
+
+        if (renderedContent) {
+          result.push({
+            notificationId: notification.id,
+            event: notification.event,
+            userId: notification.userId,
+            userName: notification.userName,
+            locale: notification.locale,
+            createdAt: notification.createdAt,
+            status: notification.status,
+            renderedContent,
+          });
+          break; // Use the first successful channel
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Get single notification with rendered content
+   */
+  async getNotificationWithRenderedContent(
+    notificationId: string,
+    channel: NotificationType,
+    includeHtml: boolean = true,
+    preferredLanguage?: string,
+  ): Promise<RenderedNotificationDto | null> {
+    const notification = await this.getNotification(notificationId);
+    if (!notification) {
+      return null;
+    }
+
+    const renderedContent = await this.getRenderedContent(
+      notificationId,
+      channel,
+      includeHtml,
+      preferredLanguage || notification.locale,
+    );
+
+    if (!renderedContent) {
+      return null;
+    }
+
+    return {
+      notificationId: notification.id,
+      event: notification.event,
+      userId: notification.userId,
+      userName: notification.userName,
+      locale: notification.locale,
+      createdAt: notification.createdAt,
+      status: notification.status,
+      renderedContent,
+    };
   }
 }

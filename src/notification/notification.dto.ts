@@ -6,6 +6,7 @@ import {
   IsArray,
   IsOptional,
   ValidateNested,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -136,4 +137,73 @@ export class NotificationResponseDto {
 
   @ApiPropertyOptional({ example: 2 })
   channelsCount?: number;
+}
+
+export class RenderedContentDto {
+  @IsString()
+  @ApiProperty({ example: 'Welcome to our service!' })
+  subject?: string;
+
+  @IsString()
+  @ApiProperty({ example: 'Hello John, your booking has been confirmed...' })
+  body: string;
+
+  @IsBoolean()
+  @ApiPropertyOptional({ example: true })
+  isHtml?: boolean;
+
+  @IsString()
+  @ApiProperty({ example: 'email' })
+  channel: NotificationType;
+
+  @IsObject()
+  @ApiPropertyOptional()
+  metadata?: Record<string, any>;
+}
+
+export class RenderedNotificationDto {
+  @ApiProperty({ example: 'notif_123' })
+  notificationId: string;
+
+  @ApiProperty({ example: 'booking_confirmed' })
+  event: string;
+
+  @ApiProperty({ example: 'user_123' })
+  userId: string;
+
+  @ApiProperty({ example: 'Alice' })
+  userName: string;
+
+  @ApiProperty({ example: 'en' })
+  locale: string;
+
+  @ApiProperty({ example: '2024-01-01T12:00:00Z' })
+  createdAt: string;
+
+  @ApiProperty({ example: 'sent' })
+  status: string;
+
+  @ApiProperty({ type: RenderedContentDto })
+  renderedContent: RenderedContentDto;
+}
+
+export class GetRenderedNotificationsDto {
+  @IsArray()
+  @IsEnum(NotificationType, { each: true })
+  @ApiProperty({
+    enum: NotificationType,
+    isArray: true,
+    example: ['email', 'push'],
+  })
+  channels: NotificationType[];
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @ApiPropertyOptional({ example: true })
+  includeHtml?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'en' })
+  preferredLanguage?: string;
 }

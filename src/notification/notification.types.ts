@@ -107,6 +107,8 @@ export interface NotificationEntity {
     priority?: number;
   };
 
+  variables?: Record<string, any>; // For template rendering
+
   createdAt: string;
   updatedAt: string;
 }
@@ -176,4 +178,19 @@ export interface NotificationTemplateEntity {
 
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RenderedNotificationContent {
+  id: string;
+  notificationId: string;
+  channel: NotificationType;
+  subject?: string;
+  body: string;
+  isHtml?: boolean;
+  metadata?: {
+    templateId: string;
+    language: string;
+    variablesUsed: string[];
+    renderedAt: string;
+  };
 }
