@@ -15,6 +15,15 @@ export type RecipientMap = Partial<{
   [NotificationType.WebSocket]: string;
 }>;
 
+export interface ChannelStatus {
+  sent: boolean;
+  messageId?: string;
+  error?: string;
+  sentAt?: string;
+  attempts?: number;
+  lastAttempt?: string;
+}
+
 export interface NotificationEntity {
   id: string;
   userId: string;
@@ -51,46 +60,11 @@ export interface NotificationEntity {
 
   // Channel-specific delivery status
   channelStatus?: {
-    email?: {
-      sent: boolean;
-      messageId?: string;
-      error?: string;
-      sentAt?: string;
-      attempts?: number;
-      lastAttempt?: string;
-    };
-    sms?: {
-      sent: boolean;
-      messageId?: string;
-      error?: string;
-      sentAt?: string;
-      attempts?: number;
-      lastAttempt?: string;
-    };
-    push?: {
-      sent: boolean;
-      messageId?: string;
-      error?: string;
-      sentAt?: string;
-      attempts?: number;
-      lastAttempt?: string;
-    };
-    session?: {
-      sent: boolean;
-      messageId?: string;
-      error?: string;
-      sentAt?: string;
-      attempts?: number;
-      lastAttempt?: string;
-    };
-    websocket?: {
-      sent: boolean;
-      messageId?: string;
-      error?: string;
-      sentAt?: string;
-      attempts?: number;
-      lastAttempt?: string;
-    };
+    email?: ChannelStatus;
+    sms?: ChannelStatus;
+    push?: ChannelStatus;
+    session?: ChannelStatus;
+    websocket?: ChannelStatus;
   };
 
   errorDetails?: {

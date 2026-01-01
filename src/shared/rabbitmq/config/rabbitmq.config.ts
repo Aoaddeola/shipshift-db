@@ -504,6 +504,28 @@ export const RabbitMQConfig = {
     },
   },
 
+  NOTIFICATION: {
+    ENTITY: 'notification',
+
+    EVENTS: {
+      REQUESTED: 'notification.requested',
+      SENT: 'notification.sent',
+      FAILED: 'notification.failed',
+      READ: 'notification.read',
+    },
+
+    COMMANDS: {
+      SEND: 'send.notification',
+      RETRY: 'retry.notification',
+      CANCEL: 'cancel.notification',
+    },
+
+    QUEUES: {
+      PROCESS_NOTIFICATION: 'notifications.process.queue',
+      RETRY_NOTIFICATION: 'notifications.retry.queue',
+      DLQ: 'notifications.dlq',
+    },
+  },
   // ==================== QUEUE OPTIONS TEMPLATES ====================
   QUEUE_OPTIONS: {
     DEFAULT: {

@@ -418,32 +418,14 @@ export class OrbitDBNotificationService implements OnModuleInit {
     }
   }
 
-  async createTemplate(
-    template: Omit<
-      NotificationTemplateEntity,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<NotificationTemplateEntity> {
-    if (!this.templateDatabase) {
-      throw new Error('Template database not initialized');
-    }
-
-    const id = randomUUID();
-    const now = new Date().toISOString();
-
-    const newTemplate: NotificationTemplateEntity = {
-      id,
-      createdAt: now,
-      updatedAt: now,
-      ...template,
-    };
-
-    await this.templateDatabase.put(newTemplate);
-    return newTemplate;
+  async deleteTemplate(id: string): Promise<void> {
+    await this.templateDatabase.del(id);
+    this.logger.log(`Deleted template ${id} successfully`);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.templateDatabase.del(id);
+  async deleteNotification(id: string): Promise<void> {
+    await this.notificationDatabase.del(id);
+    this.logger.log(`Deleted notification ${id} successfully`);
   }
 
   async getTemplates(filters?: {
@@ -635,6 +617,24 @@ export class OrbitDBNotificationService implements OnModuleInit {
 
     await this.notificationDatabase.put(notification);
     return notification;
+  }
+
+  async markAllAsRead(userId: string): Promise<NotificationEntity[] | null> {
+    const notifications = await this.getNotificationsByUser(userId);
+    if (notifications.length === 0) return null;
+
+    const notificationEntity = await Promise.all(
+      notifications.map(async (notification) => {
+        notification.status = 'read';
+        notification.readAt = new Date().toISOString();
+        notification.updatedAt = new Date().toISOString();
+
+        await this.notificationDatabase.put(notification);
+        return notification;
+      }),
+    );
+
+    return notificationEntity;
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -1001,8 +1001,6 @@ export class OrbitDBNotificationService implements OnModuleInit {
     }
   }
 
-  // Add these methods to OrbitDBNotificationService class in notification.service.ts
-
   /**
    * Get rendered content for a notification
    */
@@ -1213,5 +1211,56 @@ export class OrbitDBNotificationService implements OnModuleInit {
       status: notification.status,
       renderedContent,
     };
+  }
+  // Add this method to the OrbitDBNotificationService class:
+
+  async getTemplateByTemplateId(
+    templateId: string,
+  ): Promise<NotificationTemplateEntity | null> {
+    if (!this.templateDatabase) {
+      return null;
+    }
+
+    const allTemplates = await this.templateDatabase.all();
+    return allTemplates.find((t) => t.templateId === templateId) || null;
+  }
+
+  // Update the createTemplate method to check for duplicates:
+
+  async createTemplate(
+    template: Omit<
+      NotificationTemplateEntity,
+      'id' | 'createdAt' | 'updatedAt'
+    >,
+  ): Promise<NotificationTemplateEntity> {
+    if (!this.templateDatabase) {
+      throw new Error('Template database not initialized');
+    }
+
+    // Check for duplicate templateId
+    const existingTemplate = await this.getTemplateByTemplateId(
+      template.templateId,
+    );
+
+    if (existingTemplate) {
+      throw new Error(
+        `Template with templateId '${template.templateId}' already exists`,
+      );
+    }
+
+    const id = randomUUID();
+    const now = new Date().toISOString();
+
+    const newTemplate: NotificationTemplateEntity = {
+      id,
+      createdAt: now,
+      updatedAt: now,
+      ...template,
+    };
+
+    await this.templateDatabase.put(newTemplate);
+
+    this.logger.log(`Created new template: ${template.templateId} (${id})`);
+    return newTemplate;
   }
 }
