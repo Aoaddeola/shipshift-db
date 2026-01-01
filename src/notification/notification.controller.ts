@@ -1,151 +1,153 @@
+// notification.orbitdb.controller.ts
 import {
-  Body,
   Controller,
-  Delete,
+  Post,
+  Body,
   Get,
   Param,
-  Post,
-  Put,
-  Patch,
   Query,
+  HttpCode,
+  HttpStatus,
+  // UseGuards,
 } from '@nestjs/common';
-import { NotificationService } from './notification.service.js';
-import { NotificationCreateDto } from './notification-create.dto.js';
-import { NotificationUpdateDto } from './notification-update.dto.js';
-import { NotificationType } from './notification.types.js';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { OrbitDBNotificationService } from './notification.service.js';
+import {
+  SingleNotificationDto,
+  BatchNotificationDto,
+  NotificationResponseDto,
+} from './notification.dto.js';
+// import { JwtNodeOpAuthGuard } from 'src/guards/jwt-nodeOp-auth.guard.js';
 
-@Controller('notification')
-export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+@ApiTags('notifications')
+@Controller('notifications')
+export class NotificationOrbitDBController {
+  constructor(
+    private readonly notificationService: OrbitDBNotificationService,
+  ) {}
 
-  @Post()
-  async createNotification(@Body() notification: NotificationCreateDto) {
-    return this.notificationService.createNotification(notification);
+  // @UseGuards(JwtNodeOpAuthGuard)
+  @Post('notify')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Send notification to a single user' })
+  @ApiBody({ type: SingleNotificationDto })
+  @ApiResponse({ status: 202, type: NotificationResponseDto })
+  async notifySingle(
+    @Body() body: SingleNotificationDto,
+  ): Promise<NotificationResponseDto> {
+    return this.notificationService.processSingleNotification(body);
   }
 
-  @Get(':id')
-  async getNotification(
-    @Param('id') id: string,
-    @Query('include') include?: string,
-  ) {
-    const includeArray = include ? include.split(',') : [];
-    return this.notificationService.getNotification(id, includeArray);
-  }
-
-  @Get()
-  async getNotifications(
-    @Query('userId') userId?: string,
-    @Query('type') type?: NotificationType,
-    @Query('read') read?: string,
-    @Query('include') include?: string,
-  ) {
-    const includeArray = include ? include.split(',') : [];
-    const readBoolean = read ? read.toLowerCase() === 'true' : undefined;
-
-    if (userId && type && read !== undefined) {
-      return this.notificationService.getNotificationsByUserTypeAndRead(
-        userId,
-        type,
-        readBoolean!,
-        includeArray,
-      );
-    } else if (userId && type) {
-      return this.notificationService.getNotificationsByUserAndType(
-        userId,
-        type,
-        includeArray,
-      );
-    } else if (userId && read !== undefined) {
-      return this.notificationService.getNotificationsByUserAndRead(
-        userId,
-        readBoolean!,
-        includeArray,
-      );
-    } else if (type && read !== undefined) {
-      return this.notificationService.getNotificationsByTypeAndRead(
-        type,
-        readBoolean!,
-        includeArray,
-      );
-    } else if (userId) {
-      return this.notificationService.getNotificationsByUser(
-        userId,
-        includeArray,
-      );
-    } else if (type) {
-      return this.notificationService.getNotificationsByType(
-        type,
-        includeArray,
-      );
-    } else if (read !== undefined) {
-      return this.notificationService.getNotificationsByRead(
-        readBoolean!,
-        includeArray,
-      );
-    }
-    return this.notificationService.getNotifications(includeArray);
+  // @UseGuards(JwtNodeOpAuthGuard)
+  @Post('notify-many')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Send notifications to multiple users' })
+  @ApiBody({ type: BatchNotificationDto })
+  @ApiResponse({ status: 202, type: [NotificationResponseDto] })
+  async notifyMany(
+    @Body() body: BatchNotificationDto,
+  ): Promise<NotificationResponseDto[]> {
+    return this.notificationService.processBatchNotifications(body);
   }
 
   @Get('user/:userId')
-  async getNotificationsByUser(
+  @ApiOperation({ summary: 'Get notifications for a user' })
+  async getUserNotifications(
     @Param('userId') userId: string,
-    @Query('include') include?: string,
+    @Query('limit') limit: string = '50',
+    @Query('status') status?: string,
   ) {
-    const includeArray = include ? include.split(',') : [];
-    return this.notificationService.getNotificationsByUser(
+    const notifications = await this.notificationService.getNotificationsByUser(
       userId,
-      includeArray,
+      parseInt(limit),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      status as any,
     );
+
+    return {
+      status: 'success',
+      data: notifications,
+      count: notifications.length,
+      timestamp: new Date().toISOString(),
+    };
   }
 
-  @Get('type/:type')
-  async getNotificationsByType(
-    @Param('type') type: NotificationType,
-    @Query('include') include?: string,
+  @Get('unread-count/:userId')
+  @ApiOperation({ summary: 'Get unread notification count for a user' })
+  async getUnreadCount(@Param('userId') userId: string) {
+    const count = await this.notificationService.getUnreadCount(userId);
+    return {
+      status: 'success',
+      userId,
+      unreadCount: count,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post('read/:notificationId')
+  @ApiOperation({ summary: 'Mark notification as read' })
+  async markAsRead(@Param('notificationId') notificationId: string) {
+    const notification =
+      await this.notificationService.markAsRead(notificationId);
+    return {
+      status: notification ? 'success' : 'error',
+      message: notification
+        ? 'Notification marked as read'
+        : 'Notification not found',
+      notification,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Get notification statistics' })
+  async getStatistics(@Query('range') range: 'day' | 'week' | 'month' = 'day') {
+    const stats = await this.notificationService.getStatistics(range);
+    return {
+      status: 'success',
+      data: stats,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('templates')
+  @ApiOperation({ summary: 'Get notification templates' })
+  async getTemplates(
+    @Query('active') active: string = 'true',
+    @Query('language') language?: string,
   ) {
-    const includeArray = include ? include.split(',') : [];
-    return this.notificationService.getNotificationsByType(type, includeArray);
+    const templates = await this.notificationService.getTemplates({
+      isActive: active === 'true',
+      language,
+    });
+
+    return {
+      status: 'success',
+      data: templates,
+      count: templates.length,
+      timestamp: new Date().toISOString(),
+    };
   }
 
-  @Get('read/:read')
-  async getNotificationsByRead(
-    @Param('read') read: string,
-    @Query('include') include?: string,
-  ) {
-    const includeArray = include ? include.split(',') : [];
-    const readBoolean = read.toLowerCase() === 'true';
-    return this.notificationService.getNotificationsByRead(
-      readBoolean,
-      includeArray,
-    );
-  }
-
-  @Put(':id')
-  async updateNotification(
-    @Param('id') id: string,
-    @Body() notification: NotificationCreateDto,
-  ) {
-    return this.notificationService.updateNotification(id, notification);
-  }
-
-  @Patch(':id')
-  async partialUpdateNotification(
-    @Param('id') id: string,
-    @Body() update: NotificationUpdateDto,
-  ) {
-    return this.notificationService.partialUpdateNotification(id, update);
-  }
-
-  @Delete(':id')
-  async deleteNotification(@Param('id') id: string) {
-    return this.notificationService.deleteNotification(id);
-  }
-
-  @Patch('mark-all-read')
-  async markAllAsRead(@Body('userId') userId?: string) {
-    if (userId) {
-      return this.notificationService.markAllAsReadForUser(userId);
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  async healthCheck() {
+    try {
+      const stats = await this.notificationService.getStatistics('day');
+      return {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        stats: {
+          totalToday: stats.total,
+          successRate: stats.successRate,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'unhealthy',
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      };
     }
-    return this.notificationService.markAllAsRead();
   }
 }

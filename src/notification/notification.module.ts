@@ -1,19 +1,28 @@
-import { Module } from '@nestjs/common';
-import { NotificationController } from './notification.controller.js';
-import { NotificationService } from './notification.service.js';
-import { IPFSAccessController } from '@orbitdb/core';
-import { UserModule } from '../users/user/user.module.js';
+// notification.orbitdb.module.ts
+import { Module, Global } from '@nestjs/common';
+import { MessagingModule } from '../shared/messaging/messaging.module.js';
+import { OrbitDBNotificationService } from './notification.service.js';
+import { NotificationOrbitDBController } from './notification.controller.js';
 import { OrbitDBModule } from '../db/orbitdb/orbitdb.module.js';
+import { IPFSAccessController } from '@orbitdb/core';
+import { NotificationConsumerService } from './notification-consumer.service.js';
 
+@Global()
 @Module({
   imports: [
+    MessagingModule,
+    OrbitDBModule.forDatabase('notification-template', {
+      AccessController: IPFSAccessController({ write: ['*'] }),
+    }),
+    OrbitDBModule.forDatabase('notification-rule', {
+      AccessController: IPFSAccessController({ write: ['*'] }),
+    }),
     OrbitDBModule.forDatabase('notification', {
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
-    UserModule,
   ],
-  controllers: [NotificationController],
-  providers: [NotificationService],
-  exports: [NotificationService],
+  controllers: [NotificationOrbitDBController],
+  providers: [OrbitDBNotificationService, NotificationConsumerService],
+  exports: [OrbitDBNotificationService],
 })
-export class NotificationModule {}
+export class NotificationOrbitDBModule {}
