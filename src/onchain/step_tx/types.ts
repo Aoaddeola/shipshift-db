@@ -1,4 +1,3 @@
-
 import { Step, StepState } from '../step/step.types.js';
 
 /**
@@ -11,10 +10,10 @@ export interface StepTxDbEntry {
   state: StepState;
   step?: Step;
   transaction?: Transaction;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Transaction {
-  hash: string
+  hash: string;
 }

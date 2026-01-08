@@ -7,22 +7,31 @@ import { randomUUID } from 'node:crypto';
 import {
   NotificationEntity,
   NotificationRuleEntity,
-  NotificationTemplateEntity,
   NotificationType,
 } from './notification.types.js';
 import { MessageBusService } from '../shared/rabbitmq/rabbitmq.service.js';
 import {
   SingleNotificationDto,
-  BatchNotificationDto,
   NotificationResponseDto,
   RenderedNotificationDto,
   RenderedContentDto,
+  SingleNotificationEntityDto,
 } from './notification.dto.js';
 import { RabbitMQConfig } from '../shared/rabbitmq/config/rabbitmq.config.js';
+import { NotificationTemplateEntity } from '../notification-template/notification-template.types.js';
+import { NotificationTemplateService } from '..//notification-template/notification-template.service.js';
+import {
+  Stakeholder,
+  StakeholderRole,
+  Step,
+  StepState,
+} from '../onchain/step/step.types.js';
+import { ContactDetailsService } from '../common/contact-details/contact-details.service.js';
+import { UserService } from '../users/user/user.service.js';
 
 @Injectable()
-export class OrbitDBNotificationService implements OnModuleInit {
-  private readonly logger = new Logger(OrbitDBNotificationService.name);
+export class NotificationService implements OnModuleInit {
+  private readonly logger = new Logger(NotificationService.name);
   private cleanupInterval: NodeJS.Timeout;
 
   constructor(
@@ -32,11 +41,17 @@ export class OrbitDBNotificationService implements OnModuleInit {
     @InjectDatabase('notification-rule')
     private ruleDatabase: Database<NotificationRuleEntity>,
 
-    @InjectDatabase('notification-template')
-    private templateDatabase: Database<NotificationTemplateEntity>,
-
     @Inject(MessageBusService)
     private readonly messageBus: MessageBusService,
+
+    @Inject(NotificationTemplateService)
+    private readonly notificationTemplateService: NotificationTemplateService,
+
+    @Inject(ContactDetailsService)
+    private readonly contactDetailsService: ContactDetailsService,
+
+    @Inject(UserService)
+    private readonly userService: UserService,
   ) {}
 
   async onModuleInit() {
@@ -44,7 +59,6 @@ export class OrbitDBNotificationService implements OnModuleInit {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     try {
-      await this.initializeDefaultTemplates();
       await this.initializeDefaultRules();
 
       // Schedule cleanup job (once per day)
@@ -75,14 +89,15 @@ export class OrbitDBNotificationService implements OnModuleInit {
    * Process single notification (compatible with existing /notify endpoint)
    */
   async processSingleNotification(
-    notificationDto: SingleNotificationDto,
+    notification: SingleNotificationEntityDto,
   ): Promise<NotificationResponseDto> {
     const notificationId = randomUUID();
     const now = new Date().toISOString();
 
     try {
+      // TODO: Implement method for assigning value to isUserOnline
       // Determine which channels to use based on preferences and recipient map
-      const channelsToUse = this.determineChannelsToUse(notificationDto);
+      const channelsToUse = this.determineChannelsToUse(notification);
 
       if (channelsToUse.length === 0) {
         return {
@@ -96,38 +111,20 @@ export class OrbitDBNotificationService implements OnModuleInit {
         };
       }
 
-      // Create notification entity
-      const notification: NotificationEntity = {
+      const n = {
+        ...notification,
+        channelsToUse,
         id: notificationId,
-        userId: notificationDto.userId,
-        recipientMap: notificationDto.recipientMap,
-        urgency: notificationDto.urgency,
-        userPreferences: notificationDto.userPreferences,
-        isUserOnline: notificationDto.isUserOnline,
-        event: notificationDto.event,
-        userName: notificationDto.userName,
-        locale: notificationDto.locale,
-        status: 'pending',
-        retryCount: 0,
-        channelStatus: this.initializeChannelStatus(channelsToUse),
         createdAt: now,
         updatedAt: now,
-        channelsToUse: channelsToUse,
-        variables: {
-          // Add this
-          // Store any template variables that might be needed for rendering
-          urgency: notificationDto.urgency,
-          isUserOnline: notificationDto.isUserOnline,
-          // You can add more variables from the DTO or context here
-        },
       };
 
       // Save notification to OrbitDB
-      await this.notificationDatabase.put(notification);
+      await this.notificationDatabase.put(n);
       this.logger.debug(`Notification saved to OrbitDB: ${notificationId}`);
 
       // Send single command to process the notification
-      await this.sendNotificationProcessingCommand(notification);
+      await this.sendNotificationProcessingCommand(n);
 
       return {
         status: 'success',
@@ -143,14 +140,14 @@ export class OrbitDBNotificationService implements OnModuleInit {
       // Create failed notification record
       const failedNotification: NotificationEntity = {
         id: notificationId,
-        userId: notificationDto.userId,
-        recipientMap: notificationDto.recipientMap,
-        urgency: notificationDto.urgency,
-        userPreferences: notificationDto.userPreferences,
-        isUserOnline: notificationDto.isUserOnline,
-        event: notificationDto.event,
-        userName: notificationDto.userName,
-        locale: notificationDto.locale,
+        userId: notification.userId,
+        recipientMap: notification.recipientMap,
+        urgency: notification.urgency,
+        userPreferences: notification.userPreferences,
+        isUserOnline: notification.isUserOnline,
+        event: notification.event,
+        userName: notification.userName,
+        locale: notification.locale,
         channelsToUse: [],
         status: 'failed',
         retryCount: 0,
@@ -176,56 +173,56 @@ export class OrbitDBNotificationService implements OnModuleInit {
   /**
    * Process batch notifications (compatible with existing /notify-many endpoint)
    */
-  async processBatchNotifications(
-    batchDto: BatchNotificationDto,
-  ): Promise<NotificationResponseDto[]> {
-    const results: NotificationResponseDto[] = [];
-    const batchId = randomUUID();
+  // async processBatchNotifications(
+  //   batchDto: BatchNotificationDto,
+  // ): Promise<NotificationResponseDto[]> {
+  //   const results: NotificationResponseDto[] = [];
+  //   const batchId = randomUUID();
 
-    try {
-      this.logger.log(
-        `Processing batch ${batchId} with ${batchDto.notifications.length} notifications`,
-      );
+  //   try {
+  //     this.logger.log(
+  //       `Processing batch ${batchId} with ${Object.entries(batchDto.notifications).length} notifications`,
+  //     );
 
-      for (const notificationDto of batchDto.notifications) {
-        try {
-          const result = await this.processSingleNotification(notificationDto);
-          results.push(result);
-        } catch (error) {
-          this.logger.error(
-            `Failed to process notification for user ${notificationDto.userId}:`,
-            error,
-          );
+  //     for (const notificationDto of batchDto.notifications) {
+  //       try {
+  //         const result = await this.processSingleNotification(notificationDto);
+  //         results.push(result);
+  //       } catch (error) {
+  //         this.logger.error(
+  //           `Failed to process notification for user ${notificationDto.userId}:`,
+  //           error,
+  //         );
 
-          results.push({
-            status: 'error',
-            message: `Failed to process notification: ${error.message}`,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
+  //         results.push({
+  //           status: 'error',
+  //           message: `Failed to process notification: ${error.message}`,
+  //           timestamp: new Date().toISOString(),
+  //         });
+  //       }
+  //     }
 
-      // Emit batch completion event
-      await this.messageBus.emitEvent('notification.batch.completed', {
-        batchId,
-        total: batchDto.notifications.length,
-        successful: results.filter((r) => r.status === 'success').length,
-        failed: results.filter((r) => r.status === 'error').length,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      this.logger.error(`Failed to process batch ${batchId}:`, error);
+  //     // Emit batch completion event
+  //     await this.messageBus.emitEvent('notification.batch.completed', {
+  //       batchId,
+  //       total: Object.entries(batchDto.notifications).length,
+  //       successful: results.filter((r) => r.status === 'success').length,
+  //       failed: results.filter((r) => r.status === 'error').length,
+  //       timestamp: new Date().toISOString(),
+  //     });
+  //   } catch (error) {
+  //     this.logger.error(`Failed to process batch ${batchId}:`, error);
 
-      // Return error for all notifications in batch
-      return batchDto.notifications.map(() => ({
-        status: 'error',
-        message: `Batch processing failed: ${error.message}`,
-        timestamp: new Date().toISOString(),
-      }));
-    }
+  //     // Return error for all notifications in batch
+  //     return Object.entries(batchDto.notifications).map(() => ({
+  //       status: 'error',
+  //       message: `Batch processing failed: ${error.message}`,
+  //       timestamp: new Date().toISOString(),
+  //     }));
+  //   }
 
-    return results;
-  }
+  //   return results;
+  // }
 
   // ==================== HELPER METHODS ====================
 
@@ -310,10 +307,11 @@ export class OrbitDBNotificationService implements OnModuleInit {
   ): Promise<void> {
     try {
       // Get template for event
-      const template = await this.getTemplateForEvent(
-        notification.event,
-        notification.locale,
-      );
+      const template =
+        await this.notificationTemplateService.getTemplateForEvent(
+          notification.event,
+          notification.locale,
+        );
 
       // Prepare the processing command payload
       const payload = {
@@ -326,6 +324,7 @@ export class OrbitDBNotificationService implements OnModuleInit {
         isUserOnline: notification.isUserOnline,
         recipientMap: notification.recipientMap,
         channelsToUse: notification.channelsToUse,
+        variables: notification.variables,
         template: template || null,
         timestamp: new Date().toISOString(),
       };
@@ -373,86 +372,9 @@ export class OrbitDBNotificationService implements OnModuleInit {
     return 0;
   }
 
-  async getTemplateForEvent(
-    event: string,
-    locale: string = 'en',
-  ): Promise<NotificationTemplateEntity | null> {
-    if (!this.templateDatabase) {
-      return null;
-    }
-
-    try {
-      const allTemplates = await this.templateDatabase.all();
-
-      // First priority: exact match for event and locale
-      let template = allTemplates.find(
-        (t) => t.templateId === event && t.language === locale && t.isActive,
-      );
-
-      // Second priority: event match with any locale
-      if (!template) {
-        template = allTemplates.find(
-          (t) => t.templateId === event && t.isActive,
-        );
-      }
-
-      // Third priority: generic template for locale
-      if (!template) {
-        template = allTemplates.find(
-          (t) =>
-            t.templateId === 'generic' && t.language === locale && t.isActive,
-        );
-      }
-
-      // Fourth priority: any generic template
-      if (!template) {
-        template = allTemplates.find(
-          (t) => t.templateId === 'generic' && t.isActive,
-        );
-      }
-
-      return template || null;
-    } catch (error) {
-      this.logger.error('Failed to get template:', error);
-      return null;
-    }
-  }
-
-  async deleteTemplate(id: string): Promise<void> {
-    await this.templateDatabase.del(id);
-    this.logger.log(`Deleted template ${id} successfully`);
-  }
-
   async deleteNotification(id: string): Promise<void> {
     await this.notificationDatabase.del(id);
     this.logger.log(`Deleted notification ${id} successfully`);
-  }
-
-  async getTemplates(filters?: {
-    isActive?: boolean;
-    language?: string;
-    templateId?: string;
-  }): Promise<NotificationTemplateEntity[]> {
-    if (!this.templateDatabase) {
-      throw new Error('Template database not initialized');
-    }
-
-    const allTemplates = await this.templateDatabase.all();
-
-    if (!filters) return allTemplates;
-
-    return allTemplates.filter((template) => {
-      if (
-        filters.isActive !== undefined &&
-        template.isActive !== filters.isActive
-      )
-        return false;
-      if (filters.language && template.language !== filters.language)
-        return false;
-      if (filters.templateId && template.templateId !== filters.templateId)
-        return false;
-      return true;
-    });
   }
 
   // ==================== NOTIFICATION QUERY METHODS ====================
@@ -776,141 +698,6 @@ export class OrbitDBNotificationService implements OnModuleInit {
 
   // ==================== INITIALIZATION ====================
 
-  async initializeDefaultTemplates(): Promise<void> {
-    if (!this.templateDatabase) {
-      this.logger.warn('Template database not ready, skipping initialization');
-      return;
-    }
-
-    try {
-      const existingTemplates = await this.getTemplates();
-
-      if (existingTemplates.length === 0) {
-        this.logger.log('Initializing default notification templates');
-
-        const defaultTemplates: Array<
-          Omit<NotificationTemplateEntity, 'id' | 'createdAt' | 'updatedAt'>
-        > = [
-          {
-            templateId: 'booking_confirmed',
-            name: 'Booking Confirmed',
-            description: 'Notification when a booking is confirmed',
-            defaultSubject: 'Booking Confirmed - {{event}}',
-            defaultBody:
-              'Hello {{userName}}, your booking has been confirmed. Event: {{event}}. Date: {{date}} Time: {{time}}',
-            variables: ['userName', 'event', 'date', 'time', 'urgency'],
-            supportedChannels: [
-              NotificationType.Email,
-              NotificationType.Push,
-              NotificationType.Session,
-              NotificationType.WebSocket,
-            ],
-            language: 'en',
-            version: '1.0',
-            isActive: true,
-            isSystemTemplate: true,
-            channelSpecificContent: {
-              email: {
-                subject: '🎉 Booking Confirmed!',
-                htmlBody:
-                  '<h2>Booking Confirmed</h2><p>Hello {{userName}},</p><p>Your booking for <strong>{{event}}</strong> has been confirmed.</p><p><strong>Date:</strong> {{date}}<br><strong>Time:</strong> {{time}}</p><p>Thank you for choosing our service!</p>',
-              },
-              sms: {
-                body: 'Booking confirmed for {{event}} on {{date}} at {{time}}. Thank you!',
-              },
-              push: {
-                title: 'Booking Confirmed!',
-                body: 'Your booking for {{event}} has been confirmed',
-                data: {
-                  event: '{{event}}',
-                  type: 'booking',
-                },
-              },
-            },
-          },
-          {
-            templateId: 'password_reset',
-            name: 'Password Reset',
-            description: 'Notification for password reset',
-            defaultSubject: 'Password Reset Request',
-            defaultBody:
-              'Hello {{userName}}, you requested a password reset. If this was not you, please ignore this message.',
-            variables: ['userName', 'date', 'time'],
-            supportedChannels: [NotificationType.Email, NotificationType.SMS],
-            language: 'en',
-            version: '1.0',
-            isActive: true,
-            isSystemTemplate: true,
-            channelSpecificContent: {
-              email: {
-                subject: '🔒 Password Reset Request',
-                htmlBody:
-                  '<h2>Password Reset</h2><p>Hello {{userName}},</p><p>You requested a password reset. If this was not you, please contact support immediately.</p><p>Request time: {{date}} {{time}}</p>',
-              },
-              sms: {
-                body: 'Password reset requested. If this was not you, contact support.',
-              },
-            },
-          },
-          {
-            templateId: 'payment_received',
-            name: 'Payment Received',
-            description: 'Notification when payment is received',
-            defaultSubject: 'Payment Received',
-            defaultBody:
-              'Hello {{userName}}, we have received your payment. Thank you!',
-            variables: ['userName', 'date', 'time'],
-            supportedChannels: [
-              NotificationType.Email,
-              NotificationType.Push,
-              NotificationType.Session,
-            ],
-            language: 'en',
-            version: '1.0',
-            isActive: true,
-            isSystemTemplate: true,
-            channelSpecificContent: {
-              email: {
-                subject: '✅ Payment Received',
-                htmlBody:
-                  '<h2>Payment Confirmed</h2><p>Hello {{userName}},</p><p>We have successfully received your payment.</p><p>Payment time: {{date}} {{time}}</p>',
-              },
-              push: {
-                title: 'Payment Received',
-                body: 'Your payment has been confirmed',
-                data: {
-                  type: 'payment',
-                },
-              },
-            },
-          },
-          {
-            templateId: 'generic',
-            name: 'Generic Notification',
-            description: 'Generic template for any notification',
-            defaultSubject: 'Notification: {{event}}',
-            defaultBody:
-              'Hello {{userName}}, you have a notification: {{event}}',
-            variables: ['userName', 'event', 'date', 'time'],
-            supportedChannels: Object.values(NotificationType),
-            language: 'en',
-            version: '1.0',
-            isActive: true,
-            isSystemTemplate: true,
-          },
-        ];
-
-        for (const template of defaultTemplates) {
-          await this.createTemplate(template);
-        }
-
-        this.logger.log(`Created ${defaultTemplates.length} default templates`);
-      }
-    } catch (error) {
-      this.logger.error('Failed to initialize default templates:', error);
-    }
-  }
-
   async initializeDefaultRules(): Promise<void> {
     if (!this.ruleDatabase) {
       this.logger.warn('Rule database not ready, skipping initialization');
@@ -1016,7 +803,7 @@ export class OrbitDBNotificationService implements OnModuleInit {
     }
 
     // Get template for the event
-    const template = await this.getTemplateForEvent(
+    const template = await this.notificationTemplateService.getTemplateForEvent(
       notification.event,
       preferredLanguage || notification.locale,
     );
@@ -1212,55 +999,82 @@ export class OrbitDBNotificationService implements OnModuleInit {
       renderedContent,
     };
   }
-  // Add this method to the OrbitDBNotificationService class:
 
-  async getTemplateByTemplateId(
-    templateId: string,
-  ): Promise<NotificationTemplateEntity | null> {
-    if (!this.templateDatabase) {
-      return null;
-    }
-
-    const allTemplates = await this.templateDatabase.all();
-    return allTemplates.find((t) => t.templateId === templateId) || null;
-  }
-
-  // Update the createTemplate method to check for duplicates:
-
-  async createTemplate(
-    template: Omit<
-      NotificationTemplateEntity,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<NotificationTemplateEntity> {
-    if (!this.templateDatabase) {
-      throw new Error('Template database not initialized');
-    }
-
-    // Check for duplicate templateId
-    const existingTemplate = await this.getTemplateByTemplateId(
-      template.templateId,
-    );
-
-    if (existingTemplate) {
-      throw new Error(
-        `Template with templateId '${template.templateId}' already exists`,
-      );
-    }
-
-    const id = randomUUID();
-    const now = new Date().toISOString();
-
-    const newTemplate: NotificationTemplateEntity = {
-      id,
-      createdAt: now,
-      updatedAt: now,
-      ...template,
+  async buildStepNotificationPayload(
+    step: Step,
+    stakeholder: Stakeholder,
+    sourceEvent: string,
+  ): Promise<NotificationEntity> {
+    const variables = this.buildStepVariables(step, stakeholder.role);
+    const contactDetails = (
+      await this.contactDetailsService.findByOwner(stakeholder.userId)
+    )[0];
+    const user = await this.userService.findById(stakeholder.userId);
+    const result: NotificationEntity = {
+      userId: stakeholder.userId,
+      recipientMap: contactDetails,
+      urgency: 'medium',
+      userPreferences: contactDetails.preference,
+      isUserOnline: false,
+      event: sourceEvent,
+      userName: user!.name,
+      locale: 'en',
+      status: 'sent',
+      retryCount: 0,
+      channelsToUse: [],
+      createdAt: '',
+      updatedAt: '',
+      variables: { ...variables, dueDate: step.journey!.availableTo },
+      id: '',
     };
 
-    await this.templateDatabase.put(newTemplate);
+    return result;
+  }
 
-    this.logger.log(`Created new template: ${template.templateId} (${id})`);
-    return newTemplate;
+  private buildStepVariables(
+    step: Step,
+    role: StakeholderRole,
+  ): Record<string, any> {
+    const baseVariables: Record<string, any> = {
+      stepId: step.id,
+      shipmentId: step.shipmentId,
+      journeyId: step.journeyId,
+      agentId: step.agentId,
+      senderId: step.senderId,
+      recipientId: step.recipientId,
+      holderId: step.holderId,
+      operatorId: step.operatorId,
+      colonyId: step.colonyId,
+      state: StepState[step.state],
+      timestamp: new Date().toISOString(),
+      userRole: role,
+    };
+
+    // Add stepParams if available
+    if (step.stepParams) {
+      baseVariables['spCost'] = step.stepParams.spCost;
+      baseVariables['spETA'] = step.stepParams.spETA;
+      if (
+        step.stepParams.spPerformer &&
+        Array.isArray(step.stepParams.spPerformer)
+      ) {
+        baseVariables['spPerformer'] = step.stepParams.spPerformer[0]; // Wallet address
+      }
+    }
+
+    // Add shipment info if available
+    if (step.shipment) {
+      baseVariables['shipmentReference'] = step.shipment.id; // TODO:
+      baseVariables['shipmentStatus'] = step.shipment.status;
+    }
+
+    // Add journey info if available
+    if (step.journey) {
+      baseVariables['journeyRoute'] =
+        `${step.journey.fromLocation?.street + ' ' + step.journey.fromLocation?.city + ' ' + step.journey.fromLocation?.state} 
+          → ${step.journey.toLocation?.street + ' ' + step.journey.toLocation?.city + ' ' + step.journey.toLocation?.state}`;
+    }
+
+    return baseVariables;
   }
 }

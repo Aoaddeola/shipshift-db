@@ -95,7 +95,6 @@ export class ColonyNodeCreateDto
   maximumActiveStepsCount: number;
 
   @IsString()
-  @IsNotEmpty()
   @ApiProperty({
     example: 'QmX58D3k4m...',
     description: 'Peer ID for network communication',

@@ -76,6 +76,13 @@ export async function generateDeliveryRecord(
   step: Step,
   stepTxService: StepTxService,
 ): Promise<DeliveryRecord> {
+  const timeOfFulfillment = (
+    await stepTxService.getStepTxsByStateAndStepId(StepState.FULFILLED, step.id)
+  )[0].createdAt;
+  const timeOfCommencement = (
+    await stepTxService.getStepTxsByStateAndStepId(StepState.COMMENCED, step.id)
+  )[0].createdAt;
+  new Date('');
   const delRec: DeliveryRecord = {
     deliveryId: step.shipmentId,
     agentId: step.agentId,
@@ -84,18 +91,8 @@ export async function generateDeliveryRecord(
       step.journey?.toLocation?.coordinates!,
     ),
     durationMinutes:
-      (
-        await stepTxService.getStepTxsByStateAndStepId(
-          StepState.FULFILLED,
-          step.id,
-        )
-      )[0].createdAt?.getUTCMinutes()! -
-      (
-        await stepTxService.getStepTxsByStateAndStepId(
-          StepState.COMMENCED,
-          step.id,
-        )
-      )[0].createdAt?.getUTCMinutes()!,
+      new Date(timeOfFulfillment!).getUTCMinutes() -
+      new Date(timeOfCommencement!).getUTCMinutes(),
     earningAda: step.journey?.price!,
     status:
       step.state === StepState.FULFILLED ||
@@ -114,7 +111,7 @@ export async function generateDeliveryRecord(
         StepState.FULFILLED,
         step.id,
       )
-    )[0].createdAt?.toISOString()!, // ISO date string for active day tracking
+    )[0].createdAt!, // ISO date string for active day tracking
   };
   return delRec;
 }

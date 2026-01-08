@@ -32,6 +32,7 @@ export interface Shipment {
   journeyId?: string;
   status: ShipmentStatus;
   senderWalletAddress: string;
+  marketplaceEligible: boolean;
   fromLocation?: Location;
   toLocation?: Location;
   mission?: Mission; // Embedded mission

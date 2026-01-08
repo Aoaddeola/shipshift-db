@@ -52,6 +52,14 @@ export class OfferService {
       ...offer,
     };
 
+    if (newOffer.bid.journeyId !== undefined) {
+      await this.journeyService.getJourney(newOffer.bid.journeyId);
+    }
+
+    if (newOffer.bid.missionId !== undefined) {
+      await this.missionService.getMission(newOffer.bid.missionId);
+    }
+
     await this.database.put(newOffer);
 
     // Publish offer created event
@@ -166,6 +174,24 @@ export class OfferService {
     return Promise.all(
       offers.map((offer) => this.populateRelations(offer, include)),
     );
+  }
+
+  async getOffersByStakeHolder(stakeholderId: string): Promise<Offer[]> {
+    const all = await this.getOffers(['shipment', 'mission', 'journey']);
+    const offers = all
+      .filter((offer) => offer.shipment !== undefined)
+      .filter((offer) => {
+        let valid = false;
+        if (offer.journey) {
+          valid = offer.journey.agentId === stakeholderId;
+        }
+        if (offer.mission) {
+          valid = valid || offer.mission.curatorId === stakeholderId;
+        }
+        return valid || offer.shipment!.senderId === stakeholderId;
+      });
+
+    return offers;
   }
 
   async getOffersByMission(

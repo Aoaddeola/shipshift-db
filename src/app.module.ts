@@ -34,7 +34,8 @@ import { RabbitMQRootModule } from './shared/rabbitmq/rabbitmq.module.js';
 import { MessagingModule } from './shared/messaging/messaging.module.js';
 import { BugReportModule } from './bug-report/bug-report.module.js';
 import { OfferModule } from './offer/offer.module.js';
-import { NotificationOrbitDBModule } from './notification/notification.module.js';
+import { NotificationModule } from './notification/notification.module.js';
+import { NotificationTemplateModule } from './notification-template/notification-template.module.js';
 
 @Module({
   imports: [
@@ -85,7 +86,7 @@ import { NotificationOrbitDBModule } from './notification/notification.module.js
     TaskValidationModule,
 
     // Notification
-    NotificationOrbitDBModule,
+    NotificationModule,
 
     // Proof
     AgentMPFProofModule,
@@ -93,7 +94,7 @@ import { NotificationOrbitDBModule } from './notification/notification.module.js
     RabbitMQRootModule.forRoot(),
     MessagingModule,
     OfferModule,
-    NotificationOrbitDBModule,
+    NotificationTemplateModule,
 
     BugReportModule,
   ],

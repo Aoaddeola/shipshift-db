@@ -1,28 +1,42 @@
 // notification.orbitdb.module.ts
 import { Module, Global } from '@nestjs/common';
-import { MessagingModule } from '../shared/messaging/messaging.module.js';
-import { OrbitDBNotificationService } from './notification.service.js';
-import { NotificationOrbitDBController } from './notification.controller.js';
+import { NotificationService } from './notification.service.js';
+import { NotificationController } from './notification.controller.js';
 import { OrbitDBModule } from '../db/orbitdb/orbitdb.module.js';
 import { IPFSAccessController } from '@orbitdb/core';
-import { NotificationConsumerService } from './notification-consumer.service.js';
+import { NotificationConsumer } from './consumers/notification.consumer.js';
+import { StepModule } from '../onchain/step/step.module.js';
+import { ContactDetailsModule } from '../common/contact-details/contact-details.module.js';
+import { UserModule } from '../users/user/user.module.js';
+import { StepNotificationConsumer } from './consumers/step-notification.consumer.js';
+import { OfferNotificationConsumer } from './consumers/offer-notification.consumer.js';
+import { OfferModule } from '../offer/offer.module.js';
+import { JourneyModule } from '../logistics/journey/journey.module.js';
+import { OperatorModule } from '../users/operator/operator.module.js';
 
 @Global()
 @Module({
   imports: [
-    MessagingModule,
-    OrbitDBModule.forDatabase('notification-template', {
-      AccessController: IPFSAccessController({ write: ['*'] }),
-    }),
     OrbitDBModule.forDatabase('notification-rule', {
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
     OrbitDBModule.forDatabase('notification', {
       AccessController: IPFSAccessController({ write: ['*'] }),
     }),
+    StepModule,
+    OfferModule,
+    ContactDetailsModule,
+    UserModule,
+    JourneyModule,
+    OperatorModule,
   ],
-  controllers: [NotificationOrbitDBController],
-  providers: [OrbitDBNotificationService, NotificationConsumerService],
-  exports: [OrbitDBNotificationService],
+  controllers: [NotificationController],
+  providers: [
+    NotificationService,
+    NotificationConsumer,
+    StepNotificationConsumer,
+    OfferNotificationConsumer,
+  ],
+  exports: [NotificationService],
 })
-export class NotificationOrbitDBModule {}
+export class NotificationModule {}

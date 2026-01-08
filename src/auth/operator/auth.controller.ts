@@ -56,11 +56,9 @@ export class AuthController {
       throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
     }
     const colonyNode =
-      await this.colonyNodeService.getColonyNodesByOperatorAddress(
-        convertAddrToRaw(address),
-      );
+      await this.colonyNodeService.getColonyNodesByOperatorAddress(address);
     const _colonyNode = colonyNode.find((v) =>
-      v.nodeOperatorAddresses.includes(convertAddrToRaw(address)),
+      v.nodeOperatorAddresses.includes(address),
     );
 
     if (!_colonyNode) {

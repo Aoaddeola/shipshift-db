@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ContactDetailsService } from './contact-details.service.js';
@@ -54,7 +56,13 @@ export class ContactDetailsController {
   async update(
     @Param('id') id: string,
     @Body() contactDetails: Partial<ContactDetails>,
+    @Req() request,
   ): Promise<ContactDetailsModel> {
+    if (request.user.sub !== contactDetails.ownerId) {
+      throw new ForbiddenException(
+        'You are not authorized to make modifications',
+      );
+    }
     return this.contactDetailsService.update(id, contactDetails);
   }
 

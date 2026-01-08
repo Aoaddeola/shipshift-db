@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsDateString,
   IsOptional,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Shipment, ShipmentStatus } from './shipment.types.js';
@@ -68,6 +69,14 @@ export class ShipmentCreateDto
     description: 'Estimated time of arrival (ISO 8601)',
   })
   etaDate: string;
+
+  @IsBoolean()
+  @ApiProperty({
+    example: 'true',
+    description:
+      'Flag to determine is shipment can be displayed in marketplace',
+  })
+  marketplaceEligible: boolean;
 
   @IsString()
   @IsNotEmpty()

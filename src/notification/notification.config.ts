@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 // import { RabbitMQConfig } from '../rabbitmq/config/rabbitmq.config.js';
 
-import { RabbitMQConfig } from 'src/shared/rabbitmq/config/rabbitmq.config.js';
+import { RabbitMQConfig } from '..//shared/rabbitmq/config/rabbitmq.config.js';
+import { allNotificationTemplates } from '../notification-template/notification-template.config.js';
 
 export const NotificationConfig = {
   // ==================== ENTITY NOTIFICATION RULES ====================
@@ -11,6 +12,7 @@ export const NotificationConfig = {
       EVENTS_TO_NOTIFY: [
         RabbitMQConfig.STEP.EVENTS.CREATED,
         RabbitMQConfig.STEP.EVENTS.STATE_CHANGED,
+        RabbitMQConfig.STEP.EVENTS.ASSIGNED,
         RabbitMQConfig.STEP.EVENTS.COMPLETED,
         RabbitMQConfig.STEP.EVENTS.MILESTONE.PICKED_UP,
         RabbitMQConfig.STEP.EVENTS.MILESTONE.DROPPED_OFF,
@@ -24,15 +26,16 @@ export const NotificationConfig = {
 
     SHIPMENT: {
       EVENTS_TO_NOTIFY: [
-        RabbitMQConfig.SHIPMENT.EVENTS.STATUS_CHANGED,
+        RabbitMQConfig.SHIPMENT.EVENTS.CREATED,
         RabbitMQConfig.SHIPMENT.EVENTS.PICKED_UP,
         RabbitMQConfig.SHIPMENT.EVENTS.DELIVERED,
-        RabbitMQConfig.SHIPMENT.EVENTS.PAYMENT_PROCESSED,
-        RabbitMQConfig.SHIPMENT.EVENTS.PAYMENT_FAILED,
-        RabbitMQConfig.SHIPMENT.EVENTS.READY_FOR_PICKUP,
-        RabbitMQConfig.SHIPMENT.EVENTS.CANCELLED,
+        // RabbitMQConfig.SHIPMENT.EVENTS.STATUS_CHANGED,
+        // RabbitMQConfig.SHIPMENT.EVENTS.PAYMENT_PROCESSED,
+        // RabbitMQConfig.SHIPMENT.EVENTS.PAYMENT_FAILED,
+        // RabbitMQConfig.SHIPMENT.EVENTS.READY_FOR_PICKUP,
+        // RabbitMQConfig.SHIPMENT.EVENTS.CANCELLED,
       ],
-      STAKEHOLDERS: ['customer', 'agent', 'admin', 'operator'],
+      STAKEHOLDERS: ['customer'],
       DEFAULT_CHANNELS: ['email', 'sms', 'in_app'],
       PRIORITY: 'high',
     },
@@ -44,6 +47,18 @@ export const NotificationConfig = {
         RabbitMQConfig.JOURNEY?.EVENTS.CANCELLED || 'journey.cancelled',
         RabbitMQConfig.JOURNEY?.EVENTS.AGENT_ASSIGNED ||
           'journey.agent.assigned',
+      ],
+      STAKEHOLDERS: ['customer', 'agent', 'admin'],
+      DEFAULT_CHANNELS: ['email', 'push', 'in_app'],
+      PRIORITY: 'medium',
+    },
+
+    OFFER: {
+      EVENTS_TO_NOTIFY: [
+        RabbitMQConfig.OFFER?.EVENTS.CREATED || 'offer.created',
+        RabbitMQConfig.OFFER?.EVENTS.BID_ACCEPTED || 'offer.bid.accepted',
+        RabbitMQConfig.OFFER?.EVENTS.BID_REJECTED || 'offer.bid.rejected',
+        RabbitMQConfig.OFFER?.EVENTS.UPDATED || 'offer.updated',
       ],
       STAKEHOLDERS: ['customer', 'agent', 'admin'],
       DEFAULT_CHANNELS: ['email', 'push', 'in_app'],
@@ -102,66 +117,7 @@ export const NotificationConfig = {
   },
 
   // ==================== NOTIFICATION TEMPLATES ====================
-  TEMPLATES: {
-    STEP_STATE_CHANGED: {
-      id: 'step-state-changed',
-      name: 'Step State Changed',
-      defaultSubject: 'Step Status Update',
-      defaultBody:
-        'Step {{stepId}} state changed from {{oldState}} to {{newState}}',
-      variables: ['stepId', 'oldState', 'newState', 'agentName', 'timestamp'],
-      channels: ['email', 'in_app'],
-    },
-
-    SHIPMENT_DELIVERED: {
-      id: 'shipment-delivered',
-      name: 'Shipment Delivered',
-      defaultSubject: 'Your shipment has been delivered!',
-      defaultBody:
-        'Shipment {{shipmentId}} has been successfully delivered to {{recipientName}}',
-      variables: [
-        'shipmentId',
-        'recipientName',
-        'deliveryTime',
-        'agentName',
-        'location',
-      ],
-      channels: ['email', 'sms', 'in_app', 'push'],
-    },
-
-    PAYMENT_PROCESSED: {
-      id: 'payment-processed',
-      name: 'Payment Processed',
-      defaultSubject: 'Payment Successful',
-      defaultBody:
-        'Payment of {{amount}} {{currency}} for {{entityType}} {{entityId}} has been processed',
-      variables: [
-        'amount',
-        'currency',
-        'entityType',
-        'entityId',
-        'paymentMethod',
-        'timestamp',
-      ],
-      channels: ['email', 'in_app'],
-    },
-
-    MILESTONE_ACHIEVED: {
-      id: 'milestone-achieved',
-      name: 'Milestone Achieved',
-      defaultSubject: 'Milestone Reached!',
-      defaultBody:
-        '{{entityType}} {{entityId}} has reached milestone: {{milestone}}',
-      variables: [
-        'entityType',
-        'entityId',
-        'milestone',
-        'timestamp',
-        'agentName',
-      ],
-      channels: ['email', 'in_app', 'push'],
-    },
-  },
+  TEMPLATES: allNotificationTemplates,
 
   // ==================== DELIVERY SETTINGS ====================
   DELIVERY: {

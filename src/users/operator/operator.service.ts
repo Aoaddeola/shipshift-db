@@ -50,7 +50,8 @@ export class OperatorService {
       throw new UnprocessableEntityException('Operator not found');
     }
 
-    return this.populateRelations(entry, include);
+    const populated = this.populateRelations(entry, include);
+    return populated;
   }
 
   async getOperatorByAddress(
@@ -118,10 +119,7 @@ export class OperatorService {
           );
           if (colonyNode) {
             // Create a copy of offchain with colonyNode
-            populatedOperator.offchain = {
-              ...operator.offchain,
-              colonyNode: colonyNode,
-            };
+            populatedOperator.offchain.colonyNode = colonyNode;
           }
         } catch (error) {
           this.logger.warn(
@@ -139,10 +137,7 @@ export class OperatorService {
             );
           if (badge.length > 0) {
             // Create a copy of offchain with badge
-            populatedOperator.offchain = {
-              ...operator.offchain,
-              badge: badge[0],
-            };
+            populatedOperator.offchain.badge = badge[0];
           }
         } catch (error) {
           this.logger.warn(
@@ -221,20 +216,28 @@ export class OperatorService {
   }
 
   async deleteOperator(id: string): Promise<{ message: string }> {
-    const operator = await this.getOperator(id);
-    const badges =
-      await this.operatorBadgeService.getOperatorBadgesByOpWalletAddress(
-        operator.onchain.opAddr,
-      );
-    await this.database.del(id);
-    await Promise.all(
-      badges.map(
-        async (badge) =>
-          await this.operatorBadgeService.deleteOperatorBadge(badge.id),
-      ),
+    const operator = await this.getOperator(id, ['offchain', 'badge']);
+    await this.operatorBadgeService.deleteOperatorBadge(
+      operator.offchain.badge!.id,
     );
+    await this.database.del(id);
     return {
       message: `Operator with address ${operator.onchain.opAddr} deleted successfully`,
+    };
+  }
+
+  async deleteOrphanOperatorBadge(id: string): Promise<{ message: string }> {
+    const badges = await this.operatorBadgeService.getOperatorBadge(id);
+    try {
+      await this.getOperatorByAddress(badges.walletAddress);
+    } catch {
+      await this.database.del(id);
+      return {
+        message: `Oprhan Operator Badge ${id} deleted successfully`,
+      };
+    }
+    return {
+      message: `Operator Badge ${id} cannot be deleted.`,
     };
   }
 }

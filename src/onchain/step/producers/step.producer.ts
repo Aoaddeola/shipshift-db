@@ -884,36 +884,32 @@ export class StepProducer {
   /**
    * Publish step assigned event
    */
-  async publishStepAssigned(
-    stepId: string,
-    assigneeId: string,
-    assigneeType: 'operator' | 'agent' | 'colony',
-    assignedBy: string,
-  ): Promise<boolean> {
+  async publishStepAssigned(step: Step): Promise<boolean> {
     const event = {
-      stepId,
-      assigneeId,
-      assigneeType,
-      assignedBy,
+      stepId: step.id,
+      shipmentId: step.shipmentId,
+      journeyId: step.journeyId,
+      agentId: step.agentId,
+      operatorId: step.operatorId,
+      assigneeId: step.agentId,
+      assigneeType: 'agent',
+      assignedBy: step.senderId,
       assignedAt: new Date().toISOString(),
     };
 
     try {
-      const routingKey =
-        assigneeType === 'operator'
-          ? this.config.EVENTS.ASSIGNED
-          : `step.assigned.${assigneeType}`;
+      const routingKey = this.config.EVENTS.ASSIGNED;
 
       await this.messageBus.emitEvent(routingKey, event, {
         exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
         headers: {
           'x-event-version': '1.0',
-          'x-step-id': stepId,
-          'x-assignee-type': assigneeType,
+          'x-step-id': event.stepId,
+          'x-assignee-type': event.assigneeType,
         },
       });
 
-      this.logger.log(`Published ${routingKey} for step ${stepId}`);
+      this.logger.log(`Published ${routingKey} for step ${event.stepId}`);
       return true;
     } catch (error) {
       this.logger.error(`Failed to publish assigned event:`, error);

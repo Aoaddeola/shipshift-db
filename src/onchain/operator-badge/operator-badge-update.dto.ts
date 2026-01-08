@@ -38,6 +38,17 @@ export class OperatorBadgeUpdateDto {
 
   @IsString()
   @IsOptional()
+  @Matches(ADDRESS_REGEX, {
+    message: 'Operator badge address must be a valid Cardano address',
+  })
+  @ApiPropertyOptional({
+    example: 'addr1q7defghij5678901234abcdef1234567890abcdef1234567890abcdef',
+    description: 'Updated operator agent script address',
+  })
+  operatorAgentAddr?: string;
+
+  @IsString()
+  @IsOptional()
   @Matches(POLICY_ID_REGEX, {
     message: 'Colony minting policy must be a valid hex string',
   })

@@ -1,3 +1,5 @@
+import { ContactDetails } from '../common/contact-details/contact-details.types.js';
+
 // notification.orbitdb.types.ts
 export enum NotificationType {
   Email = 'email',
@@ -105,66 +107,57 @@ export interface NotificationRuleEntity {
   updatedAt: string;
 }
 
-export interface NotificationTemplateEntity {
-  id: string;
-  templateId: string;
-  name: string;
-  description?: string;
-  defaultSubject: string;
-  defaultBody: string;
-  variables: string[];
-  supportedChannels: NotificationType[];
-  language: string;
-  version: string;
-  isActive: boolean;
-  isSystemTemplate: boolean;
-
-  channelSpecificContent?: {
-    email?: {
-      subject?: string;
-      htmlBody?: string;
-      textBody?: string;
-    };
-    sms?: {
-      body?: string;
-      maxLength?: number;
-    };
-    push?: {
-      title?: string;
-      body?: string;
-      data?: Record<string, any>;
-    };
-    session?: {
-      message?: string;
-      data?: Record<string, any>;
-    };
-    websocket?: {
-      event?: string;
-      data?: Record<string, any>;
-    };
-  };
-
-  metadata?: {
-    createdBy?: string;
-    lastModifiedBy?: string;
-    category?: string;
-  };
-
-  createdAt: string;
-  updatedAt: string;
+// Add these to existing enums
+export enum NotificationStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  SENT = 'sent',
+  PARTIALLY_SENT = 'partially_sent',
+  DELIVERED = 'delivered',
+  FAILED = 'failed',
+  READ = 'read',
 }
 
-export interface RenderedNotificationContent {
-  id: string;
-  notificationId: string;
-  channel: NotificationType;
-  subject?: string;
-  body: string;
-  isHtml?: boolean;
-  metadata?: {
-    templateId: string;
-    language: string;
-    variablesUsed: string[];
-    renderedAt: string;
+export enum NotificationUrgency {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
+
+export function createRecipientMapConcise(
+  contact: ContactDetails,
+): RecipientMap {
+  const preferenceMapping = {
+    [NotificationType.Email]: {
+      enabled: contact.preference.email,
+      value: contact.email,
+    },
+    [NotificationType.SMS]: {
+      enabled: contact.preference.sms,
+      value: contact.sms || contact.phone,
+    },
+    [NotificationType.Push]: {
+      enabled: contact.preference.push,
+      value: contact.id, // Adjust as needed
+    },
+    [NotificationType.Session]: {
+      enabled: contact.preference.session,
+      value: contact.session,
+    },
+    [NotificationType.WebSocket]: {
+      enabled: contact.preference.websocket,
+      value: contact.session, // Adjust as needed
+    },
   };
+
+  const recipientMap: RecipientMap = {};
+
+  (Object.keys(preferenceMapping) as NotificationType[]).forEach((type) => {
+    const mapping = preferenceMapping[type];
+    if (mapping.enabled && mapping.value) {
+      recipientMap[type] = mapping.value;
+    }
+  });
+
+  return recipientMap;
 }

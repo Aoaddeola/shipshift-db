@@ -4,9 +4,11 @@ import {
   ValidateNested,
   IsNumber,
   Min,
+  IsEnum,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { OfferState } from './offer.types.js';
 
 // Nested DTO for bid update
 class BidUpdateDto {
@@ -53,4 +55,9 @@ export class OfferUpdateDto {
     description: 'Number of steps associated with offer',
   })
   stepCount?: number;
+
+  @IsEnum(OfferState)
+  @IsOptional()
+  @ApiPropertyOptional({ enum: OfferState })
+  state?: OfferState;
 }

@@ -7,10 +7,11 @@ import {
   IsOptional,
   ValidateNested,
   IsObject,
+  IsDateString,
   IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum NotificationType {
   Email = 'email',
@@ -110,6 +111,11 @@ export class SingleNotificationDto {
   @IsString()
   @ApiProperty({ example: 'en' })
   locale: string;
+
+  @IsObject()
+  @IsOptional()
+  @ApiPropertyOptional()
+  variables?: Record<string, any>;
 }
 
 export class BatchNotificationDto {
@@ -117,7 +123,7 @@ export class BatchNotificationDto {
   @ValidateNested({ each: true })
   @Type(() => SingleNotificationDto)
   @ApiProperty({ type: [SingleNotificationDto] })
-  notifications: Array<SingleNotificationDto>;
+  notifications: SingleNotificationDto[];
 }
 
 export class NotificationResponseDto {
@@ -210,173 +216,342 @@ export class GetRenderedNotificationsDto {
 }
 // Add this after the existing DTOs in notification.dto.ts
 
-export class EmailContentDto {
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: '🎉 Booking Confirmed!' })
-  subject?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: '<h2>Booking Confirmed</h2>' })
-  htmlBody?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'Your booking has been confirmed.' })
-  textBody?: string;
+export enum NotificationStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  SENT = 'sent',
+  PARTIALLY_SENT = 'partially_sent',
+  DELIVERED = 'delivered',
+  FAILED = 'failed',
+  READ = 'read',
 }
 
-export class SmsContentDto {
+export enum NotificationUrgency {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
+
+export class ChannelStatusDto {
+  @IsBoolean()
+  @ApiProperty({ example: true })
+  sent: boolean;
+
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: 'Booking confirmed for {{event}}' })
-  body?: string;
+  @ApiPropertyOptional({ example: 'msg-123' })
+  messageId?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'Failed to send' })
+  error?: string;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ example: '2024-01-01T12:00:00Z' })
+  sentAt?: string;
 
   @IsOptional()
   @IsNumber()
-  @ApiPropertyOptional({ example: 160 })
-  maxLength?: number;
+  @ApiPropertyOptional({ example: 1 })
+  attempts?: number;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ example: '2024-01-01T12:00:00Z' })
+  lastAttempt?: string;
 }
 
-export class PushContentDto {
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'Booking Confirmed!' })
-  title?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'Your booking has been confirmed' })
-  body?: string;
-
-  @IsOptional()
-  @IsObject()
-  @ApiPropertyOptional({ type: Object, example: { type: 'booking' } })
-  data?: Record<string, any>;
-}
-
-export class SessionContentDto {
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'Your booking has been confirmed' })
-  message?: string;
-
-  @IsOptional()
-  @IsObject()
-  @ApiPropertyOptional({ type: Object, example: { type: 'booking' } })
-  data?: Record<string, any>;
-}
-
-export class WebSocketContentDto {
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'notification.received' })
-  event?: string;
-
-  @IsOptional()
-  @IsObject()
-  @ApiPropertyOptional({ type: Object, example: { type: 'booking' } })
-  data?: Record<string, any>;
-}
-
-export class TemplateMetadataDto {
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'admin_user_id' })
-  createdBy?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'admin_user_id' })
-  lastModifiedBy?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'booking' })
-  category?: string;
-}
-
-export class ChannelSpecificContentDto {
+export class ChannelStatusMapDto {
   @IsOptional()
   @ValidateNested()
-  @Type(() => EmailContentDto)
-  @ApiPropertyOptional({ type: EmailContentDto })
-  email?: EmailContentDto;
+  @Type(() => ChannelStatusDto)
+  @ApiPropertyOptional({ type: ChannelStatusDto })
+  email?: ChannelStatusDto;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => SmsContentDto)
-  @ApiPropertyOptional({ type: SmsContentDto })
-  sms?: SmsContentDto;
+  @Type(() => ChannelStatusDto)
+  @ApiPropertyOptional({ type: ChannelStatusDto })
+  sms?: ChannelStatusDto;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => PushContentDto)
-  @ApiPropertyOptional({ type: PushContentDto })
-  push?: PushContentDto;
+  @Type(() => ChannelStatusDto)
+  @ApiPropertyOptional({ type: ChannelStatusDto })
+  push?: ChannelStatusDto;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => SessionContentDto)
-  @ApiPropertyOptional({ type: SessionContentDto })
-  session?: SessionContentDto;
+  @Type(() => ChannelStatusDto)
+  @ApiPropertyOptional({ type: ChannelStatusDto })
+  session?: ChannelStatusDto;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => WebSocketContentDto)
-  @ApiPropertyOptional({ type: WebSocketContentDto })
-  websocket?: WebSocketContentDto;
+  @Type(() => ChannelStatusDto)
+  @ApiPropertyOptional({ type: ChannelStatusDto })
+  websocket?: ChannelStatusDto;
 }
 
-export class CreateNotificationTemplateDto {
+export class ErrorDetailsDto {
+  @IsString()
+  @ApiProperty({ example: 'Failed to connect to email service' })
+  message: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'CONNECTION_ERROR' })
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'Error stack trace...' })
+  stack?: string;
+}
+
+export class MetadataDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'corr-123' })
+  correlationId?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'booking-service' })
+  sourceService?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: '192.168.1.1' })
+  ipAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'Mozilla/5.0' })
+  userAgent?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @ApiPropertyOptional({ example: 1 })
+  priority?: number;
+}
+
+export class SingleNotificationEntityDto {
+  @IsString()
+  @ApiProperty({ example: 'user_123' })
+  userId: string;
+
+  @ValidateNested()
+  @Type(() => RecipientMapDto)
+  @ApiProperty({ type: RecipientMapDto })
+  recipientMap: RecipientMapDto;
+
+  @IsEnum(NotificationUrgency)
+  @ApiProperty({ enum: NotificationUrgency, example: NotificationUrgency.HIGH })
+  urgency: 'low' | 'medium' | 'high';
+
+  @ValidateNested()
+  @Type(() => UserPreferencesDto)
+  @ApiProperty({ type: UserPreferencesDto })
+  userPreferences: UserPreferencesDto;
+
+  @IsBoolean()
+  @ApiProperty({ example: true })
+  isUserOnline: boolean;
+
   @IsString()
   @ApiProperty({ example: 'booking_confirmed' })
-  templateId: string;
+  event: string;
 
   @IsString()
-  @ApiProperty({ example: 'Booking Confirmed' })
-  name: string;
+  @ApiProperty({ example: 'Alice' })
+  userName: string;
+
+  @IsString()
+  @ApiProperty({ example: 'en' })
+  locale: string;
+
+  @IsEnum(NotificationStatus)
+  @ApiProperty({ enum: NotificationStatus, example: NotificationStatus.SENT })
+  status: NotificationStatus;
 
   @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'Notification when a booking is confirmed' })
-  description?: string;
+  @IsDateString()
+  @ApiPropertyOptional({ example: '2024-01-01T12:00:00Z' })
+  sentAt?: string;
 
-  @IsString()
-  @ApiProperty({ example: 'Booking Confirmed - {{event}}' })
-  defaultSubject: string;
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ example: '2024-01-01T12:05:00Z' })
+  deliveredAt?: string;
 
-  @IsString()
-  @ApiProperty({
-    example: 'Hello {{userName}}, your booking has been confirmed.',
-  })
-  defaultBody: string;
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ example: '2024-01-01T12:10:00Z' })
+  readAt?: string;
 
-  @IsArray()
-  @IsString({ each: true })
-  @ApiProperty({
-    type: [String],
-    example: ['userName', 'event', 'date', 'time'],
-  })
-  variables: string[];
+  @IsNumber()
+  @ApiProperty({ example: 0 })
+  retryCount: number;
 
   @IsArray()
   @IsEnum(NotificationType, { each: true })
   @ApiProperty({
     enum: NotificationType,
     isArray: true,
-    example: ['email', 'push', 'sms'],
+    example: [NotificationType.Email, NotificationType.Push],
   })
-  supportedChannels: NotificationType[];
+  channelsToUse: NotificationType[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ChannelStatusMapDto)
+  @ApiPropertyOptional({ type: ChannelStatusMapDto })
+  channelStatus?: ChannelStatusMapDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ErrorDetailsDto)
+  @ApiPropertyOptional({ type: ErrorDetailsDto })
+  errorDetails?: ErrorDetailsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MetadataDto)
+  @ApiPropertyOptional({ type: MetadataDto })
+  metadata?: MetadataDto;
+
+  @IsOptional()
+  @IsObject()
+  @ApiPropertyOptional({
+    example: { bookingId: 'book_123', date: '2024-01-01' },
+  })
+  variables?: Record<string, any>;
+}
+
+export class BatchNotificationEntityDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SingleNotificationEntityDto)
+  @ApiProperty({ type: [SingleNotificationEntityDto] })
+  notifications: SingleNotificationEntityDto[];
+
+  @IsNumber()
+  @ApiProperty({ example: 5 })
+  total: number;
+
+  @IsNumber()
+  @ApiProperty({ example: 0 })
+  page: number;
+
+  @IsNumber()
+  @ApiProperty({ example: 10 })
+  limit: number;
+
+  @IsNumber()
+  @ApiProperty({ example: 100 })
+  totalPages: number;
+}
+
+export class CreateSingleNotificationDto {
+  @IsString()
+  @ApiProperty({ example: 'user_123' })
+  userId: string;
+
+  @ValidateNested()
+  @Type(() => RecipientMapDto)
+  @ApiProperty({ type: RecipientMapDto })
+  recipientMap: RecipientMapDto;
+
+  @IsEnum(NotificationUrgency)
+  @ApiProperty({ enum: NotificationUrgency, example: NotificationUrgency.HIGH })
+  urgency: 'low' | 'medium' | 'high';
+
+  @IsString()
+  @ApiProperty({ example: 'booking_confirmed' })
+  event: string;
+
+  @IsString()
+  @ApiProperty({ example: 'Alice' })
+  userName: string;
 
   @IsString()
   @ApiProperty({ example: 'en' })
-  language: string;
+  locale: string;
+
+  @IsOptional()
+  @IsObject()
+  @ApiPropertyOptional({
+    example: { bookingId: 'book_123', date: '2024-01-01' },
+  })
+  variables?: Record<string, any>;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MetadataDto)
+  @ApiPropertyOptional({ type: MetadataDto })
+  metadata?: MetadataDto;
+}
+
+export class CreateBatchNotificationDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateSingleNotificationDto)
+  @ApiProperty({ type: [CreateSingleNotificationDto] })
+  notifications: CreateSingleNotificationDto[];
+}
+
+export class UpdateNotificationStatusDto {
+  @IsEnum(NotificationStatus)
+  @ApiProperty({
+    enum: NotificationStatus,
+    example: NotificationStatus.DELIVERED,
+  })
+  status: NotificationStatus;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'Additional status details' })
+  message?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ChannelStatusMapDto)
+  @ApiPropertyOptional({ type: ChannelStatusMapDto })
+  channelStatus?: ChannelStatusMapDto;
+}
+
+export class NotificationRuleDto {
+  @IsString()
+  @ApiProperty({ example: 'booking_confirmed' })
+  event: string;
 
   @IsString()
-  @ApiProperty({ example: '1.0' })
-  version: string;
+  @ApiProperty({ example: 'template_123' })
+  templateId: string;
+
+  @IsOptional()
+  @IsObject()
+  @ApiPropertyOptional({
+    example: {
+      userPreferences: ['email', 'push'],
+      isUserOnline: true,
+      urgency: ['high', 'medium'],
+      locale: ['en', 'fr'],
+    },
+  })
+  conditions?: {
+    userPreferences?: string[];
+    isUserOnline?: boolean;
+    urgency?: ('low' | 'medium' | 'high')[];
+    locale?: string[];
+  };
+
+  @IsNumber()
+  @ApiProperty({ example: 1 })
+  priority: number;
 
   @IsBoolean()
   @ApiProperty({ example: true })
@@ -384,21 +559,10 @@ export class CreateNotificationTemplateDto {
 
   @IsBoolean()
   @ApiProperty({ example: false })
-  isSystemTemplate: boolean;
+  isSystemRule: boolean;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ChannelSpecificContentDto)
-  @ApiPropertyOptional({ type: ChannelSpecificContentDto })
-  channelSpecificContent?: ChannelSpecificContentDto;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => TemplateMetadataDto)
-  @ApiPropertyOptional({ type: TemplateMetadataDto })
-  metadata?: TemplateMetadataDto;
+  @IsString()
+  @ApiPropertyOptional({ example: 'Rule for booking confirmations' })
+  description?: string;
 }
-
-export class UpdateNotificationTemplateDto extends PartialType(
-  CreateNotificationTemplateDto,
-) {}

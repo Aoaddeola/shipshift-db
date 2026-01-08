@@ -13,6 +13,7 @@ import { OperatorBadgeService } from '../operator-badge/operator-badge.service.j
 interface Operator_Badge {
   operator: Operator;
   operatorBadge: OperatorBadge;
+  operatorAgentAddr: string | null;
 }
 
 @Injectable()
@@ -44,7 +45,11 @@ export class StepFactory {
       await this.operatorBadgeService.getOperatorBadgesByWalletAddress(
         operator.onchain.opAddr,
       );
-    return { operator: operator, operatorBadge: operatorBadge[0] };
+    return {
+      operator: operator,
+      operatorBadge: operatorBadge[0],
+      operatorAgentAddr: operatorBadge[0].operatorAgentAddr || null,
+    };
   }
 
   stepFactory = async (shipment: Shipment): Promise<Omit<Step, 'id'>[]> => {
@@ -79,9 +84,13 @@ export class StepFactory {
         let holderId: string = '';
 
         const stepParams: StepOnChain = {
-          spCost: journey.price || 0, // Required: Cost as number (lovelace)
-          spPerformer: [op.operator.onchain.opAddr, op.operatorBadge.policyId],
+          spCost: journey.price,
+          spPerformer: [
+            op.operatorAgentAddr || op.operator.onchain.opAddr,
+            op.operatorBadge.policyId,
+          ],
           spRequester: requester,
+          spOperator: op.operator.onchain.opAddr,
           spETA: new Date(journey.availableTo).toISOString(),
           spStartTime: new Date(journey.availableFrom).toISOString(),
         };
@@ -91,9 +100,9 @@ export class StepFactory {
           holderId = shipment.senderId;
           stepParams.spHolder = senderWalletAddress;
           if (journeys.length > 1) {
-            stepParams.spRecipient = (
-              await this.getOperatorDetails(journeys[index + 1].id)
-            ).operator.onchain.opAddr;
+            const _op = await this.getOperatorDetails(journeys[index + 1].id);
+            stepParams.spRecipient =
+              _op.operatorAgentAddr || _op.operator.onchain.opAddr;
             recipientId = journeys[index + 1].agentId;
           } else {
             recipientId = holderId;
@@ -101,28 +110,29 @@ export class StepFactory {
           }
         } else if (index === journeys.length - 1) {
           // Last journey
-          stepParams.spHolder = (
-            await this.getOperatorDetails(journeys[index - 1].id)
-          ).operator.onchain.opAddr;
+          const _op = await this.getOperatorDetails(journeys[index - 1].id);
+          stepParams.spHolder =
+            _op.operatorAgentAddr || _op.operator.onchain.opAddr;
           stepParams.spRecipient = senderWalletAddress;
           holderId = journeys[index - 1].agentId;
           recipientId = shipment.senderId;
         } else {
           // Intermediate journeys
-          stepParams.spHolder = (
-            await this.getOperatorDetails(journeys[index - 1].id)
-          ).operator.onchain.opAddr;
+          const _op = await this.getOperatorDetails(journeys[index - 1].id);
+          stepParams.spHolder =
+            _op.operatorAgentAddr || _op.operator.onchain.opAddr;
           holderId = journeys[index - 1].agentId;
-          stepParams.spRecipient = (
-            await this.getOperatorDetails(journeys[index + 1].id)
-          ).operator.onchain.opAddr;
+
+          const __op = await this.getOperatorDetails(journeys[index + 1].id);
+          stepParams.spRecipient =
+            __op.operatorAgentAddr || __op.operator.onchain.opAddr;
           recipientId = journeys[index + 1].agentId;
         }
 
         const stepDbEntry: Omit<Step, 'id'> = {
           stepParams: stepParams,
           shipmentId: shipment.id,
-          journeyId: journey.id ?? '',
+          journeyId: journey.id || '',
           index: index,
           state: StepState.PENDING,
           operatorId: op.operator.id,

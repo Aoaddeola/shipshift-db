@@ -11,9 +11,10 @@ import {
   Length,
   BeforeCreate,
   BeforeUpdate,
+  DataType, // Add this import
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
-import { ContactDetails } from './contact-details.types.js';
+import { CommunicationPreference } from './contact-details.types.js'; // Add CommunicationPreference import
 
 /**
  * Contact Details Model
@@ -39,6 +40,7 @@ export class ContactDetailsModel extends Model {
   /**
    * Owner ID - references the user or entity this contact belongs to
    */
+  @Unique('owner_unique')
   @AllowNull(false)
   @Length({ min: 1, max: 100 })
   @Column
@@ -48,10 +50,6 @@ export class ContactDetailsModel extends Model {
    * Phone number in E.164 format (e.g., +1234567890)
    */
   @AllowNull(true)
-  // @Is('phone', {
-  //   args: [/^\+?[1-9]\d{1,14}$/, 'i'],
-  //   msg: 'Phone number must be in E.164 format (e.g., +1234567890)',
-  // })
   @Length({ min: 5, max: 20 })
   @Column
   phone?: string;
@@ -60,10 +58,6 @@ export class ContactDetailsModel extends Model {
    * SMS notification number (can be same as phone)
    */
   @AllowNull(true)
-  // @Is('sms', {
-  //   args: [/^\+?[1-9]\d{1,14}$/, 'i'],
-  //   msg: 'SMS number must be in E.164 format (e.g., +1234567890)',
-  // })
   @Length({ min: 5, max: 20 })
   @Column
   sms?: string;
@@ -78,7 +72,7 @@ export class ContactDetailsModel extends Model {
   email?: string;
 
   /**
-   * Email address
+   * Website URL
    */
   @AllowNull(true)
   @Column
@@ -91,7 +85,14 @@ export class ContactDetailsModel extends Model {
   @Length({ min: 1, max: 100 })
   @Unique('session_unique')
   @Column
-  sessionId!: string;
+  session!: string;
+
+  /**
+   * Communication preferences
+   */
+  @AllowNull(false)
+  @Column(DataType.JSON) // Store as JSON object
+  preference!: CommunicationPreference;
 
   /**
    * Created at timestamp
@@ -111,7 +112,7 @@ export class ContactDetailsModel extends Model {
    * Before create hook - validate required fields
    */
   @BeforeCreate
-  static validateBeforeCreate(instance: ContactDetails) {
+  static validateBeforeCreate(instance: ContactDetailsModel) {
     if (!instance.phone && !instance.sms && !instance.email) {
       throw new Error(
         'At least one contact method (phone, sms, or email) must be provided',
@@ -123,7 +124,7 @@ export class ContactDetailsModel extends Model {
    * Before update hook - validate required fields
    */
   @BeforeUpdate
-  static validateBeforeUpdate(instance: ContactDetails) {
+  static validateBeforeUpdate(instance: ContactDetailsModel) {
     if (!instance.phone && !instance.sms && !instance.email) {
       throw new Error(
         'At least one contact method (phone, sms, or email) must be provided',

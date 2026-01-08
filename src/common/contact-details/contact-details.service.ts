@@ -60,17 +60,24 @@ export class ContactDetailsService {
     id: string,
     contactDetails: Partial<ContactDetails>,
   ): Promise<ContactDetailsModel> {
-    const [affectedCount, [updatedContactDetails]] =
-      await this.contactDetailsModel.update(contactDetails, {
-        where: { id },
-        returning: true,
-      });
-
-    if (affectedCount === 0) {
+    // First, check if record exists
+    const existing = await this.contactDetailsModel.findByPk(id);
+    if (!existing) {
       throw new NotFoundException(`Contact details with ID ${id} not found`);
     }
 
-    return updatedContactDetails;
+    // Perform update
+    await this.contactDetailsModel.update(contactDetails, {
+      where: { id },
+    });
+
+    // Fetch updated record
+    const updated = await this.contactDetailsModel.findByPk(id);
+    if (!updated) {
+      throw new NotFoundException(`Contact details with ID ${id} not found`);
+    }
+
+    return updated;
   }
 
   async remove(id: string): Promise<void> {

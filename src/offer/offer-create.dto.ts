@@ -5,10 +5,11 @@ import {
   IsOptional,
   IsNumber,
   Min,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { Offer } from './offer.types.js';
+import { Offer, OfferState } from './offer.types.js';
 
 // Nested DTO for bid
 class BidDto {
@@ -39,6 +40,10 @@ export class OfferCreateDto
     description: 'ID of the shipment',
   })
   shipmentId: string;
+
+  @IsEnum(OfferState)
+  @ApiProperty({ enum: OfferState, default: OfferState.PENDING })
+  state: OfferState;
 
   @IsNumber()
   @Min(0)

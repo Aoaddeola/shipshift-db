@@ -1,3 +1,11 @@
+export interface CommunicationPreference {
+  email: true;
+  sms: true;
+  push: true;
+  session: true;
+  websocket: true;
+}
+
 /**
  * Contact Details Interface
  */
@@ -8,5 +16,6 @@ export interface ContactDetails {
   sms?: string; // SMS notification number (can be same as phone)
   email?: string;
   url?: string;
-  sessionId: string;
+  session: string;
+  preference: CommunicationPreference;
 }

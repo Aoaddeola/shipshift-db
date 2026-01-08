@@ -7,6 +7,7 @@ export interface OperatorBadge {
   stepAddress: string;
   treasuryAddress: string;
   statusAddress: string;
+  operatorAgentAddr?: string;
   policyId: string;
   stepPolicyId: string;
   createdAt?: string;

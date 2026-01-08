@@ -97,4 +97,9 @@ export class OperatorController {
   async deleteOperator(@Param('id') id: string) {
     return this.operatorService.deleteOperator(id);
   }
+
+  @Delete('orphan/:id')
+  async deleteOrphanOperatorBadge(@Param('id') id: string) {
+    return this.operatorService.deleteOrphanOperatorBadge(id);
+  }
 }

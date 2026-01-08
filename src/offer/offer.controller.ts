@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Body,
   Controller,
@@ -8,10 +9,13 @@ import {
   Put,
   Patch,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { OfferService } from './offer.service.js';
 import { OfferCreateDto } from './offer-create.dto.js';
 import { OfferUpdateDto } from './offer-update.dto.js';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
 
 @Controller('offer')
 export class OfferController {
@@ -35,6 +39,11 @@ export class OfferController {
   ) {
     const includeArray = include ? include.split(',') : [];
     return this.offerService.getOffersByShipment(shipmentId, includeArray);
+  }
+
+  @Get('stakeholder/:stakeholderId')
+  async getOffersByStakeHolder(@Param('stakeholderId') stakeholderId: string) {
+    return this.offerService.getOffersByStakeHolder(stakeholderId);
   }
 
   @Get('mission/:missionId')
@@ -84,6 +93,20 @@ export class OfferController {
   @Put(':id')
   async updateOffer(@Param('id') id: string, @Body() offer: OfferCreateDto) {
     return this.offerService.updateOffer(id, offer);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('accept/:id')
+  async acceptOffer(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user.sub;
+    return this.offerService.acceptOfferBid(id, userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('reject/:id')
+  async rejectOffer(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user.sub;
+    return this.offerService.rejectOfferBid(id, userId);
   }
 
   @Patch(':id')

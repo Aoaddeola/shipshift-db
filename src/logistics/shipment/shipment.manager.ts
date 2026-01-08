@@ -88,7 +88,7 @@ export class ShipmentManager {
       }
 
       // Track initialization
-      if (state !== StepState.PENDING) {
+      if (state !== StepState.PENDING && state !== StepState.ACCEPTED) {
         hasInitializedStep = true;
       }
     }

@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 // src/modules/offer/consumers/offer.consumer.ts
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, ForbiddenException } from '@nestjs/common';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { OfferService } from '../offer.service.js';
 import { RabbitMQConfig } from '../../shared/rabbitmq/config/rabbitmq.config.js';
 import { OfferProducer } from '../producers/offer.producer.js';
-import { Offer } from '../offer.types.js';
+import { Offer, OfferState } from '../offer.types.js';
 import { ShipmentService } from '../../logistics/shipment/shipment.service.js';
 import { StepService } from '../../onchain/step/step.service.js';
-import { StepState } from '../../onchain/step/step.types.js';
 import { JourneyService } from '../../logistics/journey/journey.service.js';
 import { MissionService } from '../../logistics/mission/mission.service.js';
 import { StepFactory } from '../../onchain/step/step.factory.js';
+import { StepState } from '../../onchain/step/step.types.js';
 
 @Injectable()
 export class OfferConsumer {
@@ -58,18 +58,19 @@ export class OfferConsumer {
       channel.nack(msg, false, false);
     },
   })
-  async handleShipmentCreated(event: any) {
+  async handleShipmentCreated(_event: any) {
+    const event = _event.data;
     this.logger.log(
       `Processing shipment.created for shipment ${event.shipmentId}`,
     );
 
     // When a shipment is created, you might want to create initial offers
     // Example:
-    // await this.offerProducer.sendCreateOfferCommand(
-    //   event.shipmentId,
-    //   { missionId: event.missionId, journeyId: event.journeyId },
-    //   event.createdBy || 'system'
-    // );
+    await this.offerProducer.sendCreateOfferCommand(
+      event.shipmentId,
+      { missionId: event.missionId, journeyId: event.journeyId },
+      event.createdBy || 'system',
+    );
   }
 
   @RabbitSubscribe({
@@ -130,6 +131,54 @@ export class OfferConsumer {
 
   @RabbitSubscribe({
     exchange: RabbitMQConfig.EXCHANGES.APP_COMMANDS,
+    routingKey: RabbitMQConfig.OFFER.COMMANDS.CREATE,
+    queue: RabbitMQConfig.OFFER.QUEUES.COMMAND_CREATE, // 'offers.command.accept.bid.queue',
+    queueOptions: RabbitMQConfig.QUEUE_OPTIONS.WITH_DLQ,
+    errorHandler: (channel, msg, error) => {
+      const logger = new Logger('OfferConsumer-Create');
+      logger.error(
+        `Failed to process command ${RabbitMQConfig.OFFER.COMMANDS.CREATE}:`,
+        error?.message || 'Unknown error',
+      );
+      channel.nack(msg, false, false);
+    },
+  })
+  async handleCreateOfferCommand(_command: any) {
+    const command = _command.data;
+    this.logger.log(
+      `Processing ${RabbitMQConfig.OFFER.COMMANDS.CREATE} for offer ${command.offerId}`,
+    );
+
+    try {
+      // Get the offer
+      await this.offerService.createOffer({
+        shipmentId: command.shipmentId,
+        bid: command.bid,
+        state: OfferState.PENDING,
+      });
+
+      this.logger.log(`Offer created for shipment ${command.shipmentId}`);
+
+      return {
+        success: true,
+        message: 'Offer created successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to created offer for shipment ${command.shipmentId}:`,
+        error,
+      );
+      return {
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
+  @RabbitSubscribe({
+    exchange: RabbitMQConfig.EXCHANGES.APP_COMMANDS,
     routingKey: RabbitMQConfig.OFFER.COMMANDS.ACCEPT_BID,
     queue: RabbitMQConfig.OFFER.QUEUES.COMMAND_ACCEPT_BID, // 'offers.command.accept.bid.queue',
     queueOptions: RabbitMQConfig.QUEUE_OPTIONS.WITH_DLQ,
@@ -142,17 +191,44 @@ export class OfferConsumer {
       channel.nack(msg, false, false);
     },
   })
-  async handleAcceptBidCommand(command: any) {
-    this.logger.log(
-      `Processing ${RabbitMQConfig.OFFER.COMMANDS.ACCEPT_BID} for offer ${command.offerId}`,
-    );
+  async handleAcceptBidCommand(_command: any) {
+    const command = _command.data;
+    this.logger.log(`Processing accept.offer.bid for offer ${command.offerId}`);
 
     try {
       // Get the offer
-      const offer = await this.offerService.getOffer(command.data.offerId);
+      const offer = await this.offerService.getOffer(command.offerId, [
+        'journey',
+        'mission',
+      ]);
+
+      if (
+        offer.journey !== undefined &&
+        offer.journey.agentId !== command.acceptedBy
+      ) {
+        throw new ForbiddenException('Invalid agent');
+      }
+
+      if (
+        offer.mission !== undefined &&
+        offer.mission.curatorId !== command.acceptedBy
+      ) {
+        throw new ForbiddenException('Invalid curator');
+      }
 
       // Business logic for accepting bid
       // Example: Update offer status, create contract, etc.
+      const steps = await this.stepService.getStepsByOffer(offer.id);
+      await Promise.all(
+        steps.map(async (step) => {
+          await this.stepService.partialUpdateStep(step.id, {
+            state: StepState.ACCEPTED,
+          });
+        }),
+      );
+      await this.offerService.partialUpdateOffer(offer.id, {
+        state: OfferState.ACCEPTED,
+      });
 
       // Publish bid accepted event
       await this.offerProducer.publishOfferBidAccepted(
@@ -188,15 +264,45 @@ export class OfferConsumer {
     routingKey: RabbitMQConfig.OFFER.COMMANDS.REJECT_BID,
     queue: RabbitMQConfig.OFFER.QUEUES.COMMAND_REJECT_BID, // 'offers.command.reject.bid.queue',
   })
-  async handleRejectBidCommand(command: any) {
+  async handleRejectBidCommand(_command: any) {
+    const command = _command.data;
     this.logger.log(
       `Processing ${RabbitMQConfig.OFFER.COMMANDS.REJECT_BID} for offer ${command.offerId}`,
     );
 
     try {
-      const offer = await this.offerService.getOffer(command.offerId);
+      const offer = await this.offerService.getOffer(command.offerId, [
+        'journey',
+        'mission',
+      ]);
 
-      // Business logic for rejecting bid
+      if (
+        offer.journey !== undefined &&
+        offer.journey.agentId !== command.rejectedBy
+      ) {
+        throw new ForbiddenException('Invalid agent');
+      }
+
+      if (
+        offer.mission !== undefined &&
+        offer.mission.curatorId !== command.rejectedBy
+      ) {
+        throw new ForbiddenException('Invalid curator');
+      }
+
+      // Business logic for accepting bid
+      // Example: Update offer status, create contract, etc.
+      const steps = await this.stepService.getStepsByOffer(offer.id);
+      await Promise.all(
+        steps.map(async (step) => {
+          await this.stepService.partialUpdateStep(step.id, {
+            state: StepState.REJECTED,
+          });
+        }),
+      );
+      await this.offerService.partialUpdateOffer(offer.id, {
+        state: OfferState.REJECTED,
+      });
 
       // Publish bid rejected event
       await this.offerProducer.publishOfferBidRejected(
@@ -405,38 +511,42 @@ export class OfferConsumer {
     this.logger.log(
       `Internal: Processing ${RabbitMQConfig.OFFER.EVENTS.CREATED} for offer ${event.data.offerId}`,
     );
-    // Handle internal offer created events (e.g., update cache, analytics)
-    const offer = await this.offerService.getOffer(event.data.offerId);
+    try {
+      // Handle internal offer created events (e.g., update cache, analytics)
+      const offer = await this.offerService.getOffer(event.data.offerId);
 
-    // Business logic for accepting bid
-    // Example: Update offer status, create contract, etc.
-    const shipment = await this.shipmentService.getShipment(offer.shipmentId);
+      // Business logic for accepting bid
+      // Example: Update offer status, create contract, etc.
+      const shipment = await this.shipmentService.getShipment(offer.shipmentId);
 
-    const updatedShipment = offer.bid.journeyId
-      ? {
-          ...shipment,
-          journey: await this.journeyService.getJourney(offer.bid.journeyId),
-        }
-      : offer.bid.missionId
+      const updatedShipment = offer.bid.journeyId
         ? {
             ...shipment,
-            mission: await this.missionService.getMission(offer.bid.missionId),
+            journey: await this.journeyService.getJourney(offer.bid.journeyId),
           }
-        : shipment;
-    const steps = await this.stepFactory.stepFactory(updatedShipment);
+        : offer.bid.missionId
+          ? {
+              ...shipment,
+              mission: await this.missionService.getMission(
+                offer.bid.missionId,
+              ),
+            }
+          : shipment;
+      const steps = await this.stepFactory.stepFactory(updatedShipment);
+      await Promise.all(
+        steps.map(async (step) => {
+          const _step = step;
+          _step.offerId = event.data.offerId;
+          await this.stepService.createStep(_step);
+        }),
+      );
 
-    await this.offerService.partialUpdateOffer(offer.id, {
-      stepCount: steps.length,
-    });
-
-    await Promise.all(
-      steps.map(async (step) => {
-        const _step = step;
-        _step.state = StepState.ACCEPTED;
-        _step.offerId = event.data.offerId;
-        await this.stepService.createStep(_step);
-      }),
-    );
+      await this.offerService.partialUpdateOffer(offer.id, {
+        stepCount: steps.length,
+      });
+    } catch (error) {
+      this.logger.log('Step generation failed', error);
+    }
   }
 
   @RabbitSubscribe({

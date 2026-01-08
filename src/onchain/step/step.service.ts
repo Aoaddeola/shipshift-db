@@ -61,8 +61,10 @@ export class StepService {
       await this.database.put(newStep);
       this.logger.log(`Step created: ${id}`);
 
+      const step = await this.getStep(id, ['journey']);
+
       // Publish creation event
-      await this.stepProducer.publishStepCreated(newStep);
+      await this.stepProducer.publishStepAssigned(step);
 
       // If step is in a non-pending state, publish state change
       if (newStep.state !== StepState.PENDING) {
