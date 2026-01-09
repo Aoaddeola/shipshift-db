@@ -13,6 +13,7 @@ import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
 import { ColonyNodeService } from '../../onchain/colony-node/colony-node.service.js';
 import { OperatorBadgeService } from '../../onchain/operator-badge/operator-badge.service.js';
+import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
 
 @Injectable()
 export class OperatorService {
@@ -24,6 +25,8 @@ export class OperatorService {
     private colonyNodeService: ColonyNodeService,
     @Inject(OperatorBadgeService)
     private operatorBadgeService: OperatorBadgeService,
+    @Inject(ContactDetailsService)
+    private contactDetailsService: ContactDetailsService,
   ) {}
 
   async createOperator(
@@ -220,6 +223,7 @@ export class OperatorService {
     await this.operatorBadgeService.deleteOperatorBadge(
       operator.offchain.badge!.id,
     );
+    await this.contactDetailsService.removeByOwner(operator.id);
     await this.database.del(id);
     return {
       message: `Operator with address ${operator.onchain.opAddr} deleted successfully`,
@@ -230,6 +234,21 @@ export class OperatorService {
     const badges = await this.operatorBadgeService.getOperatorBadge(id);
     try {
       await this.getOperatorByAddress(badges.walletAddress);
+    } catch {
+      await this.database.del(id);
+      return {
+        message: `Oprhan Operator Badge ${id} deleted successfully`,
+      };
+    }
+    return {
+      message: `Operator Badge ${id} cannot be deleted.`,
+    };
+  }
+
+  async deleteOrphanContactDetails(id: string): Promise<{ message: string }> {
+    const contactDetails = await this.contactDetailsService.findOne(id);
+    try {
+      await this.getOperator(contactDetails.ownerId);
     } catch {
       await this.database.del(id);
       return {

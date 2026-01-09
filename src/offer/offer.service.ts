@@ -18,6 +18,7 @@ import { OfferProducer } from './producers/offer.producer.js';
 import { MissionService } from '../logistics/mission/mission.service.js';
 import { JourneyService } from '../logistics/journey/journey.service.js';
 import { ShipmentService } from '../logistics/shipment/shipment.service.js';
+import { AgentService } from '../profiles/agent/agent.service.js';
 
 @Injectable()
 export class OfferService {
@@ -29,6 +30,7 @@ export class OfferService {
     @Inject(MissionService) private missionService: MissionService,
     @Inject(JourneyService) private journeyService: JourneyService,
     @Inject(ShipmentService) private shipmentService: ShipmentService,
+    @Inject(AgentService) private agentService: AgentService,
   ) {}
 
   async createOffer(
@@ -178,20 +180,34 @@ export class OfferService {
 
   async getOffersByStakeHolder(stakeholderId: string): Promise<Offer[]> {
     const all = await this.getOffers(['shipment', 'mission', 'journey']);
-    const offers = all
-      .filter((offer) => offer.shipment !== undefined)
-      .filter((offer) => {
-        let valid = false;
-        if (offer.journey) {
-          valid = offer.journey.agentId === stakeholderId;
-        }
-        if (offer.mission) {
-          valid = valid || offer.mission.curatorId === stakeholderId;
-        }
-        return valid || offer.shipment!.senderId === stakeholderId;
-      });
+    const filteredOffers: Offer[] = [];
 
-    return offers;
+    for (const offer of all) {
+      if (!offer.shipment) continue;
+
+      let valid = false;
+
+      if (offer.journey) {
+        const agent = await this.agentService.getAgentsByOwner(
+          offer.journey.agentId,
+        );
+        valid =
+          offer.journey.agentId === stakeholderId ||
+          agent[0].operatorId === stakeholderId;
+      }
+
+      if (offer.mission) {
+        valid = valid || offer.mission.curatorId === stakeholderId;
+      }
+
+      valid = valid || offer.shipment.senderId === stakeholderId;
+
+      if (valid) {
+        filteredOffers.push(offer);
+      }
+    }
+
+    return filteredOffers;
   }
 
   async getOffersByMission(

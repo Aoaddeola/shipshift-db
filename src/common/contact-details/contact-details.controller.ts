@@ -14,8 +14,8 @@ import { ContactDetailsService } from './contact-details.service.js';
 import { ContactDetailsModel } from './contact-details.model.js';
 import { ContactDetails } from './contact-details.types.js';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
+// import { JwtNodeOpAuthGuard } from '../../guards/jwt-nodeOp-auth.guard.js';
 
-@UseGuards(JwtAuthGuard)
 @Controller('contact-details')
 export class ContactDetailsController {
   constructor(private readonly contactDetailsService: ContactDetailsService) {}
@@ -28,16 +28,19 @@ export class ContactDetailsController {
     return this.contactDetailsService.create(contactDetails);
   }
 
+  // @UseGuards(JwtNodeOpAuthGuard)
   @Get()
   async findAll(): Promise<ContactDetailsModel[]> {
     return this.contactDetailsService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<ContactDetailsModel> {
     return this.contactDetailsService.findOne(id);
   }
 
+  // TODO: Multiple
   @Get('owner/:ownerId')
   async findByOwner(
     @Param('ownerId') ownerId: string,
@@ -45,13 +48,7 @@ export class ContactDetailsController {
     return this.contactDetailsService.findByOwner(ownerId);
   }
 
-  @Get('session/:session')
-  async findBySession(
-    @Param('session') session: string,
-  ): Promise<ContactDetailsModel> {
-    return this.contactDetailsService.findBySession(session);
-  }
-
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -66,6 +63,7 @@ export class ContactDetailsController {
     return this.contactDetailsService.update(id, contactDetails);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     return this.contactDetailsService.remove(id);

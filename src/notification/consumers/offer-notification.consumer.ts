@@ -12,6 +12,7 @@ import { ContactDetailsService } from '../../common/contact-details/contact-deta
 import { OfferService } from '../../offer/offer.service.js';
 import { JourneyService } from '../../logistics/journey/journey.service.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
+import { SingleNotificationEntityDto } from '../notification.dto.js';
 
 @Injectable()
 export class OfferNotificationConsumer {
@@ -35,6 +36,9 @@ export class OfferNotificationConsumer {
   async handleOfferAssigned(_message: any) {
     const message = _message.data;
     this.logger.debug(
+      `Processing notifications event for offer: ${JSON.stringify(message)}`,
+    );
+    this.logger.debug(
       `Processing notifications event for offer: ${message.offerId}`,
     );
 
@@ -42,7 +46,7 @@ export class OfferNotificationConsumer {
     let userId;
 
     try {
-      if (message.bid.missionId !== undefined) {
+      if (message.bid.missionId !== undefined || message.bid.missionId === '') {
         const offer = await this.offerService.getOffer(message.offerId, [
           'mission',
         ]);
@@ -50,7 +54,10 @@ export class OfferNotificationConsumer {
           await this.contactDetailsService.findByOwner(offer.mission!.curatorId)
         )[0];
         userId = offer.mission!.curatorId;
-      } else if (message.bid.journeyId !== undefined) {
+      } else if (
+        message.bid.journeyId !== undefined ||
+        message.bid.journeyId === ''
+      ) {
         const journey = await this.journeyService.getJourney(
           message.bid.journeyId,
           ['agent'],
@@ -65,7 +72,7 @@ export class OfferNotificationConsumer {
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { createdAt, updatedAt, ...cDetails } = contactDetails.dataValues;
-      await this.notificationService.processSingleNotification({
+      const notification: SingleNotificationEntityDto = {
         userId: userId,
         recipientMap: createRecipientMapConcise(cDetails),
         urgency: 'low',
@@ -87,7 +94,8 @@ export class OfferNotificationConsumer {
           missionId:
             message.bid.missionId !== undefined ? message.bid.missionId : '',
         },
-      });
+      };
+      await this.notificationService.processSingleNotification(notification);
     } catch (error) {
       this.logger.error(
         `Failed to process system event for offer: ${message.offerId}:`,

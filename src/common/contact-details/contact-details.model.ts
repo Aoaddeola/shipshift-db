@@ -113,7 +113,7 @@ export class ContactDetailsModel extends Model {
    */
   @BeforeCreate
   static validateBeforeCreate(instance: ContactDetailsModel) {
-    if (!instance.phone && !instance.sms && !instance.email) {
+    if (!instance.session && !instance.email) {
       throw new Error(
         'At least one contact method (phone, sms, or email) must be provided',
       );
@@ -125,7 +125,7 @@ export class ContactDetailsModel extends Model {
    */
   @BeforeUpdate
   static validateBeforeUpdate(instance: ContactDetailsModel) {
-    if (!instance.phone && !instance.sms && !instance.email) {
+    if (!instance.session && !instance.email) {
       throw new Error(
         'At least one contact method (phone, sms, or email) must be provided',
       );

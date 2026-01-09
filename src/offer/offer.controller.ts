@@ -16,6 +16,7 @@ import { OfferService } from './offer.service.js';
 import { OfferCreateDto } from './offer-create.dto.js';
 import { OfferUpdateDto } from './offer-update.dto.js';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
+import { JwtNodeOpAuthGuard } from '../guards/jwt-nodeOp-auth.guard.js';
 
 @Controller('offer')
 export class OfferController {
@@ -64,6 +65,7 @@ export class OfferController {
     return this.offerService.getOffersByJourney(journeyId, includeArray);
   }
 
+  @UseGuards(JwtNodeOpAuthGuard)
   @Get()
   async getOffers(
     @Query('shipmentId') shipmentId?: string,

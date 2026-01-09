@@ -1,9 +1,9 @@
 export interface CommunicationPreference {
-  email: true;
-  sms: true;
-  push: true;
-  session: true;
-  websocket: true;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+  session: boolean;
+  websocket: boolean;
 }
 
 /**

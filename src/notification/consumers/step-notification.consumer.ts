@@ -10,6 +10,7 @@ import {
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
 import { UserService } from '../../users/user/user.service.js';
+import { SingleNotificationEntityDto } from '../notification.dto.js';
 
 @Injectable()
 export class StepNotificationConsumer {
@@ -45,29 +46,30 @@ export class StepNotificationConsumer {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { createdAt, updatedAt, ...cDetails } = contactDetails.dataValues;
+    const notification: SingleNotificationEntityDto = {
+      userId: message.assigneeId,
+      recipientMap: createRecipientMapConcise(cDetails),
+      urgency: 'low',
+      userPreferences: cDetails.preference,
+      isUserOnline: false,
+      event: 'step.assigned',
+      userName: agent!.dataValues.name || 'User',
+      locale: 'en',
+      status: NotificationStatus.PENDING,
+      retryCount: 0,
+      channelsToUse: [],
+      variables: {
+        stepId: message.stepId,
+        shipmentId: message.shipmentId,
+        journeyId: message.journeyId,
+        agentId: message.agentId,
+        operatorId: message.operatorId,
+        dueDate: '100000',
+      },
+    };
 
     try {
-      await this.notificationService.processSingleNotification({
-        userId: message.assigneeId,
-        recipientMap: createRecipientMapConcise(cDetails),
-        urgency: 'low',
-        userPreferences: cDetails.preference,
-        isUserOnline: false,
-        event: 'step.assigned',
-        userName: agent!.name,
-        locale: 'en',
-        status: NotificationStatus.PENDING,
-        retryCount: 0,
-        channelsToUse: [],
-        variables: {
-          stepId: message.stepId,
-          shipmentId: message.shipmentId,
-          journeyId: message.journeyId,
-          agentId: message.agentId,
-          operatorId: message.operatorId,
-          dueDate: '100000',
-        },
-      });
+      await this.notificationService.processSingleNotification(notification);
     } catch (error) {
       this.logger.error(
         `Failed to process system event ${message.type}:`,
@@ -98,29 +100,30 @@ export class StepNotificationConsumer {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { createdAt, updatedAt, ...cDetails } = contactDetails.dataValues;
+    const notification: SingleNotificationEntityDto = {
+      userId: message.assigneeId,
+      recipientMap: createRecipientMapConcise(cDetails),
+      urgency: 'low',
+      userPreferences: cDetails.preference,
+      isUserOnline: false,
+      event: 'step.assigned',
+      userName: agent!.dataValues.name || 'User',
+      locale: 'en',
+      status: NotificationStatus.PENDING,
+      retryCount: 0,
+      channelsToUse: [],
+      variables: {
+        stepId: message.stepId,
+        shipmentId: message.shipmentId,
+        journeyId: message.journeyId,
+        agentId: message.agentId,
+        operatorId: message.operatorId,
+        dueDate: '100000',
+      },
+    };
 
     try {
-      await this.notificationService.processSingleNotification({
-        userId: message.assigneeId,
-        recipientMap: createRecipientMapConcise(cDetails),
-        urgency: 'low',
-        userPreferences: cDetails.preference,
-        isUserOnline: false,
-        event: 'step.assigned',
-        userName: agent!.name,
-        locale: 'en',
-        status: NotificationStatus.PENDING,
-        retryCount: 0,
-        channelsToUse: [],
-        variables: {
-          stepId: message.stepId,
-          shipmentId: message.shipmentId,
-          journeyId: message.journeyId,
-          agentId: message.agentId,
-          operatorId: message.operatorId,
-          dueDate: '100000',
-        },
-      });
+      await this.notificationService.processSingleNotification(notification);
     } catch (error) {
       this.logger.error(
         `Failed to process system event ${message.type}:`,

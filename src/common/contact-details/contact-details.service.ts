@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ContactDetailsModel } from './contact-details.model.js';
 import { ContactDetails } from './contact-details.types.js';
 
 @Injectable()
 export class ContactDetailsService {
+  private logger = new Logger(ContactDetailsService.name);
   constructor(
     @InjectModel(ContactDetailsModel)
     private contactDetailsModel: typeof ContactDetailsModel,
@@ -13,6 +14,7 @@ export class ContactDetailsService {
   async create(
     contactDetails: Omit<ContactDetails, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContactDetailsModel> {
+    this.logger.debug(contactDetails);
     return this.contactDetailsModel.create(contactDetails);
   }
 
@@ -84,6 +86,18 @@ export class ContactDetailsService {
     const record = await this.findOne(id);
     if (record) {
       await record.destroy();
+    }
+  }
+
+  async removeByOwner(id: string): Promise<void> {
+    const records = await this.findByOwner(id);
+    if (records.length > 0) {
+      await Promise.all(
+        records.map(async (record) => {
+          this.logger.log('Deleting contact details: ' + record.id);
+          await record.destroy();
+        }),
+      );
     }
   }
 }

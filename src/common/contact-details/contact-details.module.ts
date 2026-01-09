@@ -4,9 +4,14 @@ import { ContactDetailsController } from './contact-details.controller.js';
 import { ContactDetailsService } from './contact-details.service.js';
 import { JwtModule } from '@nestjs/jwt';
 import { ContactDetailsModel } from './contact-details.model.js';
+import { ColonyNodeModule } from '../../onchain/colony-node/colony-node.module.js';
 
 @Module({
-  imports: [SequelizeModule.forFeature([ContactDetailsModel]), JwtModule],
+  imports: [
+    SequelizeModule.forFeature([ContactDetailsModel]),
+    JwtModule,
+    ColonyNodeModule,
+  ],
   controllers: [ContactDetailsController],
   providers: [ContactDetailsService],
   exports: [ContactDetailsService],
