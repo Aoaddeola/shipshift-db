@@ -655,11 +655,6 @@ export class ShipmentConsumer {
     queue: RabbitMQConfig.SHIPMENT.QUEUES.EVENT_STATUS_CHANGED,
     queueOptions: RabbitMQConfig.Utils.withDLQ(
       RabbitMQConfig.SHIPMENT.QUEUES.EVENT_STATUS_CHANGED,
-      {
-        arguments: {
-          'x-max-priority': 5,
-        },
-      },
     ),
   })
   async handleInternalShipmentStatusChanged(event: any) {
