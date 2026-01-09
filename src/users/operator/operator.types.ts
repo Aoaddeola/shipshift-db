@@ -40,6 +40,7 @@ export interface OnchainOperator {
  * Offchain Operator Parameters
  */
 export interface OffchainOperator {
+  name: string;
   colonyNodeId: string;
   colonyNode?: ColonyNode;
   badgeId: string;

@@ -16,6 +16,7 @@ import { OperatorBadgeModule } from '../onchain/operator-badge/operator-badge.mo
 import { UserModule } from '../users/user/user.module.js';
 import { AgentMPFProofModule } from '../agent-mpf-proof/agent-mpf-proof.module.js';
 import { ColonyNodeModule } from '../onchain/colony-node/colony-node.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ColonyNodeModule } from '../onchain/colony-node/colony-node.module.js';
     UserModule,
     AgentMPFProofModule,
     ColonyNodeModule,
+    JwtModule,
   ],
   controllers: [OfferController],
   providers: [OfferService, OfferProducer, OfferConsumer, StepFactory],

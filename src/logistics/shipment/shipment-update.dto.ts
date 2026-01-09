@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsDateString,
   IsNotEmpty,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ShipmentStatus } from './shipment.types.js';
@@ -32,6 +33,14 @@ export class ShipmentUpdateDto {
     description: 'Wallet address of sender',
   })
   senderWalletAddress?: string;
+
+  @IsBoolean()
+  @ApiProperty({
+    example: 'true',
+    description:
+      'Flag to determine is shipment can be displayed in marketplace',
+  })
+  marketplaceEligible?: boolean;
 
   @IsString()
   @IsOptional()

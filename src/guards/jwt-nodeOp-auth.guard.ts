@@ -11,7 +11,6 @@ import { Request } from 'express';
 import { AppConfigService } from '../config/config.service.js';
 import { UserType } from '../users/user/user.types.js';
 import { ColonyNodeService } from '../onchain/colony-node/colony-node.service.js';
-import { convertAddrToRaw } from '../auth/operator/auth.controller.js';
 
 @Injectable()
 export class JwtNodeOpAuthGuard implements CanActivate {
@@ -36,7 +35,7 @@ export class JwtNodeOpAuthGuard implements CanActivate {
       request.user = payload;
       const colonyNodes =
         await this.colonyNodeService.getColonyNodesByOperatorAddress(
-          convertAddrToRaw(payload.walletAddress),
+          payload.walletAddress,
         );
       const peerId = (await this.colonyNodeService.getNodePeerId()).toString();
       if (

@@ -63,6 +63,14 @@ class StepOnChainDto {
   })
   spRecipient?: string;
 
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'addr1q6klmnopqr4321098765abcdef1234567890abcdef1234567890abcdef',
+    description: 'Operator wallet address',
+  })
+  spOperator?: string;
+
   @IsArray()
   @ApiProperty({
     example: ['addr1q5tuvxyz1122334455', 'policyid.assetname'],

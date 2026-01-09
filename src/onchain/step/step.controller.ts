@@ -8,11 +8,14 @@ import {
   Put,
   Patch,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { StepService } from './step.service.js';
 import { StepCreateDto } from './step-create.dto.js';
 import { StepUpdateDto } from './step-update.dto.js';
 import { StepState } from './step.types.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
 
 @Controller('step')
 export class StepController {
@@ -1143,6 +1146,13 @@ export class StepController {
   @Put(':id')
   async updateStep(@Param('id') id: string, @Body() step: StepCreateDto) {
     return this.stepService.updateStep(id, step);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  async acceptStep(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user.sub as string;
+    return this.stepService.changeStepState(id, StepState.ACCEPTED, userId);
   }
 
   @Patch(':id')

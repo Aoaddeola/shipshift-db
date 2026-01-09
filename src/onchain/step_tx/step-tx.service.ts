@@ -24,8 +24,8 @@ export class StepTxService {
     const entry: StepTxDbEntry = {
       ...stepTx,
       id,
-      createdAt: stepTx.createdAt || now,
-      updatedAt: stepTx.updatedAt || now,
+      createdAt: stepTx.createdAt || now.toISOString(),
+      updatedAt: stepTx.updatedAt || now.toISOString(),
     };
 
     await this.database.put(entry);

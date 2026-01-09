@@ -13,6 +13,8 @@ import { StepConsumer } from './consumers/step.consumer.js';
 import { StepProducer } from './producers/step.producer.js';
 import { StepFactory } from './step.factory.js';
 import { OperatorBadgeModule } from '../operator-badge/operator-badge.module.js';
+import { ContactDetailsModule } from '../../common/contact-details/contact-details.module.js';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -27,9 +29,11 @@ import { OperatorBadgeModule } from '../operator-badge/operator-badge.module.js'
     ColonyNodeModule,
     AgentModule,
     UserModule,
+    ContactDetailsModule,
+    JwtModule,
   ],
   controllers: [StepController],
-  providers: [StepService, StepConsumer, StepProducer, StepFactory],
-  exports: [StepService],
+  providers: [StepConsumer, StepService, StepProducer, StepFactory],
+  exports: [StepService, StepConsumer],
 })
 export class StepModule {}

@@ -44,6 +44,16 @@ export class OperatorBadgeCreateDto
   statusAddress: string;
 
   @IsString()
+  // @Matches(ADDRESS_REGEX, {
+  //   message: 'Operator badge address must be a valid Cardano address',
+  // })
+  @ApiProperty({
+    example: 'addr1q7defghij5678901234abcdef1234567890abcdef1234567890abcdef',
+    description: 'Operator agent script address',
+  })
+  operatorAgentAddr?: string;
+
+  @IsString()
   @IsNotEmpty()
   // @Matches(ADDRESS_REGEX, {
   //   message: 'Operator badge address must be a valid Cardano address',

@@ -120,6 +120,14 @@ class OffchainOperatorDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
+    example: 'XYZ logistics ltd.',
+    description: 'Operator name',
+  })
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
     example: 'colony-node-456',
     description: 'ID of the colony node',
   })

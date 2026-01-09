@@ -14,8 +14,8 @@ import { OAuthProvider } from '../../auth/oauth/oauth-provider.entity.js';
 import { OAuthProfile } from '../../auth/oauth/oauth.service.js';
 import { randomUUID } from 'node:crypto';
 import { Op } from 'sequelize';
-import { EmailService } from '../../notification/email.service.js';
 import { UserType } from './user.types.js';
+import { EmailService } from '../../notification/channels/email.service.js';
 
 @Injectable()
 export class UserService {

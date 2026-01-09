@@ -91,7 +91,7 @@ export class OperatorBadgeController {
     return this.operatorBadgeService.getOperatorBadgesByPolicy(policyId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteOperatorBadge(@Param('id') id: string) {
     return this.operatorBadgeService.deleteOperatorBadge(id);

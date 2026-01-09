@@ -29,12 +29,13 @@ import { TaskModule } from './testnet/task/task.module.js';
 import { TaskValidationModule } from './testnet/task-validation/task-validation.module.js';
 import { AgentMetricsModule } from './metrics/agent/agent-metrics.module.js';
 import { OperatorStatsModule } from './stats/stats.module.js';
-import { NotificationModule } from './notification/notification.module.js';
 import { AgentMPFProofModule } from './agent-mpf-proof/agent-mpf-proof.module.js';
 import { RabbitMQRootModule } from './shared/rabbitmq/rabbitmq.module.js';
 import { MessagingModule } from './shared/messaging/messaging.module.js';
 import { BugReportModule } from './bug-report/bug-report.module.js';
 import { OfferModule } from './offer/offer.module.js';
+import { NotificationModule } from './notification/notification.module.js';
+import { NotificationTemplateModule } from './notification-template/notification-template.module.js';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { OfferModule } from './offer/offer.module.js';
     RabbitMQRootModule.forRoot(),
     MessagingModule,
     OfferModule,
+    NotificationTemplateModule,
 
     BugReportModule,
   ],

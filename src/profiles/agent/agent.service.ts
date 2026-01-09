@@ -402,6 +402,12 @@ export class AgentService {
       agent.operatorId,
     );
 
+    this.logger.log(
+      'User Key Hashes',
+      resolvePaymentKeyHash(agent.onChainAddress),
+      resolvePaymentKeyHash(operator.onchain.opAddr),
+    );
+
     try {
       if (agentProofs.length === 0) {
         trie = new Trie();

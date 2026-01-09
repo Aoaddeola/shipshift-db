@@ -3,7 +3,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsDate,
+  IsDateString,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { StepTxDbEntry } from './types.js';
@@ -36,22 +36,22 @@ export class StepTxCreateDto implements Omit<StepTxDbEntry, 'id'> {
   state: StepState;
 
   @IsOptional()
-  @IsDate()
+  @IsDateString()
   @Type(() => Date)
   @ApiProperty({
     description: 'Creation timestamp',
     example: '2023-01-01T00:00:00.000Z',
     required: false,
   })
-  createdAt?: Date;
+  createdAt?: string;
 
   @IsOptional()
-  @IsDate()
+  @IsDateString()
   @Type(() => Date)
   @ApiProperty({
     description: 'Last update timestamp',
     example: '2023-01-01T00:00:00.000Z',
     required: false,
   })
-  updatedAt?: Date;
+  updatedAt?: string;
 }

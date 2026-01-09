@@ -65,6 +65,14 @@ class StepOnChainUpdateDto {
   })
   spRecipient?: string;
 
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'addr1q6klmnopqr4321098765abcdef1234567890abcdef1234567890abcdef',
+    description: 'Updated operator wallet address',
+  })
+  spOperator?: string;
+
   @IsArray()
   @IsOptional()
   @ApiPropertyOptional({

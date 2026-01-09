@@ -7,46 +7,6 @@ export const RabbitMQConfig = {
     APP_DLX: 'app.dlx', // Dead letter exchange
   },
 
-  // ==================== ROUTING KEY PATTERNS ====================
-  ROUTING_KEY_PATTERNS: {
-    // Event patterns
-    EVENT: {
-      CREATED: '{entity}.created',
-      UPDATED: '{entity}.updated',
-      DELETED: '{entity}.deleted',
-      STATE_CHANGED: '{entity}.state.changed',
-      STATUS_CHANGED: '{entity}.status.changed',
-      ASSIGNED: '{entity}.assigned',
-      UNASSIGNED: '{entity}.unassigned',
-      COMPLETED: '{entity}.completed',
-      CANCELLED: '{entity}.cancelled',
-      FAILED: '{entity}.failed',
-      MILESTONE: '{entity}.milestone.{milestone}',
-      BATCH_UPDATED: '{entity}.batch.updated',
-      PAYMENT_PROCESSED: '{entity}.payment.processed',
-      PAYMENT_FAILED: '{entity}.payment.failed',
-    },
-
-    // Command patterns
-    COMMAND: {
-      PROCESS: 'process.{entity}',
-      ASSIGN: 'assign.{entity}',
-      UPDATE: 'update.{entity}',
-      DELETE: 'delete.{entity}',
-      VALIDATE: 'validate.{entity}',
-      NOTIFY: 'notify.{entity}',
-    },
-
-    // RPC patterns
-    RPC: {
-      GET: 'rpc.get.{entity}',
-      CREATE: 'rpc.create.{entity}',
-      UPDATE: 'rpc.update.{entity}',
-      VALIDATE: 'rpc.validate.{entity}',
-      QUERY: 'rpc.query.{entity}',
-    },
-  },
-
   // ==================== STEP MODULE SPECIFIC ====================
   STEP: {
     // Entity name
@@ -145,8 +105,8 @@ export const RabbitMQConfig = {
       DELIVERED: 'shipment.delivered',
       CANCELLED: 'shipment.cancelled',
       FAILED: 'shipment.failed',
-      PAYMENT_PROCESSED: 'shipment.payment.processed',
-      PAYMENT_FAILED: 'shipment.payment.failed',
+      // PAYMENT_PROCESSED: 'shipment.payment.processed',
+      // PAYMENT_FAILED: 'shipment.payment.failed',
     },
 
     // Commands
@@ -504,6 +464,28 @@ export const RabbitMQConfig = {
     },
   },
 
+  NOTIFICATION: {
+    ENTITY: 'notification',
+
+    EVENTS: {
+      REQUESTED: 'notification.requested',
+      SENT: 'notification.sent',
+      FAILED: 'notification.failed',
+      READ: 'notification.read',
+    },
+
+    COMMANDS: {
+      SEND: 'send.notification',
+      RETRY: 'retry.notification',
+      CANCEL: 'cancel.notification',
+    },
+
+    QUEUES: {
+      PROCESS_NOTIFICATION: 'notifications.process.queue',
+      RETRY_NOTIFICATION: 'notifications.retry.queue',
+      DLQ: 'notifications.dlq',
+    },
+  },
   // ==================== QUEUE OPTIONS TEMPLATES ====================
   QUEUE_OPTIONS: {
     DEFAULT: {
