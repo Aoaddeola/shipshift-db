@@ -59,8 +59,6 @@ export class EmailService {
     const port = parseInt(
       process.env.EMAIL_PORT! || this.configService.get('EMAIL_PORT')!,
     );
-    const secure =
-      process.env.EMAIL_SECURE! || this.configService.get('EMAIL_SECURE');
     const user =
       process.env.EMAIL_USER! || this.configService.get('EMAIL_USER');
     const pass =
@@ -78,7 +76,7 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host: host,
       port: port,
-      secure: secure,
+      secure: process.env.NODE_ENV === 'development' ? true : false,
       auth: {
         user: user,
         pass: pass,
