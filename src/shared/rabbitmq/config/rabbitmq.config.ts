@@ -500,7 +500,7 @@ export const RabbitMQConfig = {
       arguments: {
         'x-dead-letter-exchange': 'app.dlx',
         'x-dead-letter-routing-key': 'dlq.{queueName}',
-        'x-message-ttl': 60000, // 60 seconds
+        'x-message-ttl': 300000, // 60 seconds
         'x-max-length': 10000,
       },
     },

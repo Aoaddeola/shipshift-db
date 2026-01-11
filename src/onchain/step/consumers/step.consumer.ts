@@ -39,11 +39,6 @@ export class StepConsumer {
     queue: RabbitMQConfig.STEP.QUEUES.EVENT_CREATED, // 'offers.integration.shipment.created.queue',
     queueOptions: RabbitMQConfig.Utils.withDLQ(
       RabbitMQConfig.STEP.QUEUES.EVENT_CREATED, // 'offers.integration.shipment.created.queue',
-      {
-        /* arguments: {
-          'x-message-ttl': 300000,
-        }, */
-      },
     ),
     errorHandler: (channel, msg, error) => {
       Logger.error(
