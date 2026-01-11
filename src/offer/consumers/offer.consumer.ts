@@ -43,11 +43,11 @@ export class OfferConsumer {
     queue: RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED, // 'offers.integration.shipment.created.queue',
     queueOptions: RabbitMQConfig.Utils.withDLQ(
       RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED, // 'offers.integration.shipment.created.queue',
-      {
+      /* {
         arguments: {
           'x-message-ttl': 300000,
         },
-      },
+      }, */
     ),
     errorHandler: (channel, msg, error) => {
       const logger = new Logger('OfferConsumer-ShipmentCreated');

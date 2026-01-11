@@ -26,7 +26,7 @@ import {
   Step,
   StepState,
 } from '../onchain/step/step.types.js';
-import { ContactDetailsService } from '../common/contact-details/contact-details.service.js';
+import { ContactDetailsService } from '../settings/contact-details/contact-details.service.js';
 import { UserService } from '../users/user/user.service.js';
 
 @Injectable()

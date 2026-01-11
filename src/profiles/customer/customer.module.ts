@@ -3,7 +3,7 @@ import { OrbitDBModule } from '../../db/orbitdb/orbitdb.module.js';
 import { CustomerController } from './customer.controller.js';
 import { CustomerService } from './customer.service.js';
 import { IPFSAccessController } from '@orbitdb/core';
-import { ContactDetailsModule } from '../../common/contact-details/contact-details.module.js';
+import { ContactDetailsModule } from '../../settings/contact-details/contact-details.module.js';
 
 @Module({
   imports: [

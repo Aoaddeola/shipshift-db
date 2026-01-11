@@ -8,7 +8,7 @@ import {
   NotificationStatus,
 } from '../notification.types.js';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
+import { ContactDetailsService } from '../../settings/contact-details/contact-details.service.js';
 import { UserService } from '../../users/user/user.service.js';
 import { SingleNotificationEntityDto } from '../notification.dto.js';
 

@@ -1,4 +1,4 @@
-import { ContactDetails } from '../common/contact-details/contact-details.types.js';
+import { ContactDetails } from '../settings/contact-details/contact-details.types.js';
 
 // notification.orbitdb.types.ts
 export enum NotificationType {

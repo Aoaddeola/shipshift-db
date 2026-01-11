@@ -13,7 +13,7 @@ import { StepConsumer } from './consumers/step.consumer.js';
 import { StepProducer } from './producers/step.producer.js';
 import { StepFactory } from './step.factory.js';
 import { OperatorBadgeModule } from '../operator-badge/operator-badge.module.js';
-import { ContactDetailsModule } from '../../common/contact-details/contact-details.module.js';
+import { ContactDetailsModule } from '../../settings/contact-details/contact-details.module.js';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
