@@ -83,7 +83,6 @@ export class ContactDetailsModel extends Model {
    */
   @AllowNull(false)
   @Length({ min: 1, max: 100 })
-  @Unique('session_unique')
   @Column
   session!: string;
 

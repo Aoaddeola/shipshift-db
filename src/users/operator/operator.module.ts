@@ -6,7 +6,7 @@ import { IPFSAccessController } from '@orbitdb/core';
 import { ColonyNodeModule } from '../../onchain/colony-node/colony-node.module.js';
 import { OperatorBadgeModule } from '../../onchain/operator-badge/operator-badge.module.js';
 import { JwtModule } from '@nestjs/jwt';
-import { ContactDetailsModule } from '../../common/contact-details/contact-details.module.js';
+import { ContactDetailsModule } from '../../settings/contact-details/contact-details.module.js';
 
 @Module({
   imports: [

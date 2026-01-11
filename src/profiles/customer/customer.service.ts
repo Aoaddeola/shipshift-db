@@ -5,7 +5,7 @@ import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { CustomerCreateDto } from './customer-create.dto.js';
 import { CustomerUpdateDto } from './customer-update.dto.js';
-import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
+import { ContactDetailsService } from '../../settings/contact-details/contact-details.service.js';
 
 @Injectable()
 export class CustomerService {

@@ -14,7 +14,7 @@ import { MissionModule } from './logistics/mission/mission.module.js';
 import { ParcelModule } from './logistics/parcel/parcel.module.js';
 import { ShipmentModule } from './logistics/shipment/shipment.module.js';
 import { LocationModule } from './common/location/location.module.js';
-import { ContactDetailsModule } from './common/contact-details/contact-details.module.js';
+import { ContactDetailsModule } from './settings/contact-details/contact-details.module.js';
 import { OAuthModule } from './auth/oauth/oauth.module.js';
 import { UserModule } from './users/user/user.module.js';
 import { UserAuthModule } from './auth/users/auth.module.js';
@@ -36,6 +36,9 @@ import { BugReportModule } from './bug-report/bug-report.module.js';
 import { OfferModule } from './offer/offer.module.js';
 import { NotificationModule } from './notification/notification.module.js';
 import { NotificationTemplateModule } from './notification-template/notification-template.module.js';
+import { LocalizationSettingsModule } from './settings/localization-settings/localization-settings.module.js';
+import { SystemSettingsModule } from './settings/system-settings/system-settings.module.js';
+import { BankAccountModule } from './settings/bank-account/bank-account.module.js';
 
 @Module({
   imports: [
@@ -97,6 +100,11 @@ import { NotificationTemplateModule } from './notification-template/notification
     NotificationTemplateModule,
 
     BugReportModule,
+
+    // Settings
+    SystemSettingsModule,
+    LocalizationSettingsModule,
+    BankAccountModule,
   ],
   providers: [],
 })

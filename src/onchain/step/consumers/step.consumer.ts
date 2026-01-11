@@ -1,22 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // src/modules/step/consumers/step.consumer.ts
-import { Injectable, Logger, Inject, Controller } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { RabbitRPC } from '../../../shared/rabbitmq/decorators/index.js';
 import { RabbitMQConfig } from '../../../shared/rabbitmq/config/rabbitmq.config.js';
 import { MessageBusService } from '../../../shared/rabbitmq/rabbitmq.service.js';
 import { StepService } from '../step.service.js';
 import {
-  Stakeholder,
-  StakeholderRole,
-  Step,
   StepState,
 } from '../step.types.js';
-import { NotificationService } from '../../../notification/notification.service.js';
 import { NotificationTemplateService } from '../../../notification-template/notification-template.service.js';
-import { NotificationEntity } from '../../../notification/notification.types.js';
-import { ContactDetailsService } from '../../../common/contact-details/contact-details.service.js';
-import { UserService } from '../../../users/user/user.service.js';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { StepProducer } from '../producers/step.producer.js';
 
@@ -47,9 +40,9 @@ export class StepConsumer {
     queueOptions: RabbitMQConfig.Utils.withDLQ(
       RabbitMQConfig.STEP.QUEUES.EVENT_CREATED, // 'offers.integration.shipment.created.queue',
       {
-        arguments: {
+        /* arguments: {
           'x-message-ttl': 300000,
-        },
+        }, */
       },
     ),
     errorHandler: (channel, msg, error) => {
@@ -227,30 +220,29 @@ export class StepConsumer {
     }
   }
 
-  // /**
-  //  * Handle step.assigned event
-  //  */
-  // @RabbitSubscribe({
-  //   exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
-  //   routingKey: RabbitMQConfig.STEP.EVENTS.ASSIGNED,
-  //   queue: RabbitMQConfig.STEP.QUEUES.EVENT_ASSIGNED,
-  //   queueOptions: RabbitMQConfig.QUEUE_OPTIONS.DEFAULT,
-  //   errorHandler: (channel, msg, error) => {
-  //     const logger = new Logger('StepConsumer-StepAssigned');
-  //     logger.error(
-  //       `Failed to process step.assigned:`,
-  //       error?.message || 'Unknown error',
-  //     );
-  //     channel.nack(msg, false, false);
-  //   },
-  // })
-  // async handleStepAssigned(_event: any): Promise<void> {
-  //   const event = _event.data;
-  //   this.logger.log(
-  //     `Processing ${RabbitMQConfig.STEP.EVENTS.ASSIGNED} for step ${event.stepId}`,
-  //   );
-
-  // }
+  /**
+   * Handle step.assigned event
+   */
+  @RabbitSubscribe({
+    exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
+    routingKey: RabbitMQConfig.STEP.EVENTS.ASSIGNED,
+    queue: RabbitMQConfig.STEP.QUEUES.EVENT_ASSIGNED,
+    queueOptions: RabbitMQConfig.QUEUE_OPTIONS.DEFAULT,
+    errorHandler: (channel, msg, error) => {
+      const logger = new Logger('StepConsumer-StepAssigned');
+      logger.error(
+        `Failed to process step.assigned:`,
+        error?.message || 'Unknown error',
+      );
+      channel.nack(msg, false, false);
+    },
+  })
+  async handleStepAssigned(_event: any): Promise<void> {
+    const event = _event.data;
+    this.logger.log(
+      `Processing ${RabbitMQConfig.STEP.EVENTS.ASSIGNED} for step ${event.stepId}`,
+    );
+  }
 
   /**
    * Handle steps.batch.updated event

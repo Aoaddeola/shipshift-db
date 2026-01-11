@@ -14,7 +14,6 @@ export class ContactDetailsService {
   async create(
     contactDetails: Omit<ContactDetails, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContactDetailsModel> {
-    this.logger.debug(contactDetails);
     return this.contactDetailsModel.create(contactDetails);
   }
 

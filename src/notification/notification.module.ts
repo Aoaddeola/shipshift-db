@@ -6,7 +6,7 @@ import { OrbitDBModule } from '../db/orbitdb/orbitdb.module.js';
 import { IPFSAccessController } from '@orbitdb/core';
 import { NotificationConsumer } from './consumers/notification.consumer.js';
 import { StepModule } from '../onchain/step/step.module.js';
-import { ContactDetailsModule } from '../common/contact-details/contact-details.module.js';
+import { ContactDetailsModule } from '../settings/contact-details/contact-details.module.js';
 import { UserModule } from '../users/user/user.module.js';
 import { StepNotificationConsumer } from './consumers/step-notification.consumer.js';
 import { OfferNotificationConsumer } from './consumers/offer-notification.consumer.js';

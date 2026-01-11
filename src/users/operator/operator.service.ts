@@ -13,7 +13,7 @@ import { OperatorCreateDto } from './operator-create.dto.js';
 import { OperatorUpdateDto } from './operator-update.dto.js';
 import { ColonyNodeService } from '../../onchain/colony-node/colony-node.service.js';
 import { OperatorBadgeService } from '../../onchain/operator-badge/operator-badge.service.js';
-import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
+import { ContactDetailsService } from '../../settings/contact-details/contact-details.service.js';
 
 @Injectable()
 export class OperatorService {

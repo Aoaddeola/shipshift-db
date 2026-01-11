@@ -1,7 +1,7 @@
 // Auto-generated file - DO NOT EDIT MANUALLY
 // This file exports all type definitions from across the application
 
-export * from './common/contact-details/contact-details.types.js';
+export * from './settings/contact-details/contact-details.types.js';
 export * from './common/currency/currency.types.js';
 export * from './common/location/location.types.js';
 export * from './logistics/journey/journey.types.js';

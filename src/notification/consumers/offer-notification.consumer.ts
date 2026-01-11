@@ -8,7 +8,7 @@ import {
   NotificationStatus,
 } from '../notification.types.js';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { ContactDetailsService } from '../../common/contact-details/contact-details.service.js';
+import { ContactDetailsService } from '../../settings/contact-details/contact-details.service.js';
 import { OfferService } from '../../offer/offer.service.js';
 import { JourneyService } from '../../logistics/journey/journey.service.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
