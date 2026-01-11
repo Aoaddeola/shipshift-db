@@ -42,12 +42,7 @@ export class OfferConsumer {
     routingKey: RabbitMQConfig.SHIPMENT.EVENTS.CREATED, // 'shipment.created'
     queue: RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED, // 'offers.integration.shipment.created.queue',
     queueOptions: RabbitMQConfig.Utils.withDLQ(
-      RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED, // 'offers.integration.shipment.created.queue',
-      /* {
-        arguments: {
-          'x-message-ttl': 300000,
-        },
-      }, */
+      RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED
     ),
     errorHandler: (channel, msg, error) => {
       const logger = new Logger('OfferConsumer-ShipmentCreated');
