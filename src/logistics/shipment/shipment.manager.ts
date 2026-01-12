@@ -110,7 +110,6 @@ export class ShipmentManager {
    */
   private isActiveState(state: StepState): boolean {
     return [
-      StepState.COMMITTED,
       StepState.PICKED_UP,
       StepState.DROPPED_OFF,
       StepState.COMMENCED,
