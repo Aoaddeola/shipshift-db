@@ -6,9 +6,7 @@ import { RabbitRPC } from '../../../shared/rabbitmq/decorators/index.js';
 import { RabbitMQConfig } from '../../../shared/rabbitmq/config/rabbitmq.config.js';
 import { MessageBusService } from '../../../shared/rabbitmq/rabbitmq.service.js';
 import { StepService } from '../step.service.js';
-import {
-  StepState,
-} from '../step.types.js';
+import { StepState } from '../step.types.js';
 import { NotificationTemplateService } from '../../../notification-template/notification-template.service.js';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { StepProducer } from '../producers/step.producer.js';
@@ -29,78 +27,6 @@ export class StepConsumer {
   ) {}
 
   // ==================== EVENT HANDLERS ====================
-
-  /**
-   * Handle step.created event
-   */
-  @RabbitSubscribe({
-    exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
-    routingKey: RabbitMQConfig.STEP.EVENTS.CREATED,
-    queue: RabbitMQConfig.STEP.QUEUES.EVENT_CREATED, // 'offers.integration.shipment.created.queue',
-    queueOptions: RabbitMQConfig.Utils.withDLQ(
-      RabbitMQConfig.STEP.QUEUES.EVENT_CREATED
-    ),
-    errorHandler: (channel, msg, error) => {
-      Logger.error(
-        `Failed to process ${RabbitMQConfig.STEP.EVENTS.CREATED}:`,
-        error,
-        'StepConsumer',
-      );
-      channel.nack(msg, false, false); // Don't requeue
-    },
-  })
-  async handleStepCreated(event: any): Promise<void> {
-    this.logger.log(
-      `Processing ${RabbitMQConfig.STEP.EVENTS.CREATED} for step ${event.stepId}`,
-    );
-
-    try {
-      // Handle step creation logic
-      // Example: Update related entities, send notifications, etc.
-      const template =
-        await this.notificationTemplateService.getTemplateForEvent(
-          RabbitMQConfig.STEP.EVENTS.CREATED,
-        );
-      // // await this.stepService.handleStepCreated(event);
-      this.logger.debug(
-        `Successfully processed step.created for ${event.stepId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error processing step.created for ${event.stepId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Handle step.updated event
-   */
-  @RabbitSubscribe({
-    exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
-    routingKey: RabbitMQConfig.STEP.EVENTS.UPDATED,
-    queue: RabbitMQConfig.STEP.QUEUES.EVENT_UPDATED,
-    queueOptions: RabbitMQConfig.QUEUE_OPTIONS.DEFAULT,
-  })
-  async handleStepUpdated(event: any): Promise<void> {
-    this.logger.log(
-      `Processing ${RabbitMQConfig.STEP.EVENTS.UPDATED} for step ${event.stepId}`,
-    );
-
-    try {
-      // await this.stepService.handleStepUpdated(event);
-      this.logger.debug(
-        `Successfully processed step.updated for ${event.stepId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error processing step.updated for ${event.stepId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
 
   /**
    * Handle step.state.changed event
@@ -136,39 +62,6 @@ export class StepConsumer {
     } catch (error) {
       this.logger.error(
         `Error processing state change for ${event.stepId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Handle step.completed event
-   */
-  @RabbitSubscribe({
-    exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
-    routingKey: RabbitMQConfig.STEP.EVENTS.COMPLETED,
-    queue: RabbitMQConfig.STEP.QUEUES.EVENT_COMPLETED,
-    queueOptions: RabbitMQConfig.QUEUE_OPTIONS.DEFAULT,
-  })
-  async handleStepCompleted(event: any): Promise<void> {
-    this.logger.log(
-      `Processing ${RabbitMQConfig.STEP.EVENTS.COMPLETED} for step ${event.stepId}`,
-    );
-
-    try {
-      // Handle completion logic
-      // await this.stepService.handleStepCompleted(event);
-
-      // Trigger next step if exists
-      // await this.stepService.triggerNextStep(event.stepId);
-
-      this.logger.debug(
-        `Successfully processed step.completed for ${event.stepId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error processing step.completed for ${event.stepId}:`,
         error,
       );
       throw error;
@@ -428,49 +321,49 @@ export class StepConsumer {
     }
   }
 
-  /**
-   * Handle assign.step.agent command
-   */
-  @RabbitSubscribe({
-    exchange: RabbitMQConfig.EXCHANGES.APP_COMMANDS,
-    routingKey: RabbitMQConfig.STEP.COMMANDS.ASSIGN_AGENT,
-    queue: RabbitMQConfig.STEP.QUEUES.COMMAND_ASSIGN_OPERATOR,
-    queueOptions: RabbitMQConfig.QUEUE_OPTIONS.DEFAULT,
-  })
-  async handleAssignAgentCommand(command: any): Promise<void> {
-    this.logger.log(
-      `Processing ${RabbitMQConfig.STEP.COMMANDS.ASSIGN_AGENT} for step ${command.stepId}`,
-    );
+  // /**
+  //  * Handle assign.step.agent command
+  //  */
+  // @RabbitSubscribe({
+  //   exchange: RabbitMQConfig.EXCHANGES.APP_COMMANDS,
+  //   routingKey: RabbitMQConfig.STEP.COMMANDS.ASSIGN_AGENT,
+  //   queue: RabbitMQConfig.STEP.QUEUES.COMMAND_ASSIGN_OPERATOR,
+  //   queueOptions: RabbitMQConfig.QUEUE_OPTIONS.DEFAULT,
+  // })
+  // async handleAssignAgentCommand(command: any): Promise<void> {
+  //   this.logger.log(
+  //     `Processing ${RabbitMQConfig.STEP.COMMANDS.ASSIGN_AGENT} for step ${command.stepId}`,
+  //   );
 
-    try {
-      const { stepId, agentId, assignedBy } = command;
+  //   try {
+  //     const { stepId, agentId, assignedBy } = command;
 
-      await this.stepService.assignAgent(stepId, agentId, assignedBy);
+  //     await this.stepService.assignAgent(stepId, agentId, assignedBy);
 
-      // Publish assignment event
-      await this.messageBus.emitEvent(
-        RabbitMQConfig.STEP.EVENTS.ASSIGNED,
-        {
-          stepId,
-          assigneeId: agentId,
-          assigneeType: 'agent',
-          assignedBy,
-          assignedAt: new Date().toISOString(),
-        },
-        { exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS },
-      );
+  //     // Publish assignment event
+  //     await this.messageBus.emitEvent(
+  //       RabbitMQConfig.STEP.EVENTS.ASSIGNED,
+  //       {
+  //         stepId,
+  //         assigneeId: agentId,
+  //         assigneeType: 'agent',
+  //         assignedBy,
+  //         assignedAt: new Date().toISOString(),
+  //       },
+  //       { exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS },
+  //     );
 
-      this.logger.debug(
-        `Successfully assigned agent ${agentId} to step ${stepId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error assigning agent to step ${command.stepId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
+  //     this.logger.debug(
+  //       `Successfully assigned agent ${agentId} to step ${stepId}`,
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error assigning agent to step ${command.stepId}:`,
+  //       error,
+  //     );
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Handle update.step.state command
@@ -678,56 +571,56 @@ export class StepConsumer {
     }
   }
 
-  /**
-   * Handle rpc.update.step RPC request
-   */
-  @RabbitRPC({
-    exchange: RabbitMQConfig.EXCHANGES.APP_RPC,
-    routingKey: RabbitMQConfig.STEP.RPC.UPDATE,
-    queue: 'steps.rpc.update.queue', // Note: config missing this queue
-    queueOptions: RabbitMQConfig.QUEUE_OPTIONS.RPC,
-  })
-  async handleUpdateStepRPC(request: any): Promise<any> {
-    this.logger.log(
-      `Processing ${RabbitMQConfig.STEP.RPC.UPDATE} for step ${request.stepId}`,
-    );
+  // /**
+  //  * Handle rpc.update.step RPC request
+  //  */
+  // @RabbitRPC({
+  //   exchange: RabbitMQConfig.EXCHANGES.APP_RPC,
+  //   routingKey: RabbitMQConfig.STEP.RPC.UPDATE,
+  //   queue: 'steps.rpc.update.queue', // Note: config missing this queue
+  //   queueOptions: RabbitMQConfig.QUEUE_OPTIONS.RPC,
+  // })
+  // async handleUpdateStepRPC(request: any): Promise<any> {
+  //   this.logger.log(
+  //     `Processing ${RabbitMQConfig.STEP.RPC.UPDATE} for step ${request.stepId}`,
+  //   );
 
-    try {
-      const { stepId, updateData, updatedBy } = request;
+  //   try {
+  //     const { stepId, updateData, updatedBy } = request;
 
-      const step = await this.stepService.updateStep(
-        stepId,
-        updateData,
-        updatedBy,
-      );
+  //     const step = await this.stepService.updateStep(
+  //       stepId,
+  //       updateData,
+  //       updatedBy,
+  //     );
 
-      // Publish update event
-      await this.messageBus.emitEvent(
-        RabbitMQConfig.STEP.EVENTS.UPDATED,
-        {
-          stepId,
-          updatedFields: updateData,
-          updatedBy,
-          updatedAt: new Date().toISOString(),
-        },
-        { exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS },
-      );
+  //     // Publish update event
+  //     await this.messageBus.emitEvent(
+  //       RabbitMQConfig.STEP.EVENTS.UPDATED,
+  //       {
+  //         stepId,
+  //         updatedFields: updateData,
+  //         updatedBy,
+  //         updatedAt: new Date().toISOString(),
+  //       },
+  //       { exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS },
+  //     );
 
-      return {
-        success: true,
-        data: step,
-      };
-    } catch (error) {
-      this.logger.error(
-        `Error in RPC ${RabbitMQConfig.STEP.RPC.UPDATE}:`,
-        error,
-      );
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-  }
+  //     return {
+  //       success: true,
+  //       data: step,
+  //     };
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error in RPC ${RabbitMQConfig.STEP.RPC.UPDATE}:`,
+  //       error,
+  //     );
+  //     return {
+  //       success: false,
+  //       error: error.message,
+  //     };
+  //   }
+  // }
 
   /**
    * Handle rpc.validate.step.transition RPC request
