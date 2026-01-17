@@ -11,7 +11,6 @@ import { Step, StepState } from './step.types.js';
 import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { StepCreateDto } from './step-create.dto.js';
-import { StepUpdateDto } from './step-update.dto.js';
 import { ShipmentService } from '../../logistics/shipment/shipment.service.js';
 import { JourneyService } from '../../logistics/journey/journey.service.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
@@ -21,6 +20,7 @@ import { AgentService } from '../../profiles/agent/agent.service.js';
 import { StepProducer } from './producers/step.producer.js';
 import { RabbitMQConfig } from '../../shared/rabbitmq/config/rabbitmq.config.js';
 import { MessageBusService } from '../../shared/rabbitmq/rabbitmq.service.js';
+import { StepUpdateDto } from './step-update.dto.js';
 
 @Injectable()
 export class StepService {
@@ -96,36 +96,69 @@ export class StepService {
     return this.populateRelations(entry, include);
   }
 
-  async updateStep(
+  // ==================== STATE MANAGEMENT ====================
+
+  async changeStepState(
     id: string,
-    stepData: StepCreateDto,
-    updatedBy?: string,
+    newState: StepState,
+    changedBy: string,
+    reason?: string,
+    metadata?: {
+      transactionHash?: string;
+      performer?: string;
+      cost?: number;
+      location?: { lat: number; lng: number; address?: string };
+    },
   ): Promise<Step> {
-    // First check if step exists
     const existingStep = await this.getStep(id);
-    const now = new Date().toISOString();
 
-    // Validate dependencies exist
-    await this.validateDependencies(stepData);
+    // Validate state transition
+    await this.validateStateTransition(existingStep.state, newState, changedBy);
 
-    // Create updated step with ID preserved
-    const updatedStep: Step = {
-      ...stepData,
-      ...existingStep,
-      id, // Preserve ID
-      updatedAt: now,
-    };
-
-    this.logger.log(`Updating step: ${id}`);
-    await this.database.put(updatedStep);
-
-    // Publish update event
-    await this.stepProducer.publishStepUpdated(
+    // Update the step state
+    const updatedStep = await this.partialUpdateStep(
       id,
-      existingStep.state,
-      stepData,
-      updatedBy || 'system',
+      { state: newState },
+      changedBy,
     );
+
+    const shipmentSteps = await this.getStepsByShipment(
+      existingStep.shipmentId,
+    );
+
+    // Publish state change event with metadata
+    await this.stepProducer.publishStepStateChanged(
+      id,
+      existingStep.shipmentId,
+      existingStep.journeyId,
+      shipmentSteps.map((step, index) => {
+        return { index, state: step.state };
+      }),
+      existingStep.state,
+      newState,
+      changedBy,
+      {
+        reason,
+        ...metadata,
+      },
+    );
+
+    // Publish milestone events for specific states
+    if (newState === StepState.PICKED_UP) {
+      await this.stepProducer.publishStepMilestone(
+        id,
+        'picked_up',
+        metadata?.location,
+        changedBy,
+      );
+    } else if (newState === StepState.DROPPED_OFF) {
+      await this.stepProducer.publishStepMilestone(
+        id,
+        'dropped_off',
+        metadata?.location,
+        changedBy,
+      );
+    }
 
     return updatedStep;
   }
@@ -162,14 +195,6 @@ export class StepService {
     this.logger.log(`Partially updating step: ${id}`);
     await this.database.put(updatedStep);
 
-    // Publish update event
-    await this.stepProducer.publishStepUpdated(
-      id,
-      existingStep.state,
-      update,
-      updatedBy || 'system',
-    );
-
     const shipmentSteps = await this.getStepsByShipment(
       existingStep.shipmentId,
     );
@@ -184,94 +209,6 @@ export class StepService {
         existingStep.state,
         update.state,
         updatedBy || 'system',
-      );
-    }
-
-    return updatedStep;
-  }
-
-  async deleteStep(
-    id: string,
-    deletedBy?: string,
-  ): Promise<{ message: string }> {
-    const step = await this.getStep(id);
-    await this.database.del(id);
-
-    // Publish deletion event
-    await this.stepProducer.publishStepDeleted(
-      id,
-      step.index,
-      step.shipmentId,
-      step.journeyId,
-      deletedBy || 'system',
-    );
-
-    this.logger.log(`Step deleted: ${id}`);
-
-    return {
-      message: `Step ${step.index} for shipment ${step.shipmentId} deleted successfully`,
-    };
-  }
-
-  // ==================== STATE MANAGEMENT ====================
-
-  async changeStepState(
-    id: string,
-    newState: StepState,
-    changedBy: string,
-    reason?: string,
-    metadata?: {
-      transactionHash?: string;
-      performer?: string;
-      cost?: number;
-      location?: { lat: number; lng: number; address?: string };
-    },
-  ): Promise<Step> {
-    const existingStep = await this.getStep(id);
-
-    // Validate state transition
-    await this.validateStateTransition(existingStep.state, newState, changedBy);
-
-    // Update the step state
-    const updatedStep = await this.partialUpdateStep(
-      id,
-      { state: newState },
-      changedBy,
-    );
-
-    const shipmentSteps = await this.getStepsByShipment(
-      existingStep.shipmentId,
-    );
-
-    // Publish state change event with metadata
-    await this.stepProducer.publishStepStateChanged(
-      id,
-      existingStep.shipmentId,
-      existingStep.journeyId,
-      shipmentSteps,
-      existingStep.state,
-      newState,
-      changedBy,
-      {
-        reason,
-        ...metadata,
-      },
-    );
-
-    // Publish milestone events for specific states
-    if (newState === StepState.PICKED_UP) {
-      await this.stepProducer.publishStepMilestone(
-        id,
-        'picked_up',
-        metadata?.location,
-        changedBy,
-      );
-    } else if (newState === StepState.DROPPED_OFF) {
-      await this.stepProducer.publishStepMilestone(
-        id,
-        'dropped_off',
-        metadata?.location,
-        changedBy,
       );
     }
 
@@ -307,69 +244,6 @@ export class StepService {
         message: `Failed to send processing command: ${error.message}`,
       };
     }
-  }
-
-  // ==================== BATCH OPERATIONS ====================
-
-  async batchUpdateSteps(
-    filter: {
-      shipmentId?: string;
-      journeyId?: string;
-      operatorId?: string;
-      colonyId?: string;
-      agentId?: string;
-      senderId?: string;
-      state?: StepState;
-      minIndex?: number;
-      maxIndex?: number;
-    },
-    update: StepUpdateDto,
-    requestedBy: string,
-  ): Promise<{ updatedCount: number; steps: Step[] }> {
-    const allSteps = await this.database.all();
-
-    // Filter steps
-    const filteredSteps = allSteps.filter((step) => {
-      if (filter.shipmentId && step.shipmentId !== filter.shipmentId)
-        return false;
-      if (filter.journeyId && step.journeyId !== filter.journeyId) return false;
-      if (filter.operatorId && step.operatorId !== filter.operatorId)
-        return false;
-      if (filter.colonyId && step.colonyId !== filter.colonyId) return false;
-      if (filter.agentId && step.agentId !== filter.agentId) return false;
-      if (filter.senderId && step.senderId !== filter.senderId) return false;
-      if (filter.state !== undefined && step.state !== filter.state)
-        return false;
-      if (filter.minIndex !== undefined && step.index < filter.minIndex)
-        return false;
-      if (filter.maxIndex !== undefined && step.index > filter.maxIndex)
-        return false;
-      return true;
-    });
-
-    // Update each step
-    const updatedSteps: Step[] = [];
-    for (const step of filteredSteps) {
-      const updatedStep = await this.partialUpdateStep(
-        step.id,
-        update,
-        requestedBy,
-      );
-      updatedSteps.push(updatedStep);
-    }
-
-    // Publish batch update event
-    await this.stepProducer.publishStepsBatchUpdated(
-      updatedSteps.length,
-      filter,
-      update,
-      requestedBy,
-    );
-
-    return {
-      updatedCount: updatedSteps.length,
-      steps: updatedSteps,
-    };
   }
 
   // ==================== QUERY METHODS (with RabbitMQ integration) ====================
@@ -615,20 +489,6 @@ export class StepService {
 
   // ==================== BUSINESS LOGIC METHODS ====================
 
-  async assignAgent(
-    stepId: string,
-    agentId: string,
-    assignedBy: string,
-  ): Promise<Step> {
-    await this.getStep(stepId);
-
-    // Send command to assign operator
-    await this.stepProducer.sendAssignAgentCommand(stepId, agentId, assignedBy);
-
-    // Update step with new agent
-    return this.partialUpdateStep(stepId, { agentId }, assignedBy);
-  }
-
   async notifyStakeholders(
     stepId: string,
     notificationType: 'status_update' | 'milestone' | 'payment' | 'issue',
@@ -667,57 +527,6 @@ export class StepService {
         error,
       );
       return false;
-    }
-  }
-
-  async processPayment(
-    stepId: string,
-    amount: number,
-    currency: string,
-    transactionId: string,
-    payerId: string,
-  ): Promise<{ success: boolean; message: string }> {
-    try {
-      // Update step with payment info
-      await this.partialUpdateStep(stepId, {
-        stepParams: {
-          spCost: amount,
-        },
-      });
-
-      // Publish payment processed event
-      await this.stepProducer.publishStepPaymentProcessed(
-        stepId,
-        'step-shipment-id', // You might need to get this from step
-        amount,
-        currency,
-        transactionId,
-        payerId,
-        'completed',
-      );
-
-      return {
-        success: true,
-        message: 'Payment processed successfully',
-      };
-    } catch (error) {
-      this.logger.error(`Failed to process payment for step ${stepId}:`, error);
-
-      // Publish payment failed event
-      await this.stepProducer.publishStepPaymentProcessed(
-        stepId,
-        'step-shipment-id',
-        amount,
-        currency,
-        transactionId,
-        payerId,
-        'failed',
-      );
-
-      return {
-        success: false,
-        message: `Payment processing failed: ${error.message}`,
-      };
     }
   }
 

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
@@ -1144,7 +1143,7 @@ export class StepController {
 
   @Put(':id')
   async updateStep(@Param('id') id: string, @Body() step: StepCreateDto) {
-    return this.stepService.updateStep(id, step);
+    return this.stepService.partialUpdateStep(id, { ...step });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -1154,10 +1153,5 @@ export class StepController {
     @Body() update: StepUpdateDto,
   ) {
     return this.stepService.partialUpdateStep(id, update);
-  }
-
-  @Delete(':id')
-  async deleteStep(@Param('id') id: string) {
-    return this.stepService.deleteStep(id);
   }
 }
