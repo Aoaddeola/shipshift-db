@@ -13,6 +13,7 @@ import { OfferNotificationConsumer } from './consumers/offer-notification.consum
 import { OfferModule } from '../offer/offer.module.js';
 import { JourneyModule } from '../logistics/journey/journey.module.js';
 import { OperatorModule } from '../users/operator/operator.module.js';
+import { ShipmentModule } from '../logistics/shipment/shipment.module.js';
 
 @Global()
 @Module({
@@ -26,6 +27,7 @@ import { OperatorModule } from '../users/operator/operator.module.js';
     StepModule,
     OfferModule,
     ContactDetailsModule,
+    ShipmentModule,
     UserModule,
     JourneyModule,
     OperatorModule,

@@ -1,8 +1,8 @@
 import { Mission } from '../mission/mission.types.js';
 import { Parcel } from '../parcel/parcel.types.js';
 import { Journey } from '../journey/journey.types.js';
-import { Customer } from '../../profiles/customer/customer.types.js';
 import { Location } from '../../common/location/location.types.js';
+import { User } from '../../users/user/user.model.js';
 
 /**
  * Shipment Status Enum
@@ -38,7 +38,7 @@ export interface Shipment {
   mission?: Mission; // Embedded mission
   parcel?: Parcel; // Embedded parcel
   journey?: Journey; // Embedded journey
-  sender?: Customer; // Embedded sender
+  sender?: User; // Embedded sender
   createdAt?: string;
   updatedAt?: string;
 }

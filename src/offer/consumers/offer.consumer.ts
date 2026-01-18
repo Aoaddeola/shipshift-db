@@ -5,7 +5,7 @@ import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { OfferService } from '../offer.service.js';
 import { RabbitMQConfig } from '../../shared/rabbitmq/config/rabbitmq.config.js';
 import { OfferProducer } from '../producers/offer.producer.js';
-import { Offer, OfferState } from '../offer.types.js';
+import { OfferState } from '../offer.types.js';
 import { ShipmentService } from '../../logistics/shipment/shipment.service.js';
 import { StepService } from '../../onchain/step/step.service.js';
 import { JourneyService } from '../../logistics/journey/journey.service.js';
@@ -42,7 +42,7 @@ export class OfferConsumer {
     routingKey: RabbitMQConfig.SHIPMENT.EVENTS.CREATED, // 'shipment.created'
     queue: RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED, // 'offers.integration.shipment.created.queue',
     queueOptions: RabbitMQConfig.Utils.withDLQ(
-      RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED
+      RabbitMQConfig.OFFER.QUEUES.SHIPMENT_CREATED,
     ),
     errorHandler: (channel, msg, error) => {
       const logger = new Logger('OfferConsumer-ShipmentCreated');
@@ -101,8 +101,8 @@ export class OfferConsumer {
 
   @RabbitSubscribe({
     exchange: RabbitMQConfig.EXCHANGES.APP_EVENTS,
-    routingKey: RabbitMQConfig.JOURNEY.EVENTS.UPDATED,
-    queue: RabbitMQConfig.OFFER.QUEUES.JOURNEY_UPDATED, // 'offers.integration.journey.updated.queue',
+    routingKey: RabbitMQConfig.OFFER.EVENTS.UPDATED,
+    queue: RabbitMQConfig.OFFER.QUEUES.EVENT_UPDATED, // 'offers.integration.journey.updated.queue',
   })
   async handleJourneyUpdated(event: any) {
     this.logger.log(
@@ -509,6 +509,7 @@ export class OfferConsumer {
     try {
       // Handle internal offer created events (e.g., update cache, analytics)
       const offer = await this.offerService.getOffer(event.data.offerId);
+      let offerState: OfferState = OfferState.PENDING;
 
       // Business logic for accepting bid
       // Example: Update offer status, create contract, etc.
@@ -532,12 +533,29 @@ export class OfferConsumer {
         steps.map(async (step) => {
           const _step = step;
           _step.offerId = event.data.offerId;
-          await this.stepService.createStep(_step);
+          if (
+            (offer.bid.journeyId &&
+              shipment.journeyId === offer.bid.journeyId) ||
+            (offer.bid.missionId && shipment.missionId === offer.bid.missionId)
+          ) {
+            //
+          } else {
+            _step.state = StepState.ACCEPTED;
+            offerState = OfferState.ACCEPTED;
+          }
+          await this.stepService.createStep(
+            _step,
+            undefined,
+            _step.state === StepState.PENDING,
+          );
         }),
       );
 
+      this.logger.log('offerState', offerState);
+
       await this.offerService.partialUpdateOffer(offer.id, {
         stepCount: steps.length,
+        state: offerState,
       });
     } catch (error) {
       this.logger.log('Step generation failed', error);
@@ -554,84 +572,5 @@ export class OfferConsumer {
       `Internal: Processing ${RabbitMQConfig.OFFER.EVENTS.BID_ACCEPTED} for offer ${event.offerId}`,
     );
     // Handle bid accepted events (e.g., update related shipment/journey status)
-  }
-
-  // ==================== BATCH OPERATION HANDLERS ====================
-
-  @RabbitSubscribe({
-    exchange: RabbitMQConfig.EXCHANGES.APP_COMMANDS,
-    routingKey: RabbitMQConfig.OFFER.EVENTS.BATCH_UPDATED, // 'batch.update.offers',
-    queue: 'offers.command.batch.update.queue',
-  })
-  async handleBatchUpdateOffers(command: {
-    filter: {
-      shipmentId?: string;
-      missionId?: string;
-      journeyId?: string;
-      [key: string]: any;
-    };
-    update: any;
-    requestedBy: string;
-  }) {
-    this.logger.log(
-      `Processing batch.update.offers command requested by ${command.requestedBy}`,
-    );
-
-    try {
-      let offers = await this.offerService.getOffers();
-
-      // Apply filters
-      if (command.filter.shipmentId) {
-        offers = offers.filter(
-          (offer) => offer.shipmentId === command.filter.shipmentId,
-        );
-      }
-      if (command.filter.missionId) {
-        offers = offers.filter(
-          (offer) => offer.bid.missionId === command.filter.missionId,
-        );
-      }
-      if (command.filter.journeyId) {
-        offers = offers.filter(
-          (offer) => offer.bid.journeyId === command.filter.journeyId,
-        );
-      }
-
-      // Update each offer
-      const updatedOffers: Offer[] = [];
-      for (const offer of offers) {
-        try {
-          const updatedOffer = await this.offerService.partialUpdateOffer(
-            offer.id,
-            command.update,
-          );
-          updatedOffers.push(updatedOffer);
-        } catch (error) {
-          this.logger.error(`Failed to update offer ${offer.id}:`, error);
-        }
-      }
-
-      // Publish batch update event
-      await this.offerProducer.publishOffersBatchUpdated(
-        updatedOffers.length,
-        command.filter,
-        command.update,
-        command.requestedBy,
-      );
-
-      return {
-        success: true,
-        updatedCount: updatedOffers.length,
-        message: `Successfully updated ${updatedOffers.length} offers`,
-        timestamp: new Date().toISOString(),
-      };
-    } catch (error) {
-      this.logger.error(`Failed to process batch.update.offers:`, error);
-      return {
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      };
-    }
   }
 }

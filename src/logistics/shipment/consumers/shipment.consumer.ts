@@ -5,12 +5,12 @@ import { ShipmentService } from '../shipment.service.js';
 import { ShipmentStatus } from '../shipment.types.js';
 import { RabbitMQConfig } from '../../../shared/rabbitmq/config/rabbitmq.config.js';
 import { LocationService } from '../../../common/location/location.service.js';
-import { CustomerService } from '../../../profiles/customer/customer.service.js';
 import { JourneyService } from '../../../logistics/journey/journey.service.js';
 import { MissionService } from '../../../logistics/mission/mission.service.js';
 import { ParcelService } from '../../../logistics/parcel/parcel.service.js';
 import { ShipmentProducer } from '../providers/shipment.provider.js';
 import { ShipmentManager } from '../shipment.manager.js';
+import { UserService } from '../../../users/user/user.service.js';
 
 @Injectable()
 export class ShipmentConsumer {
@@ -30,8 +30,8 @@ export class ShipmentConsumer {
     private readonly parcelService: ParcelService,
     @Inject(LocationService)
     private readonly locationService: LocationService,
-    @Inject(CustomerService)
-    private readonly customerService: CustomerService,
+    @Inject(UserService)
+    private readonly userService: UserService,
   ) {}
 
   // ==================== INTEGRATION HANDLERS (Other entity events) ====================
@@ -519,7 +519,7 @@ export class ShipmentConsumer {
       // Validate sender exists
       if (event.shipmentData.senderId) {
         try {
-          await this.customerService.getCustomer(event.shipmentData.senderId);
+          await this.userService.findById(event.shipmentData.senderId);
         } catch {
           errors.push(`Sender ${event.shipmentData.senderId} not found`);
         }

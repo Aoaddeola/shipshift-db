@@ -5,12 +5,12 @@ import { Database } from '../../db/orbitdb/database.js';
 import { randomUUID } from 'node:crypto';
 import { ShipmentCreateDto } from './shipment-create.dto.js';
 import { ShipmentUpdateDto } from './shipment-update.dto.js';
-import { CustomerService } from '../../profiles/customer/customer.service.js';
 import { ParcelService } from '../parcel/parcel.service.js';
 import { LocationService } from '../../common/location/location.service.js';
 import { MissionService } from '../mission/mission.service.js';
 import { JourneyService } from '../journey/journey.service.js';
 import { ShipmentProducer } from './providers/shipment.provider.js';
+import { UserService } from '../../users/user/user.service.js';
 
 @Injectable()
 export class ShipmentService {
@@ -18,7 +18,7 @@ export class ShipmentService {
 
   constructor(
     @InjectDatabase('shipment') private database: Database<Shipment>,
-    @Inject(CustomerService) private customerService: CustomerService,
+    @Inject(UserService) private userService: UserService,
     @Inject(ParcelService) private parcelService: ParcelService,
     @Inject(LocationService) private locationService: LocationService,
     @Inject(MissionService) private missionService: MissionService,
@@ -577,9 +577,7 @@ export class ShipmentService {
     // Handle sender population
     if (include?.includes('sender')) {
       try {
-        const sender = await this.customerService.getCustomer(
-          shipment.senderId,
-        );
+        const sender = await this.userService.findById(shipment.senderId);
         if (sender) {
           populatedShipment.sender = sender;
         }
