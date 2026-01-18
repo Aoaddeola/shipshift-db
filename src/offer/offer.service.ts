@@ -123,6 +123,7 @@ export class OfferService {
     id: string,
     update: OfferUpdateDto,
     updatedBy?: string,
+    publish: boolean = true,
   ): Promise<Offer> {
     const existingOffer = await this.getOffer(id);
     const now = new Date().toISOString();
@@ -154,14 +155,16 @@ export class OfferService {
     this.logger.log(`Partially updating offer: ${id}`);
     await this.database.put(updatedOffer);
 
-    // Publish offer updated event
-    await this.offerProducer.publishOfferUpdated(
-      id,
-      existingOffer.shipmentId,
-      existingOffer.bid,
-      update,
-      updatedBy || 'system',
-    );
+    if (publish) {
+      // Publish offer updated event
+      await this.offerProducer.publishOfferUpdated(
+        id,
+        existingOffer.shipmentId,
+        existingOffer.bid,
+        update,
+        updatedBy || 'system',
+      );
+    }
 
     return updatedOffer;
   }

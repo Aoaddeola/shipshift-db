@@ -40,7 +40,11 @@ export class StepService {
 
   // ==================== CORE CRUD OPERATIONS ====================
 
-  async createStep(stepData: StepCreateDto, createdBy?: string): Promise<Step> {
+  async createStep(
+    stepData: StepCreateDto,
+    createdBy?: string,
+    publish: boolean = true,
+  ): Promise<Step> {
     this.logger.log(`Creating step for shipment: ${stepData.shipmentId}`);
 
     // Validate dependencies exist
@@ -64,20 +68,24 @@ export class StepService {
       const step = await this.getStep(id, ['journey']);
 
       // Publish creation event
-      await this.stepProducer.publishStepAssigned(step);
+      if (publish) {
+        await this.stepProducer.publishStepAssigned(step);
 
-      // If step is in a non-pending state, publish state change
-      if (newStep.state !== StepState.PENDING) {
-        const shipmentSteps = await this.getStepsByShipment(id);
-        await this.stepProducer.publishStepStateChanged(
-          id,
-          newStep.shipmentId,
-          newStep.journeyId,
-          shipmentSteps,
-          StepState.PENDING, // Previous state (implicit)
-          newStep.state,
-          createdBy || 'system',
-        );
+        // If step is in a non-pending state, publish state change
+        if (newStep.state !== StepState.PENDING) {
+          const shipmentSteps = await this.getStepsByShipment(id);
+          await this.stepProducer.publishStepStateChanged(
+            id,
+            newStep.shipmentId,
+            newStep.journeyId,
+            shipmentSteps.map((step, index) => {
+              return { index, state: step.state };
+            }),
+            StepState.PENDING, // Previous state (implicit)
+            newStep.state,
+            createdBy || 'system',
+          );
+        }
       }
 
       return newStep;

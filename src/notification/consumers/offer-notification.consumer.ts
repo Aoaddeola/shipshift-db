@@ -13,6 +13,7 @@ import { OfferService } from '../../offer/offer.service.js';
 import { JourneyService } from '../../logistics/journey/journey.service.js';
 import { OperatorService } from '../../users/operator/operator.service.js';
 import { SingleNotificationEntityDto } from '../notification.dto.js';
+import { ShipmentService } from '../../logistics/shipment/shipment.service.js';
 
 @Injectable()
 export class OfferNotificationConsumer {
@@ -24,6 +25,7 @@ export class OfferNotificationConsumer {
     private readonly offerService: OfferService,
     private readonly journeyService: JourneyService,
     private readonly operatorService: OperatorService,
+    private readonly shipmentService: ShipmentService,
   ) {}
 
   // Listen for system events that should trigger notifications
@@ -36,40 +38,66 @@ export class OfferNotificationConsumer {
   async handleOfferAssigned(_message: any) {
     const message = _message.data;
     this.logger.debug(
-      `Processing notifications event for offer: ${JSON.stringify(message)}`,
-    );
-    this.logger.debug(
       `Processing notifications event for offer: ${message.offerId}`,
+    );
+    const shipment = await this.shipmentService.getShipment(
+      message.shipmentId,
+      ['sender'],
     );
 
     let contactDetails;
     let userId;
+    let userName;
 
     try {
-      if (message.bid.missionId !== undefined || message.bid.missionId === '') {
-        const offer = await this.offerService.getOffer(message.offerId, [
-          'mission',
-        ]);
-        contactDetails = (
-          await this.contactDetailsService.findByOwner(offer.mission!.curatorId)
-        )[0];
-        userId = offer.mission!.curatorId;
-      } else if (
-        message.bid.journeyId !== undefined ||
-        message.bid.journeyId === ''
+      // When Offer is sent to a Sender
+      if (
+        (message.bid.journeyId &&
+          shipment.journeyId !== message.bid.journeyId) ||
+        (message.bid.missionId && shipment.missionId !== message.bid.missionId)
       ) {
-        const journey = await this.journeyService.getJourney(
-          message.bid.journeyId,
-          ['agent'],
-        );
         contactDetails = (
-          await this.contactDetailsService.findByOwner(
-            journey.agent!.operatorId,
-          )
+          await this.contactDetailsService.findByOwner(shipment.senderId)
         )[0];
-        userId = journey.agent!.operatorId;
+        userId = shipment.senderId;
+        userName = shipment.sender!.id;
+      } else {
+        // Otherwise
+        if (
+          message.bid.missionId !== undefined &&
+          message.bid.missionId !== ''
+        ) {
+          const offer = await this.offerService.getOffer(message.offerId, [
+            'mission',
+          ]);
+          contactDetails = (
+            await this.contactDetailsService.findByOwner(
+              offer.mission!.curatorId,
+            )
+          )[0];
+          userId = offer.mission!.curatorId;
+          userName = await this.operatorService.getOperator(
+            offer.mission!.curatorId,
+          );
+        } else if (
+          message.bid.journeyId !== undefined &&
+          message.bid.journeyId !== ''
+        ) {
+          const journey = await this.journeyService.getJourney(
+            message.bid.journeyId,
+            ['agent'],
+          );
+          contactDetails = (
+            await this.contactDetailsService.findByOwner(
+              journey.agent!.operatorId,
+            )
+          )[0];
+          userId = journey.agent!.operatorId;
+          userName = (
+            await this.operatorService.getOperator(journey.agent!.operatorId)
+          ).offchain.name;
+        }
       }
-
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { createdAt, updatedAt, ...cDetails } = contactDetails.dataValues;
       const notification: SingleNotificationEntityDto = {
@@ -79,9 +107,7 @@ export class OfferNotificationConsumer {
         userPreferences: cDetails.preference,
         isUserOnline: false,
         event: 'offer.created',
-        userName:
-          (await this.operatorService.getOperator(userId)).offchain.name ||
-          'User',
+        userName: userName || 'user',
         locale: 'en',
         status: NotificationStatus.PENDING,
         retryCount: 0,
