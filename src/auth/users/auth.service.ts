@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -19,7 +20,6 @@ export class UserAuthService {
     private userService: UserService,
     private jwtService: JwtService,
   ) {}
-
   /**
    * Validate user credentials and return user if valid
    */
@@ -96,7 +96,7 @@ export class UserAuthService {
   }
 
   /**
-   * Generate JWT access and refresh tokens
+   * Generate JWT access and refresh tokens with different expirations
    */
   private async generateTokens(
     user: any,
@@ -106,15 +106,20 @@ export class UserAuthService {
       email: user.email,
       name: user.name,
       userType: user.userType,
+      iat: Math.floor(Date.now() / 1000), // Issued at timestamp
     };
 
-    const accessToken = await this.jwtService.signAsync(payload);
-
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '7d', // Refresh token expires in 7 days
+    // Access token (short-lived - e.g., 15 minutes)
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
     });
 
-    // Store refresh token hash in database (optional)
+    // Refresh token (long-lived - e.g., 7 days)
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+    });
+
+    // Store hashed refresh token in database
     await this.storeRefreshToken(user.id, refreshToken);
 
     return { accessToken, refreshToken };
@@ -127,43 +132,150 @@ export class UserAuthService {
     userId: string,
     refreshToken: string,
   ): Promise<void> {
-    // You can store the hashed refresh token in the database
-    // For simplicity, we're not implementing it here, but you can add it to your user entity
     const hashedToken = await bcrypt.hash(refreshToken, 12);
     await this.userService.updateRefreshToken(userId, hashedToken);
   }
 
   /**
-   * Refresh access token using refresh token
+   * Validate and refresh access token using refresh token
    */
   async refreshToken(refreshToken: string) {
     try {
+      Logger.log('Refreshing token...');
+
+      // First verify the refresh token is valid and not expired
       const payload = await this.jwtService.verifyAsync(refreshToken);
 
-      // Verify the refresh token is still valid in database (optional)
-      // const user = await this.userService.findById(payload.sub);
-      // if (!user || !user.refreshToken) {
-      //   throw new UnauthorizedException('Invalid refresh token');
-      // }
-
-      // const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
-      // if (!isRefreshTokenValid) {
-      //   throw new UnauthorizedException('Invalid refresh token');
-      // }
-
+      // Get user from database
       const user = await this.userService.findById(payload.sub);
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
 
+      // Check if user has a refresh token stored
+      if (!user.refreshToken) {
+        throw new UnauthorizedException(
+          'Refresh token not found. Please login again.',
+        );
+      }
+
+      // Verify the refresh token matches the stored hash
+      const isRefreshTokenValid = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
+      if (!isRefreshTokenValid) {
+        // If token doesn't match, clear the stored token (security measure)
+        await this.userService.updateRefreshToken(user.id, null);
+        throw new UnauthorizedException(
+          'Invalid refresh token. Possible security breach.',
+        );
+      }
+
+      // Check if refresh token is expired (should be caught by verifyAsync, but double-check)
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        await this.userService.updateRefreshToken(user.id, null);
+        throw new UnauthorizedException('Refresh token expired');
+      }
+
+      // Generate new tokens (rotating refresh tokens for security)
       const tokens = await this.generateTokens(user);
+      const message = 'Tokens refreshed successfully';
+      Logger.log(message);
 
       return {
         user: this.sanitizeUser(user),
         ...tokens,
+        message,
       };
     } catch (error) {
+      // Handle specific JWT errors
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException(
+          'Refresh token expired. Please login again.',
+        );
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Re-throw if it's already an UnauthorizedException
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
       throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  /**
+   * Validate access token - useful for guards/middleware
+   */
+  async validateAccessToken(accessToken: string): Promise<any> {
+    try {
+      const payload = await this.jwtService.verifyAsync(accessToken);
+      return payload;
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Access token expired');
+      }
+      throw new UnauthorizedException('Invalid access token');
+    }
+  }
+
+  /**
+   * Validate and refresh tokens if access token is expired
+   * This can be used in an interceptor/guard
+   */
+  async validateOrRefreshTokens(
+    accessToken: string,
+    refreshToken: string,
+  ): Promise<{
+    valid: boolean;
+    newTokens?: { accessToken: string; refreshToken: string };
+    user?: any;
+    message?: string;
+  }> {
+    try {
+      // Try to validate access token first
+      const payload = await this.jwtService.verifyAsync(accessToken);
+
+      // Access token is valid
+      const user = await this.userService.findById(payload.sub);
+      return {
+        valid: true,
+        user: this.sanitizeUser(user),
+      };
+    } catch (accessTokenError) {
+      // Access token is invalid or expired
+      if (accessTokenError.name === 'TokenExpiredError' && refreshToken) {
+        // Access token expired, try to refresh using refresh token
+        try {
+          const result = await this.refreshToken(refreshToken);
+          return {
+            valid: false,
+            newTokens: {
+              accessToken: result.accessToken,
+              refreshToken: result.refreshToken,
+            },
+            user: result.user,
+            message: 'Access token expired, new tokens issued',
+          };
+        } catch (refreshError) {
+          // Refresh token is also invalid
+          return {
+            valid: false,
+            message: 'Both access and refresh tokens are invalid',
+          };
+        }
+      }
+
+      // Access token invalid for other reasons (no refresh token provided, etc.)
+      return {
+        valid: false,
+        message: 'Invalid access token',
+      };
     }
   }
 
@@ -208,15 +320,20 @@ export class UserAuthService {
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
       const payload = await this.jwtService.verifyAsync(token);
-      console.log('PAYLOAD', payload);
 
       if (payload.type !== 'password_reset') {
         throw new UnauthorizedException('Invalid reset token');
       }
 
       await this.userService.setPassword(payload.sub, newPassword);
+
+      // Invalidate all existing refresh tokens for security
+      await this.userService.updateRefreshToken(payload.sub, null);
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired reset token');
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Reset token has expired');
+      }
+      throw new UnauthorizedException('Invalid reset token');
     }
   }
 
@@ -279,7 +396,7 @@ export class UserAuthService {
         `Email verification token for ${user.email}: ${verificationToken}`,
       );
       console.log(
-        `Verification URL: http://localhost:3000/verify-email?token=${verificationToken}`,
+        `Verification URL: ${process.env.FRONTEND_URL}/web2/auth/verify-email?token=${verificationToken}`,
       );
     }
 

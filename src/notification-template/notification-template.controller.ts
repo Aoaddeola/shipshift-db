@@ -13,6 +13,7 @@ import {
   BadRequestException,
   Delete,
   Put,
+  UseGuards,
   // UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -21,7 +22,8 @@ import {
   CreateNotificationTemplateDto,
   UpdateNotificationTemplateDto,
 } from './notification-template.dto.js';
-// import { JwtNodeOpAuthGuard } from '..//guards/jwt-nodeOp-auth.guard.js';
+import { JwtNodeOpAuthGuard } from '../guards/jwt-nodeOp-auth.guard.js';
+import { JwtAdminAuthGuard } from '../guards/jwt-admin-auth.guard.js';
 
 @ApiTags('notification-templates')
 @Controller('notification-templates')
@@ -30,7 +32,7 @@ export class NotificationTemplateController {
     private readonly notificationService: NotificationTemplateService,
   ) {}
 
-  // @UseGuards(JwtNodeOpAuthGuard) // Uncomment if you want to add authentication
+  @UseGuards(JwtAdminAuthGuard) // Uncomment if you want to add authentication
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new notification template' })
@@ -56,7 +58,7 @@ export class NotificationTemplateController {
 
   // You can also add update and delete endpoints:
 
-  // @UseGuards(JwtNodeOpAuthGuard)
+  @UseGuards(JwtAdminAuthGuard)
   @Put(':templateId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update an existing notification template' })
@@ -109,7 +111,7 @@ export class NotificationTemplateController {
     };
   }
 
-  // @UseGuards(JwtNodeOpAuthGuard)
+  @UseGuards(JwtNodeOpAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a notification template' })
