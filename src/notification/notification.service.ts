@@ -896,6 +896,41 @@ export class NotificationService implements OnModuleInit {
       }
     }
 
+    const processTemplate = (template: string): string => {
+      const processBlock = (text: string): string => {
+        // Process conditionals first
+        const conditionalRegex = /\{\{#if (\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
+
+        let processed = text.replace(
+          conditionalRegex,
+          (match, conditionName, content) => {
+            if (
+              variables[conditionName] !== undefined &&
+              variables[conditionName]
+            ) {
+              // Recursively process the inner content
+              return processBlock(`${content}`);
+            }
+            return '';
+          },
+        );
+
+        // Then replace variables in the processed text
+        processed = processed.replace(
+          /\{\{(\w+)\}\}/g,
+          (match, variableName) => {
+            return variables[variableName] !== undefined
+              ? String(variables[variableName])
+              : match;
+          },
+        );
+
+        return processed;
+      };
+
+      return processBlock(template);
+    };
+
     // Replace template variables
     const replaceVariables = (text: string): string => {
       return text.replace(/\{\{(\w+)\}\}/g, (match, variableName) => {
@@ -907,7 +942,7 @@ export class NotificationService implements OnModuleInit {
 
     return {
       subject: subject ? replaceVariables(subject) : undefined,
-      body: replaceVariables(body),
+      body: processTemplate(body),
       isHtml,
     };
   }

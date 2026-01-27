@@ -40,6 +40,10 @@ export class User extends Model {
   @Column(DataType.STRING)
   avatar: string;
 
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  refreshToken: string;
+
   @Default(false)
   @Column(DataType.BOOLEAN)
   isVerified: boolean;
